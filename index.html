@@ -34,6 +34,23 @@
     summary{cursor:pointer} .qs{margin:.4rem 0 0 .2rem;padding-left:1rem}.qs li{margin:.2rem 0}
     #diag{position:fixed;right:10px;bottom:10px;background:#06151b;color:#bde8ef;border:1px solid rgba(255,255,255,.15);padding:8px 10px;border-radius:10px;font-size:.8rem;opacity:.9;z-index:9999;display:none}
     #toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:10px 14px;border-radius:12px;z-index:9999;display:none}
+    <style>
+  /* Kaart-icoontjes */
+  .pin { width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.35) }
+  .pin.stop { background:#4aa3ff }
+  .pin.start { background:#20c997 }
+  .pin.end { background:#e74c3c }
+
+  /* Mijn live positie – pulserend stipje */
+  .user-dot { width:14px;height:14px;border-radius:50%;background:#3dd1c0;border:2px solid #fff;
+              box-shadow:0 0 0 rgba(61,209,192,.7); animation:pulse 2s infinite }
+  @keyframes pulse {
+    0% { box-shadow:0 0 0 0 rgba(61,209,192,.7) }
+    70% { box-shadow:0 0 0 16px rgba(61,209,192,0) }
+    100% { box-shadow:0 0 0 0 rgba(61,209,192,0) }
+  }
+</style>
+
   </style>
 </head>
 <body>
