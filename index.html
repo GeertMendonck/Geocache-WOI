@@ -142,7 +142,18 @@
       DATA = { meta, stops, personages };
       return DATA;
     }
-
+// OSRM fallback: tekent een fietsroute langs je stops (alleen online)
+async function drawOsrmRouteLatLngs(latlngs){
+  const coords = latlngs.map(([lat,lng]) => `${lng},${lat}`).join(';');
+  const url = `https://router.project-osrm.org/route/v1/cycling/${coords}?overview=full&geometries=geojson&steps=false`;
+  const res = await fetch(url, { cache: 'no-store' });
+  const data = await res.json().catch(()=> ({}));
+  if (data?.routes?.[0]) {
+    return L.geoJSON(data.routes[0].geometry, { style: { weight: 4, opacity: 0.9 } }).addTo(LMAP);
+  } else {
+    console.warn('OSRM gaf geen route terug:', data);
+  }
+}
     function toast(msg){ const t=$('#toast'); t.textContent=msg; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>{t.style.display='none'},2000); }
 
     function ensureCharacter(){
@@ -217,51 +228,73 @@
     // Leaflet kaart (één kaart met route + stops + live-positie)
     let LMAP, liveMarker, accCircle, followMe=false;
     function initLeafletMap(){
-      try{
-        if (!window.L) return;
-        const div = $('#oneMap'); if(!div) return;
-        const start = DATA.stops.find(s=>s.id===DATA.meta.startStopId) || DATA.stops[0];
-        LMAP = L.map(div, { zoomControl:true }).setView([start.lat, start.lng], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap'}).addTo(LMAP);
+  try{
+    if (!window.L) return;
+    const div = document.getElementById('oneMap'); if(!div) return;
 
-        const bounds = [];
-        DATA.stops.forEach(s=>{
-          const p=[s.lat,s.lng];
-          L.marker(p).addTo(LMAP).bindPopup(s.naam);
-          L.circle(p,{radius:s.radius||DATA.meta.radiusDefaultMeters,color:'#3dd1c0',weight:1,fillOpacity:.05}).addTo(LMAP);
-          bounds.push(p);
-        });
-        if(bounds.length) LMAP.fitBounds(bounds,{padding:[20,20]});
+    // Custom icons
+    const icon = (cls)=> L.divIcon({ className: 'pin '+cls, iconSize:[16,16], iconAnchor:[8,8] });
+    const iconStart = icon('start');
+    const iconStop  = icon('stop');
+    const iconEnd   = icon('end');
+    const iconUser  = L.divIcon({ className:'user-dot', iconSize:[14,14], iconAnchor:[7,7] });
 
-        if (DATA.meta.kmlPath){
-          fetch(DATA.meta.kmlPath)
-            .then(r=>r.text())
-            .then(txt=>{
-              const kml = new DOMParser().parseFromString(txt,'text/xml');
-              const gj  = toGeoJSON.kml(kml);
-              const layer = L.geoJSON(gj, { style:{ weight:3 } }).addTo(LMAP);
-              try { LMAP.fitBounds(layer.getBounds().extend(L.latLngBounds(bounds)), { padding:[20,20] }); } catch {}
-            })
-            .catch(err=>console.warn('KML laden faalde:', err));
-        } else {
-          L.polyline(bounds,{weight:3}).addTo(LMAP);
-        }
+    // Start uit meta of eerste stop
+    const start = DATA.stops.find(s=>s.id===DATA.meta.startStopId) || DATA.stops[0];
+    LMAP = L.map(div, { zoomControl:true }).setView([start.lat, start.lng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap'}).addTo(LMAP);
 
-        liveMarker = L.marker([0,0], { opacity:0 }).addTo(LMAP);
-        accCircle  = L.circle([0,0], { radius:0, color:'#3dd1c0', fillOpacity:.1 }).addTo(LMAP);
+    // Stops + radius
+    const bounds = [];
+    DATA.stops.forEach(s=>{
+      const p=[s.lat,s.lng]; bounds.push(p);
+      let ic = iconStop;
+      if (s.id===DATA.meta.startStopId) ic = iconStart;
+      if (s.id===DATA.meta.endStopId)   ic = iconEnd;
+      L.marker(p, {icon:ic}).addTo(LMAP).bindPopup(s.naam);
+      L.circle(p,{radius:s.radius||DATA.meta.radiusDefaultMeters,color:'#3dd1c0',weight:1,fillOpacity:.05}).addTo(LMAP);
+    });
+    if(bounds.length) LMAP.fitBounds(bounds,{padding:[20,20]});
 
-        const btn = $('#recenterBtn'); if(btn) btn.addEventListener('click', ()=>{ followMe = true; });
-      }catch(e){ console.error(e); }
-    }
+    // KML laden en checken op lijnen; anders OSRM fallback
+    (async ()=>{
+      let hadLine=false;
+      if (DATA.meta.kmlPath){
+        try{
+          const txt = await fetch(DATA.meta.kmlPath, {cache:'no-store'}).then(r=>r.text());
+          const kml = new DOMParser().parseFromString(txt,'text/xml');
+          const gj  = toGeoJSON.kml(kml);
+          hadLine = (gj.features||[]).some(f => /LineString|MultiLineString/.test(f.geometry?.type||''));
+          // KML tekenen: punten als kleine stipjes, lijnen dikker
+          L.geoJSON(gj, {
+            pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius:3, weight:1, opacity:.9, fillOpacity:.6 }),
+            style: (f) => (/LineString|MultiLineString/.test(f.geometry?.type||'') ? { weight:4, opacity:.9 } : { weight:1, opacity:.6 })
+          }).addTo(LMAP);
+        }catch(err){ console.warn('KML laden faalde:', err); }
+      }
+      if (!hadLine) {
+        const routePoints = DATA.stops.map(s => [s.lat, s.lng]);
+        drawOsrmRouteLatLngs(routePoints);
+      }
+    })();
+
+    // Live-positie
+    liveMarker = L.marker([0,0], { icon:iconUser, opacity:0 }).addTo(LMAP);
+    accCircle  = L.circle([0,0], { radius:0, color:'#3dd1c0', fillOpacity:.1 }).addTo(LMAP);
+
+    const btn = document.getElementById('recenterBtn');
+    if(btn) btn.addEventListener('click', ()=>{ followMe = true; });
+  }catch(e){ console.error(e); }
+}
     function updateLeafletLive(lat,lng,acc){
-      try{
-        if(!LMAP || !liveMarker || !accCircle) return;
-        liveMarker.setLatLng([lat,lng]).setOpacity(1);
-        accCircle.setLatLng([lat,lng]).setRadius(acc||0);
-        if (followMe) LMAP.setView([lat,lng]);
-        const a=$('#openInMaps'); if(a) a.href=`https://maps.google.com/?q=${lat},${lng}`;
-      }catch(e){ console.error(e); }
-    }
+  try{
+    if(!LMAP || !liveMarker || !accCircle) return;
+    liveMarker.setLatLng([lat,lng]).setOpacity(1);
+    accCircle.setLatLng([lat,lng]).setRadius(acc||0);
+    if (followMe) LMAP.setView([lat,lng]);
+    const a=document.getElementById('openInMaps'); if(a) a.href=`https://maps.google.com/?q=${lat},${lng}`;
+  }catch(e){ console.error(e); }
+}
 
     // Geoloc
     let watchId=null; window.__insideStart=false;
