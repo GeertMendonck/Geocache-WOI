@@ -6,27 +6,34 @@
   <title>WOI – Mijn Personage</title>
   <meta name="theme-color" content="#0c2630"/>
   <link rel="manifest" href="manifest.webmanifest">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script defer src="https://unpkg.com/@mapbox/togeojson@0.16.0/dist/togeojson.umd.js"></script>
+
   <style>
     :root { --bg:#0b1a22; --card:#0f2430; --text:#e8f4f7; --muted:#9fb6bd; --accent:#3dd1c0; }
     *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
     h1,h2{margin:.2rem 0 .6rem} h1{font-size:1.35rem} h2{font-size:1.1rem}
     .wrap{max-width:980px;margin:0 auto;padding:14px}
-    .grid{display:grid;gap:12px} .two{grid-template-columns:1fr;}.pill{display:inline-block;border:1px solid rgba(255,255,255,.15);padding:.25rem .6rem;border-radius:999px;margin:.15rem .25rem 0 0;white-space:nowrap}
+    .grid{display:grid;gap:12px} .two{grid-template-columns:1fr;}
     @media (min-width:840px){.two{grid-template-columns:1fr 1fr}}
     .card{background:var(--card);border-radius:14px;padding:14px;box-shadow:0 6px 18px rgba(0,0,0,.22)}
     .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.right{justify-content:flex-end}
     .small{font-size:.9rem}.muted{color:var(--muted)} .warn{color:#ffdf80}
+    .pill{display:inline-block;border:1px solid rgba(255,255,255,.15);padding:.25rem .6rem;border-radius:999px;margin:.15rem .25rem 0 0;white-space:nowrap}
     button{background:#173743;color:#dff7fb;border:none;padding:8px 12px;border-radius:10px;cursor:pointer}
     button.primary{background:#2db9a8;color:#062b33} button:disabled{opacity:.5;cursor:not-allowed}
     select{background:#0f2a35;color:#eaf7fa;border:1px solid rgba(255,255,255,.15);padding:8px;border-radius:10px}
     .ring{width:54px;height:54px;border-radius:999px;display:grid;place-items:center;background:conic-gradient(var(--accent) 0deg, rgba(255,255,255,.15) 0 360deg);box-shadow:0 2px 8px rgba(0,0,0,.25)}
     .ring span{font-size:.75rem;color:#062b33;font-weight:700}
     .kpi{justify-content:space-between}
-    .mapframe{width:100%;height:360px;border:0;border-radius:12px}.mapframe.small{height:300px}
+    #oneMap.leaflet-container { height: 420px; border-radius:12px; }
     details{background:#0a1e27;border:1px solid rgba(255,255,255,.08);padding:8px 10px;border-radius:10px}
     summary{cursor:pointer} .qs{margin:.4rem 0 0 .2rem;padding-left:1rem}.qs li{margin:.2rem 0}
     #diag{position:fixed;right:10px;bottom:10px;background:#06151b;color:#bde8ef;border:1px solid rgba(255,255,255,.15);padding:8px 10px;border-radius:10px;font-size:.8rem;opacity:.9;z-index:9999;display:none}
-    #toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:10px 14px;border-radius:12px;z-index:9999}
+    #toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:10px 14px;border-radius:12px;z-index:9999;display:none}
   </style>
 </head>
 <body>
@@ -41,16 +48,13 @@
     <div class="grid two">
       <section class="card">
         <h2>Jouw personage</h2>
-        <div class="small muted">Je mag alleen <b>aan de startlocatie</b> een personage kiezen of wijzigen. Daarna wordt je keuze vastgezet.</div>
+        <div class="small muted">Kiezen of wijzigen kan <b>alleen aan de startlocatie</b>. Zodra je vertrekt, wordt je keuze vergrendeld.</div>
         <div id="pcInfo" class="small muted" style="margin:8px 0">Laden…</div>
         <div id="pcChooser" class="row small"></div>
         <div class="row" style="gap:8px;margin-top:6px">
           <button id="regenBtn">🎲 Willekeurig</button>
           <button id="savePcBtn" class="primary">✅ Bevestig keuze</button>
           <button id="exportBtn">💾 Exporteer voortgang</button>
-        </div>
-        <div class="small muted" style="margin-top:6px">
-          Tip: installeer via browser-menu en open minstens één keer online; daarna werkt alles offline.
         </div>
       </section>
 
@@ -82,12 +86,10 @@
 
     <section class="card" style="margin-top:12px">
       <h2>Kaart</h2>
-      <div class="small muted">Routekaart (My Maps) en live positie (werkt online). Offline blijft de app functioneren zonder kaart.</div>
-      <div class="grid" style="grid-template-columns:1fr;gap:10px">
-        <iframe id="routeMap" class="mapframe" src=""></iframe>
-        <iframe id="liveMap" class="mapframe small" src=""></iframe>
-      </div>
+      <div class="small muted">Eén kaart met route + jouw live positie (werkt online; offline blijft de app bruikbaar zonder kaart).</div>
+      <div id="oneMap"></div>
       <div class="row small" style="margin-top:8px">
+        <button id="recenterBtn">🎯 Centreer op mij</button>
         <a id="openInMaps" href="#" target="_blank" rel="noopener">📍 Open je positie in Google Maps</a>
       </div>
     </section>
@@ -99,150 +101,45 @@
   </div>
 
   <div id="diag"></div>
+  <div id="toast"></div>
 
-  <!-- DATA -->
-  <script id="scenario-data" type="application/json">{
-    "meta": {
-      "title": "WOI – Mijn Personage",
-      "radiusDefaultMeters": 200,
-      "startStopId": "start_menenpoort",
-      "endStopId": "end_menenpoort",
-      "requiredStops": ["new_irish_farm","langemark","tyne_cot","passchendaele_museum"],
-      "myMapsEmbedUrl": "https://www.google.com/maps/d/embed?mid=1PX9PLdEburE2dqbKbAj2C44SiCjtGSc&hl=nl&ehbc=2E312F"
-    },
-    "stops": [
-      {"id":"start_menenpoort","naam":"Start: Menenpoort (Ieper)","lat":50.851003,"lng":2.890939,"radius":140,
-        "vragen":["Welke naam of inscriptie raakte je en waarom?","Wat verwacht je vandaag te leren?"]},
-      {"id":"new_irish_farm","naam":"Stop 1: New Irish Farm Cemetery","lat":50.872890,"lng":2.897360,"radius":180,
-        "vragen":["Wat viel je op aan de namen of symbolen op de graven?","Welke link hoor jij tussen dit landschap en het verhaal van jouw personage?"]},
-      {"id":"langemark","naam":"Stop 2: Studentenfriedhof Langemark","lat":50.915300,"lng":2.916300,"radius":200,
-        "vragen":["Wat betekent het voor jou dat hier vooral jonge studenten liggen?","Hoe verandert dit jouw kijk op ‘de vijand’?"]},
-      {"id":"tyne_cot","naam":"Stop 3: Tyne Cot Cemetery","lat":50.887000,"lng":2.999300,"radius":220,
-        "vragen":["Wat zegt de schaal van deze plek over de slag hier?","Welke zin uit het verhaal bleef hangen en waarom?"]},
-      {"id":"passchendaele_museum","naam":"Stop 4: Memorial Museum Passchendaele","lat":50.898700,"lng":3.000700,"radius":180,
-        "vragen":["Wat doet het met je om objecten uit de oorlog achter glas te zien?","Welke vraag zou jij willen stellen aan iemand uit die tijd?"]},
-      {"id":"end_menenpoort","naam":"Einde: Menenpoort (Ieper)","lat":50.851003,"lng":2.890939,"radius":140,
-        "vragen":["Wat neem je mee uit de verhalen?","Voor wie wil jij hier even stilstaan?"]}
-    ],
-    "personages": [
-      {"id":"aminata_diop","naam":"Aminata Diop","herkomst":"Saint-Louis, Senegal","leeftijd":22,"rol":"Verpleegster (Rode Kruis)","bio":"Verzorgde gewonden in veldhospitalen rond Ieper.","verhalen":{
-        "start_menenpoort":"Ik ben Aminata, dochter van een kleermaker uit Saint-Louis. Toen de oorlog kwam, zocht het Rode Kruis handen die konden verzorgen en harten die niet te snel braken. Ik dacht dat brieven schrijven voor gewonden mijn zwaarste taak zou zijn, tot ik leerde hoe stilte in een tent zwaarder kan wegen dan ieder verband.",
-        "new_irish_farm":"De Ierse jongens vroegen eerst om thee. Daarna om tijd. Loopgraafvoet, schrammen, koorts — en altijd modder. Ik leerde voeten drogen met zachte doeken en de blik af te wenden wanneer schaamte harder prikte dan jodium.",
-        "langemark":"We ruilden steriele doeken met een Duitse verpleger, kort en woordeloos. Aan beide kanten waren de handen even moe en even menselijk. In de schemer van de verbandtent leek het front heel even een gangpad in een ziekenhuis.",
-        "tyne_cot":"De brancards bleven komen. Morfine was schaars, hoop nog schaarser. Ik schreef voor wie niet meer kon: ‘Lieve moeder, maak u geen zorgen.’ De jongen die het dicteerde kneep mijn hand tot de woorden ophielden.",
-        "passchendaele_museum":"Achter glas blinken instrumenten schoon, maar ik hoor er de zenuwachtige ademhaling bij. Ik zie polsbandjes, etiketten, flessenkurken — kleine beloftes dat we ons best deden, ook als het niet genoeg was.",
-        "end_menenpoort":"Hier, tussen namen zonder graf, denk ik aan alle brieven die nooit verstuurd raakten. Ik vouw mijn herinneringen dicht zoals ik ooit gaas dichtvouwde: zorgvuldig, met de wens dat het iemand minder pijn doet."
-      }},
-      {"id":"youssef_ben_salah","naam":"Youssef ben Salah","herkomst":"Fès, Marokko","leeftijd":19,"rol":"Tirailleur (Frans)","bio":"Kwam in 1917 naar het Westelijk Front als versterking.","verhalen":{
-        "start_menenpoort":"Ik ben Youssef, zoon van een leerbewerker. Vrijwilliger uit Fès, overtuigd dat moed overal dezelfde taal spreekt. In Ieper voelde ik me klein tussen bogen en namen; ik herkende geen enkel woord, maar ik begreep de stilte.",
-        "new_irish_farm":"We ploeterden door aarde die aan je laarzen trok alsof ze je wilde houden. Het bevel was eenvoudig: vooruit. Ik droeg munitie, water, soms mijn eigen angst, en leerde dat zingen in het Arabisch ook warmte kan geven in een Vlaamse regenbui.",
-        "langemark":"Een Duitse gevangene vroeg om brood. Ik gaf hem een stuk en hij gaf me een woord terug — ‘danke’. Het klonk vreemd in mijn mond, maar menselijk in mijn oren. Voor heel even leek het front geen grens.",
-        "tyne_cot":"We telden niet meer in dagen maar in granaten. Een vriend verdween in rook zonder afscheid. Ik schreef zijn naam op een papiertje en stopte het bij mijn Koran, alsof papier kon bewaren wat de modder rooft.",
-        "passchendaele_museum":"Een bajonet achter glas is lichter dan in je handen. Ik raak het glas niet aan; sommige dingen houd je beter op afstand, anders kom je ze weer tegen in je slaap.",
-        "end_menenpoort":"Als ik terugkijk, vraag ik niet waarom ik bleef leven. Ik vraag wat ik met dat leven zal doen zodat zijn naam, die op mijn papiertje staat, blijft bestaan."
-      }},
-      {"id":"stanislaw_nowak","naam":"Stanisław Nowak","herkomst":"Galicië","leeftijd":21,"rol":"Artilleriehelper","bio":"Boerenzoon met een liefde voor techniek.","verhalen":{
-        "start_menenpoort":"Stanisław, zoon van een smid. Ik werd opgeleid bij de artillerie omdat ik snel begreep hoe katrollen en hulsliften werkten. Onder deze poort klinkt de stad als een grote klok: iedere echo tikt een naam aan.",
-        "new_irish_farm":"Het verzetten van een houwitser lijkt op ploegen: langzaam, samen, en met blaren. Ik leerde schatten zonder meetlint, voelen zonder te kijken. Soms wist ik aan de trilling al genoeg.",
-        "langemark":"Tussen twee beschietingen durfde iemand viool te spelen. Een melodie zonder vlag of rang. Even telde ik geen afstand in meters maar in maten.",
-        "tyne_cot":"Elke granaat heeft een nummer, maar geen geweten. Ik droeg hulzen weg en vroeg me af hoeveel stilte ze zouden achterlaten. Als de batterij zweeg, hoorde ik mijn hart eindelijk in een normaal tempo.",
-        "passchendaele_museum":"Instrumenten met naalden en wijzers fascineren me nog steeds. Ze meten, maar ze begrijpen niet. Misschien is dat beter zo.",
-        "end_menenpoort":"Ik wil na de oorlog machines maken die bouwen. Tandwielen die graan malen. Krachten die mensen optillen in plaats van neerhalen."
-      }},
-      {"id":"margot_vandamme","naam":"Margot Vandamme","herkomst":"Ieper, België","leeftijd":18,"rol":"Burger – brievenschrijfster","bio":"Schreef brieven voor gewonden die zelf niet meer konden.","verhalen":{
-        "start_menenpoort":"Ik ben Margot, dochter van een kruidenier. In de verbandpost vroeg een verpleger of ik wilde helpen schrijven. ‘Zij dicteren, jij noteert.’ Soms waren het drie woorden. Soms een hele avond stilte.",
-        "new_irish_farm":"Een Ierse jongen lachte om mijn accent toen ik ‘ma’ voorlas. Daarna beet hij op zijn lip om het huilen tegen te houden. Ik zette mijn hand op de rand van zijn bed en deed alsof we allebei sterk waren.",
-        "langemark":"De zwarte kruisen stonden dicht bij elkaar. Ik dacht aan hoe klein mensen worden als je ze alleen nog als naam leest. Ik stak een lintje in mijn zak, niet wetend voor wie ik het bewaarde.",
-        "tyne_cot":"Een Canadese verpleegster gaf me een stukje blauw lint. ‘Voor moed,’ zei ze. Ik had geen geweer, maar ik droeg het toch.",
-        "passchendaele_museum":"In een vitrine ligt een veldfles zoals mijn broer er een had. Ik zie mijn eigen gezicht in het glas weerspiegeld en vraag me af of herinneringen zwaarder worden of lichter door de jaren.",
-        "end_menenpoort":"Ik leg het lintje neer zonder naam. Voor de jongen, voor mijn broer, voor wie nooit werd voorgelezen. Soms is herdenken niets anders dan hardop blijven schrijven."
-      }},
-      {"id":"harinder_singh","naam":"Harinder Singh","herkomst":"Punjab, Brits-Indië","leeftijd":23,"rol":"Sikh infanterist","bio":"Diende in het Britse leger, hield vast aan geloof en turban.","verhalen":{
-        "start_menenpoort":"Ik ben Harinder. Mijn vader vertelde dat eer rechtop begint: in je rug en in je turban. Ik stapte aan boord omdat dienstplicht hier plicht heet en thuis eer.",
-        "new_irish_farm":"Modder maakt geen onderscheid. Ik deelde mijn brood en kreeg een grap terug. Voor even proefde ik thuis in een lach die ik niet helemaal begreep.",
-        "langemark":"Een kamerad vroeg of mijn haar nooit lastig was. Ik zei dat geloof je rug recht houdt, ook als je handen trillen. Hij knikte en reikte me draad aan om mijn turban opnieuw te winden.",
-        "tyne_cot":"Een scherf scheurde stof, niet huid. Ik dankte zacht, streek mijn tulband glad en keek of iedereen nog stond. Je telt je zegeningen soms in inches.",
-        "passchendaele_museum":"Een uniformpop staart de zaal in. Ik raak niets aan. Ik denk aan handen wassen met weinig water en toch proberen schoon te blijven van binnen.",
-        "end_menenpoort":"Ik spreek een kort gebed, niet voor overwinning, maar voor rust. Voor wie viel, en voor wie bleef dragen."
-      }},
-      {"id":"elsa_stein","naam":"Elsa Stein","herkomst":"Keulen, Duitsland","leeftijd":20,"rol":"Geneeskundestudente (vrijwilliger)","bio":"Kreeg opleiding in noodhospitaal net over de grens.","verhalen":{
-        "start_menenpoort":"Elsa, tweedejaars geneeskunde. Ik dacht dat anatomieboeken me zouden beschermen tegen echte wonden. De oorlog leerde me dat kennis helpt, maar dat handen het moeten doen.",
-        "new_irish_farm":"In de ochtend oefenden we hechtingen op sinaasappels. In de middag niet meer. Ik telde naalden alsof tellen controle gaf.",
-        "langemark":"Mijn accent maakte me verdacht. Toch hield iemand het gordijn open terwijl ik werkte. Ik keek niet op. Pijn heeft geen uniform.",
-        "tyne_cot":"Koorts, pols, adem — ritme tegen paniek. Soms hielp het een mens te vertellen wat ik aan het doen was, alsof uitleg zelf een medicijn was.",
-        "passchendaele_museum":"Instrumenten liggen stil, maar ik hoor nog de snelle adempjes van wie bang is. Ik hoop dat niemand ooit zal denken dat we niet probeerden.",
-        "end_menenpoort":"Ik keer terug naar de studie met handen die te veel hebben aangeraakt en een hart dat niet wil verharden. Misschien is dat genoeg."
-      }},
-      {"id":"mehmet_arslan","naam":"Mehmet Arslan","herkomst":"Ankara, Ottomaanse Rijk","leeftijd":26,"rol":"Sappeur","bio":"Groef en timmerde, vaak dichterbij dan goed was.","verhalen":{
-        "start_menenpoort":"Mehmet, zoon van een timmerman. Ik werd sappeur omdat ik recht kan zagen, ook als de grond beeft. Hier kijk ik naar bogen en denk ik aan draagkracht: wat houdt en wat breekt.",
-        "new_irish_farm":"Steunbalken kraken eerlijk; ze liegen niet. Ik klopte ze vast met een ritme dat luider was dan mijn gedachten.",
-        "langemark":"Tabak ruilen voor spijkers lijkt dwaas, totdat je dakbalken wil die blijven hangen. Ik stak een extra nagel waar niemand hem zag, gewoon voor de zekerheid.",
-        "tyne_cot":"Ondergronds klinkt oorlog als een verre onweer. Je leert luisteren naar zand dat beweegt, naar planken die ademen.",
-        "passchendaele_museum":"Een maquette van loopgraven ziet er netjes uit. In het echt is niets netjes behalve de discipline om terug te komen als iets los zit.",
-        "end_menenpoort":"Na dit alles wil ik huizen stutten die nooit meer hoeven te schuilen. Het is een bescheiden droom, maar hij draagt ver."
-      }},
-      {"id":"hua_zheng","naam":"Hua Zheng","herkomst":"Shandong, China","leeftijd":24,"rol":"Chinese Labour Corps","bio":"Arbeider aan wegen, sporen en logistiek.","verhalen":{
-        "start_menenpoort":"Ik ben Hua. In mijn dorp zei men: ‘Wie werkt met twee handen, reist ver.’ Ik tekende voor arbeid, niet voor oorlog, en toch droeg ik haar elke dag.",
-        "new_irish_farm":"Kratten sjouwen werd een lied zonder woorden: tillen, stappen, neerzetten, ademen. Aan het eind van de dag proefde ik stof, zout en soms een grap die overleefde.",
-        "langemark":"Ik leerde ‘dank u’ zeggen met een vreemd accent en iemand leerde mij ‘xie xie’ terug. We lachten omdat we allebei fout zaten en toch begrepen wat bedoeld werd.",
-        "tyne_cot":"We legden kiezels recht tussen witte stenen. Het gaf rust om iets te ordenen in een wereld die uit de maat was.",
-        "passchendaele_museum":"Op een foto zie ik gezichten die op de mijne lijken, maar donkerder van de modder. Ik vraag me af of iemand onze namen zal herinneren als het werk klaar is.",
-        "end_menenpoort":"Misschien is dit de plek waar arbeid ook herdenking wordt. Ik denk aan een weg die naar huis leidt, strak en vlak, zonder kraters."
-      }},
-      {"id":"aileen_omalley","naam":"Aileen O’Malley","herkomst":"Cork, Ierland","leeftijd":19,"rol":"Veldtelefoniste","bio":"Onderhield lijnen onder gevaarlijk vuur.","verhalen":{
-        "start_menenpoort":"Aileen, veldtelefoniste. Mijn werk was luisteren, knopen leggen en hopen dat stemmen elkaar bleven vinden. Ik leerde dat een rechte lijn soms de gevaarlijkste weg is.",
-        "new_irish_farm":"Een lijn brak, natuurlijk net wanneer het dringend was. Ik knoopte met stijve vingers en bad dat de vonk niet langs mij koos om over te springen.",
-        "langemark":"Aan de andere kant van de draad klonk iemand met een zwaar accent. ‘Linie vrij?’ vroeg hij. ‘Nog wel,’ antwoordde ik. Voor even waren we alleen techniek.",
-        "tyne_cot":"De stilste momenten zijn het luidst in je hoofd. Soms hield ik de koptelefoon net even van mijn oor, niet uit angst, maar om weer te kunnen tellen.",
-        "passchendaele_museum":"De telefooncentrale in de vitrine ruikt vast niet meer naar bakeliet en zweet. Ik weet nog hoe de schakelaars aanvoelden, als kleine beslissingen.",
-        "end_menenpoort":"‘Lijn hersteld,’ zeg ik zacht. Niet voor een officier, maar voor iedereen die nog iets wil zeggen tegen wie er niet meer is."
-      }},
-      {"id":"marcel_dupont","naam":"Marcel Dupont","herkomst":"Lille, Frankrijk","leeftijd":25,"rol":"Poilu (infanterist)","bio":"Doorstond de modder met droge humor.","verhalen":{
-        "start_menenpoort":"Marcel hier. Ik hield van brood met te veel korst en grappen met te weinig punt. Toen we marcheerden, zei ik dat de modder bang voor mij was. Ze lachte niet terug.",
-        "new_irish_farm":"We deelden sigaretten en schunnige liedjes, alsof lucht beter ademt met branie. De nacht was koud en de grappen warmden net genoeg.",
-        "langemark":"Iemand tekende thuis in mijn notitieboekje. Een straat, een vrouw achter een raam. Als ik het dichtklapte, voelde ik haar niet meer roepen dat ik moest eten.",
-        "tyne_cot":"— Hier neemt Louise, Marcels zus, over. Hij viel bij een aanval; de brief zei ‘onmiddellijk’ en ‘zonder pijn’. Later vond ik zijn boekje terug, nat en toch leesbaar. Ik blader erin alsof hij nog even moet lachen om iets wat ik niet snap.",
-        "passchendaele_museum":"Ik, Louise, sta hier en herken een gasmasker dat muf ruikt in mijn herinnering. Niet omdat ik het droeg, maar omdat Marcel erover schreef: dat je ademhalen dan ineens werk wordt.",
-        "end_menenpoort":"Ik leg zijn naam tussen andere namen. Ik weet niet of hij bang was. Ik weet wel dat hij altijd zei dat modder bang voor hem was. Misschien heeft hij het gewonnen."
-      }},
-      {"id":"anna_kowalska","naam":"Anna Kowalska","herkomst":"Łódź, Polen","leeftijd":22,"rol":"Chauffeuse (ambulance)","bio":"Reed gewonden over hobbelige wegen naar hulp.","verhalen":{
-        "start_menenpoort":"Anna, dochter van een wever. Ik leerde rijden op vrachtwagens die liever bleven staan. In oorlogstijd heet vooruitgang soms gewoon ‘in z’n twee en hopen’.",
-        "new_irish_farm":"Mijn lading ademde en kreunde. Bochten moesten zacht, anders deed ik meer kwaad dan goed. Ik praatte tegen de motor alsof hij een koppig paard was.",
-        "langemark":"Een paard stond echt midden op de weg. Ik legde mijn hand op zijn hals en beloofde niets, en toch ging hij opzij. Een soldaat lachte dat ik talen sprak die hij niet kende.",
-        "tyne_cot":"Banden plakken bij maanlicht is geduld oefenen. Ik telde tot honderd bij iedere slag van de pomp, zoals mijn moeder telt als ze bidt.",
-        "passchendaele_museum":"De ambulance in de zaal is kleiner dan ik me herinner. Misschien ben ik groter geworden, of is het verleden altijd net te knus in vitrines.",
-        "end_menenpoort":"Ik zet in gedachten de motor uit. Even niets dat trilt. Alleen adem, en de weg naar huis die stil voor me ligt."
-      }}
-    ]
-  }</script>
-
-  <!-- APP -->
   <script>
   (function(){
     const $=sel=>document.querySelector(sel);
-    const showDiag = (msg) => { const d=$('#diag'); d.style.display='block'; d.textContent=String(msg).slice(0,400); };
+    const showDiag = (msg) => { const d=$('#diag'); d.style.display='block'; d.textContent=String(msg).slice(0,500); };
     window.addEventListener('error', e=>showDiag('JS error: '+e.message));
     window.addEventListener('unhandledrejection', e=>showDiag('Promise error: '+(e.reason?.message||e.reason)));
 
-    const DATA = JSON.parse(document.getElementById('scenario-data').textContent);
     const store={get(){try{return JSON.parse(localStorage.getItem('woi_state')||'{}')}catch{return{}}},set(v){localStorage.setItem('woi_state',JSON.stringify(v))}};
     const distanceMeters=(a,b)=>{const R=6371e3,φ1=a.lat*Math.PI/180,φ2=b.lat*Math.PI/180,dφ=(b.lat-a.lat)*Math.PI/180,dλ=(b.lng-a.lng)*Math.PI/180;const s=Math.sin(dφ/2)**2+Math.cos(φ1)*Math.cos(φ2)*Math.sin(dλ/2)**2;return 2*R*Math.asin(Math.sqrt(s));};
     const pick=a=>a[Math.floor(Math.random()*a.length)];
 
-    function toast(msg){ let t=document.getElementById('toast'); if(!t){ t=document.createElement('div'); t.id='toast'; document.body.appendChild(t);} t.textContent=msg; clearTimeout(t._h); t.style.display='block'; t._h=setTimeout(()=>{t.style.display='none'},2000); }
+    let DATA = { meta:{}, stops:[], personages:[] };
+
+    async function loadScenario() {
+      const [meta, stops, personages] = await Promise.all([
+        fetch('./data/meta.json').then(r=>r.json()),
+        fetch('./data/stops.json').then(r=>r.json()),
+        fetch('./data/personages.json').then(r=>r.json())
+      ]);
+      DATA = { meta, stops, personages };
+      return DATA;
+    }
+
+    function toast(msg){ const t=$('#toast'); t.textContent=msg; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>{t.style.display='none'},2000); }
 
     function ensureCharacter(){
-      const st=store.get(); const forced=new URLSearchParams(location.search).get('pc');
-      if(forced && DATA.personages.some(p=>p.id===forced)){ st.pcId=forced; store.set(st); return st.pcId; }
-      if(st.pcId && DATA.personages.some(p=>p.id===st.pcId)) return st.pcId;
-      const pc=pick(DATA.personages); st.pcId=pc.id; store.set(st); return pc.id;
+      const st=store.get();
+      const forced=new URLSearchParams(location.search).get('pc');
+      if(forced && DATA.personages.some(p=>p.id===forced)){ st.pcId=forced; st.unlocked=st.unlocked||[]; st.flags=st.flags||{}; store.set(st); return st.pcId; }
+      if(st.pcId && DATA.personages.some(p=>p.id===st.pcId)){ st.unlocked=st.unlocked||[]; st.flags=st.flags||{}; store.set(st); return st.pcId; }
+      const pc=pick(DATA.personages); st.pcId=pc.id; st.unlocked=st.unlocked||[]; st.flags=st.flags||{}; store.set(st); return pc.id;
     }
     const currentPc=()=>DATA.personages.find(p=>p.id===store.get().pcId);
 
     function renderProfile(){
       const pc=currentPc(); if(!pc) return;
-      const box=$('#pcInfo'); if(!box) return;
-      box.innerHTML = `<div class="row">
+      $('#pcInfo').innerHTML = `<div class="row">
         <div class="pill">🧑 <b>${pc.naam}</b></div>
         <div class="pill">🎂 ${pc.leeftijd} jaar</div>
         <div class="pill">🌍 ${pc.herkomst}</div>
@@ -295,10 +192,59 @@
       if(txt) txt.textContent = `${done}/${total}`;
     }
 
-    // Speech
+    // Speech (Web Speech API)
     let selectedVoice=null;
     function pickVoice(){ try{ const vs=speechSynthesis.getVoices(); selectedVoice = vs.find(v=>v.lang?.toLowerCase().startsWith('nl')) || vs.find(v=>v.lang?.toLowerCase().startsWith('en')) || vs[0]||null; }catch{} }
     function speakText(t){ if(!('speechSynthesis'in window)) return alert('Voorlezen niet ondersteund.'); speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); if(selectedVoice) u.voice=selectedVoice; u.lang=(selectedVoice&&selectedVoice.lang)||'nl-NL'; speechSynthesis.speak(u); }
+
+    // Leaflet kaart (één kaart met route + stops + live-positie)
+    let LMAP, liveMarker, accCircle, followMe=false;
+    function initLeafletMap(){
+      try{
+        if (!window.L) return;
+        const div = $('#oneMap'); if(!div) return;
+        const start = DATA.stops.find(s=>s.id===DATA.meta.startStopId) || DATA.stops[0];
+        LMAP = L.map(div, { zoomControl:true }).setView([start.lat, start.lng], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap'}).addTo(LMAP);
+
+        const bounds = [];
+        DATA.stops.forEach(s=>{
+          const p=[s.lat,s.lng];
+          L.marker(p).addTo(LMAP).bindPopup(s.naam);
+          L.circle(p,{radius:s.radius||DATA.meta.radiusDefaultMeters,color:'#3dd1c0',weight:1,fillOpacity:.05}).addTo(LMAP);
+          bounds.push(p);
+        });
+        if(bounds.length) LMAP.fitBounds(bounds,{padding:[20,20]});
+
+        if (DATA.meta.kmlPath){
+          fetch(DATA.meta.kmlPath)
+            .then(r=>r.text())
+            .then(txt=>{
+              const kml = new DOMParser().parseFromString(txt,'text/xml');
+              const gj  = toGeoJSON.kml(kml);
+              const layer = L.geoJSON(gj, { style:{ weight:3 } }).addTo(LMAP);
+              try { LMAP.fitBounds(layer.getBounds().extend(L.latLngBounds(bounds)), { padding:[20,20] }); } catch {}
+            })
+            .catch(err=>console.warn('KML laden faalde:', err));
+        } else {
+          L.polyline(bounds,{weight:3}).addTo(LMAP);
+        }
+
+        liveMarker = L.marker([0,0], { opacity:0 }).addTo(LMAP);
+        accCircle  = L.circle([0,0], { radius:0, color:'#3dd1c0', fillOpacity:.1 }).addTo(LMAP);
+
+        const btn = $('#recenterBtn'); if(btn) btn.addEventListener('click', ()=>{ followMe = true; });
+      }catch(e){ console.error(e); }
+    }
+    function updateLeafletLive(lat,lng,acc){
+      try{
+        if(!LMAP || !liveMarker || !accCircle) return;
+        liveMarker.setLatLng([lat,lng]).setOpacity(1);
+        accCircle.setLatLng([lat,lng]).setRadius(acc||0);
+        if (followMe) LMAP.setView([lat,lng]);
+        const a=$('#openInMaps'); if(a) a.href=`https://maps.google.com/?q=${lat},${lng}`;
+      }catch(e){ console.error(e); }
+    }
 
     // Geoloc
     let watchId=null; window.__insideStart=false;
@@ -317,11 +263,6 @@
         }
       }
     }
-    function updateLiveMap(lat,lng){
-      const live=$('#liveMap'); if(live) live.src = `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
-      const open=$('#openInMaps'); if(open) open.href=`https://maps.google.com/?q=${lat},${lng}`;
-    }
-
     function startWatch(){
       if(!('geolocation'in navigator)){ $('#permNote').textContent='Geen geolocatie'; return; }
       $('#geoState').textContent='Actief';
@@ -337,8 +278,17 @@
           if(s.id===DATA.meta.startStopId){ insideStart = d <= (s.radius||DATA.meta.radiusDefaultMeters); }
         }
         window.__insideStart = insideStart; renderCharacterChooser();
-        if(best){ $('#closest').textContent=best.name; $('#dist').textContent=`${best.d}`; $('#radius').textContent=`${best.radius}`; tryUnlock(best, accuracy); renderProgress(); renderStops(); updateLiveMap(latitude, longitude); }
-        const st=store.get(); if(!st.lockedPc && !insideStart){ st.lockedPc=true; store.set(st); renderCharacterChooser(); toast('🔒 Personage vergrendeld'); }
+
+        // lock pas nadat je ooit in de startzone bent geweest én deze verlaten hebt
+        const st=store.get(); st.flags=st.flags||{};
+        if(insideStart){ st.flags.seenStart = true; store.set(st); }
+        if(!insideStart && st.flags.seenStart && !st.lockedPc){ st.lockedPc=true; store.set(st); renderCharacterChooser(); toast('🔒 Personage vergrendeld'); }
+
+        if(best){
+          $('#closest').textContent=best.name; $('#dist').textContent=`${best.d}`; $('#radius').textContent=`${best.radius}`;
+          tryUnlock(best, accuracy); renderProgress(); renderStops();
+          updateLeafletLive(latitude, longitude, accuracy);
+        }
       }, err=>{ $('#permNote').innerHTML='<span class="warn">Locatie geweigerd</span>'; $('#geoState').textContent='Uit'; }, {enableHighAccuracy:true,maximumAge:10000,timeout:15000});
     }
     function stopWatch(){ if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; $('#geoState').textContent='Inactief'; } }
@@ -346,40 +296,49 @@
     // Safe binding helper
     const on=(id,ev,fn)=>{ const el=$(id.startsWith('#')?id:'#'+id); if(el) el.addEventListener(ev,fn); };
 
-    function init(){
-      // TTS voices
-      if('speechSynthesis' in window){ try{pickVoice(); speechSynthesis.addEventListener('voiceschanged', pickVoice);}catch{} }
-      // Routekaart
-      try{ const rm=$('#routeMap'); if(rm) rm.src = DATA.meta.myMapsEmbedUrl; }catch{}
+    async function boot(){
+      try{
+        // Data laden
+        await loadScenario();
 
-      ensureCharacter(); renderProfile(); renderStops(); renderUnlocked(); renderProgress();
+        // Kaart
+        if (navigator.onLine) initLeafletMap();
+        window.addEventListener('online', ()=>{ if(!LMAP) initLeafletMap(); });
 
-      // Listeners (defensief)
-      on('regenBtn','click',()=>{ const st=store.get(); if(st.lockedPc && !window.__insideStart){ toast('🔒 Buiten startzone kan je niet wisselen.'); return; } delete st.pcId; store.set(st); ensureCharacter(); renderProfile(); renderUnlocked(); toast('🎲 Nieuw personage gekozen'); });
-      on('savePcBtn','click',()=>{ const st=store.get(); if(st.lockedPc && !window.__insideStart){ toast('🔒 Wijzigen kan enkel aan de start.'); return; } if(!window.__insideStart){ toast('🔐 Ga naar de startlocatie om te kiezen.'); return; } const sel=$('#pcSelect'); if(sel){ st.pcId=sel.value; store.set(st); renderProfile(); toast('✅ Personage bevestigd'); }});
-      on('exportBtn','click',()=>{ const st=store.get(); const pc=currentPc(); const lines=[]; lines.push(`# ${DATA.meta.title}`); lines.push(`Personage: ${pc.naam} (${pc.herkomst}) – ${pc.rol}`); lines.push(''); for(const id of (st.unlocked||[])){ const stop=DATA.stops.find(s=>s.id===id); lines.push(`## ${stop?.naam||id}`); lines.push(pc.verhalen[id]||'(geen tekst)'); lines.push(''); } const blob=new Blob([lines.join('\n')],{type:'text/markdown'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='woi-voortgang.md'; a.click(); URL.revokeObjectURL(url); });
-      on('unlockList','click',(e)=>{ const b=e.target.closest && e.target.closest('button.readBtn'); if(!b) return; const id=b.getAttribute('data-read'); const pc=currentPc(); const txt=pc?.verhalen?.[id]; if(txt){ if('speechSynthesis'in window && speechSynthesis.speaking){ speechSynthesis.cancel(); } else { speakText(txt); } }});
-      on('startBtn','click',startWatch);
-      on('stopBtn','click',stopWatch);
-      on('demoBtn','click',()=>{ const s=DATA.stops.find(x=>x.id===DATA.meta.requiredStops[0])||DATA.stops[0]; tryUnlock({id:s.id,name:s.naam,d:0,radius:(s.radius||DATA.meta.radiusDefaultMeters)}); });
-      on('resetBtn','click',()=>{ localStorage.removeItem('woi_state'); location.reload(); });
+        // TTS
+        if('speechSynthesis' in window){ try{pickVoice(); speechSynthesis.addEventListener('voiceschanged', pickVoice);}catch{} }
 
-      // Install prompt
-      let deferredPrompt=null; window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;const b=$('#installHint'); if(b){b.textContent='📲 Installeer app'; b.classList.add('primary');}}); 
-      on('installHint','click',async()=>{ if(deferredPrompt){ deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; } else { alert('Installeer via browser-menu: Chrome: ⋮ → Toevoegen aan startscherm. Safari: Deel-icoon → Zet op beginscherm.'); }});
+        // App-state
+        ensureCharacter(); renderProfile(); renderStops(); renderUnlocked(); renderProgress();
 
-      // SW
-      if('serviceWorker' in navigator){
-        navigator.serviceWorker.register('./sw.js?v=2025-08-31-clean1',{scope:'./'})
-          .then(()=>{$('#cacheState').textContent='Geïnstalleerd';})
-          .catch(()=>{$('#cacheState').textContent='Niet geïnstalleerd';});
+        // Listeners
+        on('regenBtn','click',()=>{ const st=store.get(); if(st.lockedPc && !window.__insideStart){ toast('🔒 Buiten startzone kan je niet wisselen.'); return; } delete st.pcId; store.set(st); ensureCharacter(); renderProfile(); renderUnlocked(); toast('🎲 Nieuw personage gekozen'); });
+        on('savePcBtn','click',()=>{ const st=store.get(); if(st.lockedPc && !window.__insideStart){ toast('🔒 Wijzigen kan enkel na terugkeer naar de start.'); return; } if(!window.__insideStart){ toast('🔐 Ga naar de startlocatie om te kiezen.'); return; } const sel=$('#pcSelect'); if(sel){ st.pcId=sel.value; store.set(st); renderProfile(); toast('✅ Personage bevestigd'); }});
+        on('exportBtn','click',()=>{ const st=store.get(); const pc=currentPc(); const lines=[]; lines.push(`# ${DATA.meta.title}`); lines.push(`Personage: ${pc.naam} (${pc.herkomst}) – ${pc.rol}`); lines.push(''); for(const id of (st.unlocked||[])){ const stop=DATA.stops.find(s=>s.id===id); lines.push(`## ${stop?.naam||id}`); lines.push(pc.verhalen[id]||'(geen tekst)'); lines.push(''); } const blob=new Blob([lines.join('\n')],{type:'text/markdown'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='woi-voortgang.md'; a.click(); URL.revokeObjectURL(url); });
+        on('unlockList','click',(e)=>{ const b=e.target.closest && e.target.closest('button.readBtn'); if(!b) return; const id=b.getAttribute('data-read'); const pc=currentPc(); const txt=pc?.verhalen?.[id]; if(txt){ if('speechSynthesis'in window && speechSynthesis.speaking){ speechSynthesis.cancel(); } else { speakText(txt); } }});
+        on('startBtn','click',startWatch);
+        on('stopBtn','click',stopWatch);
+        on('demoBtn','click',()=>{ const s=DATA.stops.find(x=>x.id===DATA.meta.requiredStops[0])||DATA.stops[0]; tryUnlock({id:s.id,name:s.naam,d:0,radius:(s.radius||DATA.meta.radiusDefaultMeters)}); });
+        on('resetBtn','click',()=>{ localStorage.removeItem('woi_state'); location.reload(); });
+        on('recenterBtn','click',()=>{ followMe = true; });
+
+        // Install prompt
+        let deferredPrompt=null;
+        window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;const b=$('#installHint'); if(b){b.textContent='📲 Installeer app'; b.classList.add('primary');}});
+        on('installHint','click',async()=>{ if(deferredPrompt){ deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; } else { alert('Installeer via browser-menu: Chrome: ⋮ → Toevoegen aan startscherm. Safari: Deel-icoon → Zet op beginscherm.'); }});
+
+        // SW
+        if('serviceWorker' in navigator){
+          navigator.serviceWorker.register('./sw.js?v=2025-09-01',{scope:'./'})
+            .then(()=>{ const el=$('#cacheState'); if(el) el.textContent='Geïnstalleerd'; })
+            .catch(()=>{ const el=$('#cacheState'); if(el) el.textContent='Niet geïnstalleerd'; });
+        }
+      }catch(e){
+        showDiag('Data laden mislukte. Open de app even online?'); console.error(e);
       }
-
-      // Debug overlay (toon met ?debug=1)
-      if(new URLSearchParams(location.search).get('debug')==='1'){ const d=$('#diag'); d.style.display='block'; d.textContent='Boot OK • listeners actief'; }
     }
 
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', boot);
   })();
   </script>
 </body>
