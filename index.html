@@ -405,7 +405,7 @@
   document.getElementById('installHint').addEventListener('click',async()=>{ if(deferredPrompt){ deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; } else { alert('Installeer via browser-menu: Chrome: ⋮ → Toevoegen aan startscherm. Safari: deel‑icoon → Zet op beginscherm.'); } });
 
   // Service worker registratie (met versie‑bust)
-  if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js?v=2025-08-31-1',{scope:'./'}).then(()=>{ $('#cacheState').textContent='Geïnstalleerd'; }).catch(()=>{ $('#cacheState').textContent='Niet geïnstalleerd'; }); }
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js?v=2025-08-31-2',{scope:'./'}).then(()=>{ $('#cacheState').textContent='Geïnstalleerd'; }).catch(()=>{ $('#cacheState').textContent='Niet geïnstalleerd'; }); }
 
   // Init
   ensureCharacter(); renderProfile(); renderStops(); renderUnlocked(); renderProgress();
