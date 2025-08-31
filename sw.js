@@ -1,16 +1,20 @@
-// sw.js — clean, updatevriendelijk
-const CACHE = 'woi-pwa-v6-clean1';
-const PRECACHE = ['./','./index.html','./manifest.webmanifest'];
+// sw.js – voeg je data toe
+const CACHE = 'woi-pwa-v7';
+const PRECACHE = [
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './data/meta.json',
+  './data/stops.json',
+  './data/personages.json',
+  './data/route.kml'
+];
 
-self.addEventListener('message', (e) => {
-  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
-});
-
-self.addEventListener('install', (e) => {
+self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)));
 });
 
-self.addEventListener('activate', (e) => {
+self.addEventListener('activate', e => {
   e.waitUntil((async () => {
     const keys = await caches.keys();
     await Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)));
@@ -19,31 +23,28 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  const req = e.request;
-
-  // HTML/navigatie: network-first, fallback cache
-  if (req.mode === 'navigate' ||
-      (req.method === 'GET' && req.headers.get('accept')?.includes('text/html')) ||
-      req.destination === 'document') {
-    e.respondWith(
-      fetch(req).then(res => {
-        const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy));
-        return res;
-      }).catch(() => caches.match('./index.html'))
-    );
+  const url = new URL(e.request.url);
+  // HTML: network-first
+  if (e.request.mode === 'navigate' || e.request.destination === 'document') {
+    e.respondWith(fetch(e.request).then(res => {
+      caches.open(CACHE).then(c => c.put(e.request, res.clone())); return res;
+    }).catch(() => caches.match('./index.html')));
     return;
   }
-
-  // Overige assets: cache-first, update in achtergrond
-  e.respondWith(
-    caches.match(req).then(cached => {
-      const fetchPromise = fetch(req).then(res => {
-        if (req.method === 'GET' && new URL(req.url).origin === location.origin) {
-          caches.open(CACHE).then(c => c.put(req, res.clone()));
-        }
-        return res;
-      }).catch(() => cached || Promise.reject('offline'));
-      return cached || fetchPromise;
+  // JSON & KML: network-first (zodat updates zonder code doorstromen)
+  if (url.pathname.endsWith('.json') || url.pathname.endsWith('.kml')) {
+    e.respondWith(fetch(e.request).then(res => {
+      caches.open(CACHE).then(c => c.put(e.request, res.clone())); return res;
+    }).catch(() => caches.match(e.request)));
+    return;
+  }
+  // overige assets: cache-first
+  e.respondWith(caches.match(e.request).then(cached =>
+    cached || fetch(e.request).then(res => {
+      if (url.origin === location.origin && e.request.method === 'GET') {
+        caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+      }
+      return res;
     })
-  );
+  ));
 });
