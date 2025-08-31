@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#0c2630"/>
   <link rel="manifest" href="manifest.webmanifest">
 
-  <!-- Leaflet -->
+  <!-- Leaflet & toGeoJSON -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script defer src="https://unpkg.com/@mapbox/togeojson@0.16.0/dist/togeojson.umd.js"></script>
@@ -17,8 +17,7 @@
     *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
     h1,h2{margin:.2rem 0 .6rem} h1{font-size:1.35rem} h2{font-size:1.1rem}
     .wrap{max-width:980px;margin:0 auto;padding:14px}
-    .grid{display:grid;gap:12px} .two{grid-template-columns:1fr;}
-    @media (min-width:840px){.two{grid-template-columns:1fr 1fr}}
+    .grid{display:grid;gap:12px} .two{grid-template-columns:1fr;} @media (min-width:840px){.two{grid-template-columns:1fr 1fr}}
     .card{background:var(--card);border-radius:14px;padding:14px;box-shadow:0 6px 18px rgba(0,0,0,.22)}
     .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.right{justify-content:flex-end}
     .small{font-size:.9rem}.muted{color:var(--muted)} .warn{color:#ffdf80}
@@ -34,23 +33,15 @@
     summary{cursor:pointer} .qs{margin:.4rem 0 0 .2rem;padding-left:1rem}.qs li{margin:.2rem 0}
     #diag{position:fixed;right:10px;bottom:10px;background:#06151b;color:#bde8ef;border:1px solid rgba(255,255,255,.15);padding:8px 10px;border-radius:10px;font-size:.8rem;opacity:.9;z-index:9999;display:none}
     #toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:10px 14px;border-radius:12px;z-index:9999;display:none}
-    
-  /* Kaart-icoontjes */
-  .pin { width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.35) }
-  .pin.stop { background:#4aa3ff }
-  .pin.start { background:#20c997 }
-  .pin.end { background:#e74c3c }
 
-  /* Mijn live positie – pulserend stipje */
-  .user-dot { width:14px;height:14px;border-radius:50%;background:#3dd1c0;border:2px solid #fff;
-              box-shadow:0 0 0 rgba(61,209,192,.7); animation:pulse 2s infinite }
-  @keyframes pulse {
-    0% { box-shadow:0 0 0 0 rgba(61,209,192,.7) }
-    70% { box-shadow:0 0 0 16px rgba(61,209,192,0) }
-    100% { box-shadow:0 0 0 0 rgba(61,209,192,0) }
-  }
-</style>
-
+    /* Kaart-icoontjes */
+    .pin { width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.35) }
+    .pin.stop  { background:#4aa3ff }
+    .pin.start { background:#20c997 }
+    .pin.end   { background:#e74c3c }
+    .user-dot  { width:14px;height:14px;border-radius:50%;background:#3dd1c0;border:2px solid #fff;
+                 box-shadow:0 0 0 rgba(61,209,192,.7); animation:pulse 2s infinite }
+    @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(61,209,192,.7)} 70%{box-shadow:0 0 0 16px rgba(61,209,192,0)} 100%{box-shadow:0 0 0 0 rgba(61,209,192,0)} }
   </style>
 </head>
 <body>
@@ -120,276 +111,7 @@
   <div id="diag"></div>
   <div id="toast"></div>
 
-  <script>
-  (function(){
-    const $=sel=>document.querySelector(sel);
-    const showDiag = (msg) => { const d=$('#diag'); d.style.display='block'; d.textContent=String(msg).slice(0,500); };
-    window.addEventListener('error', e=>showDiag('JS error: '+e.message));
-    window.addEventListener('unhandledrejection', e=>showDiag('Promise error: '+(e.reason?.message||e.reason)));
-
-    const store={get(){try{return JSON.parse(localStorage.getItem('woi_state')||'{}')}catch{return{}}},set(v){localStorage.setItem('woi_state',JSON.stringify(v))}};
-    const distanceMeters=(a,b)=>{const R=6371e3,φ1=a.lat*Math.PI/180,φ2=b.lat*Math.PI/180,dφ=(b.lat-a.lat)*Math.PI/180,dλ=(b.lng-a.lng)*Math.PI/180;const s=Math.sin(dφ/2)**2+Math.cos(φ1)*Math.cos(φ2)*Math.sin(dλ/2)**2;return 2*R*Math.asin(Math.sqrt(s));};
-    const pick=a=>a[Math.floor(Math.random()*a.length)];
-
-    let DATA = { meta:{}, stops:[], personages:[] };
-
-    async function loadScenario() {
-      const [meta, stops, personages] = await Promise.all([
-        fetch('./data/meta.json').then(r=>r.json()),
-        fetch('./data/stops.json').then(r=>r.json()),
-        fetch('./data/personages.json').then(r=>r.json())
-      ]);
-      DATA = { meta, stops, personages };
-      return DATA;
-    }
-// OSRM fallback: tekent een fietsroute langs je stops (alleen online)
-async function drawOsrmRouteLatLngs(latlngs){
-  const coords = latlngs.map(([lat,lng]) => `${lng},${lat}`).join(';');
-  const url = `https://router.project-osrm.org/route/v1/cycling/${coords}?overview=full&geometries=geojson&steps=false`;
-  const res = await fetch(url, { cache: 'no-store' });
-  const data = await res.json().catch(()=> ({}));
-  if (data?.routes?.[0]) {
-    return L.geoJSON(data.routes[0].geometry, { style: { weight: 4, opacity: 0.9 } }).addTo(LMAP);
-  } else {
-    console.warn('OSRM gaf geen route terug:', data);
-  }
-}
-    function toast(msg){ const t=$('#toast'); t.textContent=msg; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>{t.style.display='none'},2000); }
-
-    function ensureCharacter(){
-      const st=store.get();
-      const forced=new URLSearchParams(location.search).get('pc');
-      if(forced && DATA.personages.some(p=>p.id===forced)){ st.pcId=forced; st.unlocked=st.unlocked||[]; st.flags=st.flags||{}; store.set(st); return st.pcId; }
-      if(st.pcId && DATA.personages.some(p=>p.id===st.pcId)){ st.unlocked=st.unlocked||[]; st.flags=st.flags||{}; store.set(st); return st.pcId; }
-      const pc=pick(DATA.personages); st.pcId=pc.id; st.unlocked=st.unlocked||[]; st.flags=st.flags||{}; store.set(st); return pc.id;
-    }
-    const currentPc=()=>DATA.personages.find(p=>p.id===store.get().pcId);
-
-    function renderProfile(){
-      const pc=currentPc(); if(!pc) return;
-      $('#pcInfo').innerHTML = `<div class="row">
-        <div class="pill">🧑 <b>${pc.naam}</b></div>
-        <div class="pill">🎂 ${pc.leeftijd} jaar</div>
-        <div class="pill">🌍 ${pc.herkomst}</div>
-        <div class="pill">🎖️ ${pc.rol}</div>
-      </div><p class="muted">${pc.bio}</p>`;
-      renderCharacterChooser();
-    }
-
-    function renderCharacterChooser(){
-      const st=store.get(); const el=$('#pcChooser'); if(!el) return;
-      const options = DATA.personages.map(p=>`<option value="${p.id}" ${p.id===st.pcId?'selected':''}>${p.naam} (${p.leeftijd}) — ${p.rol}</option>`).join('');
-      const inside = window.__insideStart===true; const locked = !!st.lockedPc;
-      el.innerHTML = `<select id="pcSelect" ${locked?'disabled':''} ${!inside&&!locked?'disabled':''}>${options}</select>
-        <span class="pill ${locked?'ok':''}">${locked?'🔒 Keuze vergrendeld': (inside? '🟢 Je kan hier je personage kiezen' : '🔐 Kiesbaar enkel aan de start')}</span>`;
-    }
-
-    function renderStops(){
-      const cont=$('#stopsList'); if(!cont) return;
-      const st=store.get(); const unlocked=new Set(st.unlocked||[]);
-      cont.innerHTML = DATA.stops.map(s=>{
-        const ok = unlocked.has(s.id); const isEnd = s.id===DATA.meta.endStopId;
-        const icon = ok ? '✅' : (isEnd ? '🔒' : '⏳');
-        return `<span class="pill">${icon} ${s.naam}</span>`;
-      }).join('');
-    }
-
-    function renderUnlocked(){
-      const st=store.get(); const pc=currentPc(); const cont=$('#unlockList'); if(!cont) return;
-      if(!st.unlocked||!st.unlocked.length){cont.innerHTML='<div class="muted">Nog niets ontgrendeld.</div>';return;}
-      cont.innerHTML = st.unlocked.map(id=>{
-        const stop = DATA.stops.find(s=>s.id===id);
-        const txt = pc.verhalen?.[id];
-        const qs = (stop?.vragen||[]);
-        const qHtml = qs.length? `<div class="small" style="margin-top:6px"><b>Reflectie:</b><ul class="qs">${qs.map(q=>`<li>${q}</li>`).join('')}</ul></div>` : '';
-        return `<details open>
-          <summary>📘 ${stop?.naam||id} <button class="readBtn" data-read="${id}" title="Lees voor">🔊</button></summary>
-          <div style="margin-top:6px">${txt||'<span class="muted">(Geen tekst)</span>'}</div>
-          ${qHtml}
-        </details>`;
-      }).join('');
-      renderProgress();
-    }
-
-    function renderProgress(){
-      const st = store.get(); const req = DATA.meta.requiredStops||[];
-      const done = (st.unlocked||[]).filter(id=>req.includes(id)).length;
-      const total=req.length; const deg = total?(done/total)*360:0;
-      const ring=$('#progressRing'), txt=$('#progressText');
-      if(ring) ring.style.background = `conic-gradient(var(--accent) ${deg}deg, rgba(255,255,255,.15) 0 360deg)`;
-      if(txt) txt.textContent = `${done}/${total}`;
-    }
-
-    // Speech (Web Speech API)
-    let selectedVoice=null;
-    function pickVoice(){ try{ const vs=speechSynthesis.getVoices(); selectedVoice = vs.find(v=>v.lang?.toLowerCase().startsWith('nl')) || vs.find(v=>v.lang?.toLowerCase().startsWith('en')) || vs[0]||null; }catch{} }
-    function speakText(t){ if(!('speechSynthesis'in window)) return alert('Voorlezen niet ondersteund.'); speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); if(selectedVoice) u.voice=selectedVoice; u.lang=(selectedVoice&&selectedVoice.lang)||'nl-NL'; speechSynthesis.speak(u); }
-
-    // Leaflet kaart (één kaart met route + stops + live-positie)
-    let LMAP, liveMarker, accCircle, followMe=false;
-    function initLeafletMap(){
-  try{
-    if (!window.L) return;
-    const div = document.getElementById('oneMap'); if(!div) return;
-
-    // Custom icons
-    const icon = (cls)=> L.divIcon({ className: 'pin '+cls, iconSize:[16,16], iconAnchor:[8,8] });
-    const iconStart = icon('start');
-    const iconStop  = icon('stop');
-    const iconEnd   = icon('end');
-    const iconUser  = L.divIcon({ className:'user-dot', iconSize:[14,14], iconAnchor:[7,7] });
-
-    // Start uit meta of eerste stop
-    const start = DATA.stops.find(s=>s.id===DATA.meta.startStopId) || DATA.stops[0];
-    LMAP = L.map(div, { zoomControl:true }).setView([start.lat, start.lng], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap'}).addTo(LMAP);
-
-    // Stops + radius
-    const bounds = [];
-    DATA.stops.forEach(s=>{
-      const p=[s.lat,s.lng]; bounds.push(p);
-      let ic = iconStop;
-      if (s.id===DATA.meta.startStopId) ic = iconStart;
-      if (s.id===DATA.meta.endStopId)   ic = iconEnd;
-      L.marker(p, {icon:ic}).addTo(LMAP).bindPopup(s.naam);
-      L.circle(p,{radius:s.radius||DATA.meta.radiusDefaultMeters,color:'#3dd1c0',weight:1,fillOpacity:.05}).addTo(LMAP);
-    });
-    if(bounds.length) LMAP.fitBounds(bounds,{padding:[20,20]});
-
-    // KML laden en checken op lijnen; anders OSRM fallback
-    (async ()=>{
-      let hadLine=false;
-      if (DATA.meta.kmlPath){
-        try{
-          const txt = await fetch(DATA.meta.kmlPath, {cache:'no-store'}).then(r=>r.text());
-          const kml = new DOMParser().parseFromString(txt,'text/xml');
-          const gj  = toGeoJSON.kml(kml);
-          hadLine = (gj.features||[]).some(f => /LineString|MultiLineString/.test(f.geometry?.type||''));
-          // KML tekenen: punten als kleine stipjes, lijnen dikker
-          L.geoJSON(gj, {
-            pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius:3, weight:1, opacity:.9, fillOpacity:.6 }),
-            style: (f) => (/LineString|MultiLineString/.test(f.geometry?.type||'') ? { weight:4, opacity:.9 } : { weight:1, opacity:.6 })
-          }).addTo(LMAP);
-        }catch(err){ console.warn('KML laden faalde:', err); }
-      }
-      if (!hadLine) {
-        const routePoints = DATA.stops.map(s => [s.lat, s.lng]);
-        drawOsrmRouteLatLngs(routePoints);
-      }
-    })();
-
-    // Live-positie
-    liveMarker = L.marker([0,0], { icon:iconUser, opacity:0 }).addTo(LMAP);
-    accCircle  = L.circle([0,0], { radius:0, color:'#3dd1c0', fillOpacity:.1 }).addTo(LMAP);
-
-    const btn = document.getElementById('recenterBtn');
-    if(btn) btn.addEventListener('click', ()=>{ followMe = true; });
-  }catch(e){ console.error(e); }
-}
-    function updateLeafletLive(lat,lng,acc){
-  try{
-    if(!LMAP || !liveMarker || !accCircle) return;
-    liveMarker.setLatLng([lat,lng]).setOpacity(1);
-    accCircle.setLatLng([lat,lng]).setRadius(acc||0);
-    if (followMe) LMAP.setView([lat,lng]);
-    const a=document.getElementById('openInMaps'); if(a) a.href=`https://maps.google.com/?q=${lat},${lng}`;
-  }catch(e){ console.error(e); }
-}
-
-    // Geoloc
-    let watchId=null; window.__insideStart=false;
-    function tryUnlock(best, acc){
-      const effective = Math.max(0, best.d - (acc||0));
-      if(effective <= best.radius){
-        const st=store.get(); st.unlocked=st.unlocked||[];
-        if(best.id===DATA.meta.endStopId){
-          const req = new Set(DATA.meta.requiredStops);
-          const haveAll = [...req].every(id=>st.unlocked.includes(id));
-          if(!haveAll) return;
-        }
-        if(!st.unlocked.includes(best.id)){
-          st.unlocked.push(best.id); store.set(st);
-          renderUnlocked(); renderStops(); toast(`✅ Ontgrendeld: ${best.name}`);
-        }
-      }
-    }
-    function startWatch(){
-      if(!('geolocation'in navigator)){ $('#permNote').textContent='Geen geolocatie'; return; }
-      $('#geoState').textContent='Actief';
-      watchId = navigator.geolocation.watchPosition(pos=>{
-        const {latitude,longitude,accuracy}=pos.coords;
-        $('#coords').textContent = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-        $('#acc').textContent = Math.round(accuracy);
-        const here={lat:latitude,lng:longitude};
-        let best=null; let insideStart=false;
-        for(const s of DATA.stops){
-          const d = Math.round(distanceMeters(here,{lat:s.lat,lng:s.lng}));
-          if(!best||d<best.d) best={id:s.id,name:s.naam,d,radius:(s.radius||DATA.meta.radiusDefaultMeters)};
-          if(s.id===DATA.meta.startStopId){ insideStart = d <= (s.radius||DATA.meta.radiusDefaultMeters); }
-        }
-        window.__insideStart = insideStart; renderCharacterChooser();
-
-        // lock pas nadat je ooit in de startzone bent geweest én deze verlaten hebt
-        const st=store.get(); st.flags=st.flags||{};
-        if(insideStart){ st.flags.seenStart = true; store.set(st); }
-        if(!insideStart && st.flags.seenStart && !st.lockedPc){ st.lockedPc=true; store.set(st); renderCharacterChooser(); toast('🔒 Personage vergrendeld'); }
-
-        if(best){
-          $('#closest').textContent=best.name; $('#dist').textContent=`${best.d}`; $('#radius').textContent=`${best.radius}`;
-          tryUnlock(best, accuracy); renderProgress(); renderStops();
-          updateLeafletLive(latitude, longitude, accuracy);
-        }
-      }, err=>{ $('#permNote').innerHTML='<span class="warn">Locatie geweigerd</span>'; $('#geoState').textContent='Uit'; }, {enableHighAccuracy:true,maximumAge:10000,timeout:15000});
-    }
-    function stopWatch(){ if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; $('#geoState').textContent='Inactief'; } }
-
-    // Safe binding helper
-    const on=(id,ev,fn)=>{ const el=$(id.startsWith('#')?id:'#'+id); if(el) el.addEventListener(ev,fn); };
-
-    async function boot(){
-      try{
-        // Data laden
-        await loadScenario();
-
-        // Kaart
-        if (navigator.onLine) initLeafletMap();
-        window.addEventListener('online', ()=>{ if(!LMAP) initLeafletMap(); });
-
-        // TTS
-        if('speechSynthesis' in window){ try{pickVoice(); speechSynthesis.addEventListener('voiceschanged', pickVoice);}catch{} }
-
-        // App-state
-        ensureCharacter(); renderProfile(); renderStops(); renderUnlocked(); renderProgress();
-
-        // Listeners
-        on('regenBtn','click',()=>{ const st=store.get(); if(st.lockedPc && !window.__insideStart){ toast('🔒 Buiten startzone kan je niet wisselen.'); return; } delete st.pcId; store.set(st); ensureCharacter(); renderProfile(); renderUnlocked(); toast('🎲 Nieuw personage gekozen'); });
-        on('savePcBtn','click',()=>{ const st=store.get(); if(st.lockedPc && !window.__insideStart){ toast('🔒 Wijzigen kan enkel na terugkeer naar de start.'); return; } if(!window.__insideStart){ toast('🔐 Ga naar de startlocatie om te kiezen.'); return; } const sel=$('#pcSelect'); if(sel){ st.pcId=sel.value; store.set(st); renderProfile(); toast('✅ Personage bevestigd'); }});
-        on('exportBtn','click',()=>{ const st=store.get(); const pc=currentPc(); const lines=[]; lines.push(`# ${DATA.meta.title}`); lines.push(`Personage: ${pc.naam} (${pc.herkomst}) – ${pc.rol}`); lines.push(''); for(const id of (st.unlocked||[])){ const stop=DATA.stops.find(s=>s.id===id); lines.push(`## ${stop?.naam||id}`); lines.push(pc.verhalen[id]||'(geen tekst)'); lines.push(''); } const blob=new Blob([lines.join('\n')],{type:'text/markdown'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='woi-voortgang.md'; a.click(); URL.revokeObjectURL(url); });
-        on('unlockList','click',(e)=>{ const b=e.target.closest && e.target.closest('button.readBtn'); if(!b) return; const id=b.getAttribute('data-read'); const pc=currentPc(); const txt=pc?.verhalen?.[id]; if(txt){ if('speechSynthesis'in window && speechSynthesis.speaking){ speechSynthesis.cancel(); } else { speakText(txt); } }});
-        on('startBtn','click',startWatch);
-        on('stopBtn','click',stopWatch);
-        on('demoBtn','click',()=>{ const s=DATA.stops.find(x=>x.id===DATA.meta.requiredStops[0])||DATA.stops[0]; tryUnlock({id:s.id,name:s.naam,d:0,radius:(s.radius||DATA.meta.radiusDefaultMeters)}); });
-        on('resetBtn','click',()=>{ localStorage.removeItem('woi_state'); location.reload(); });
-        on('recenterBtn','click',()=>{ followMe = true; });
-
-        // Install prompt
-        let deferredPrompt=null;
-        window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;const b=$('#installHint'); if(b){b.textContent='📲 Installeer app'; b.classList.add('primary');}});
-        on('installHint','click',async()=>{ if(deferredPrompt){ deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; } else { alert('Installeer via browser-menu: Chrome: ⋮ → Toevoegen aan startscherm. Safari: Deel-icoon → Zet op beginscherm.'); }});
-
-        // SW
-        if('serviceWorker' in navigator){
-          navigator.serviceWorker.register('./sw.js?v=2025-09-01',{scope:'./'})
-            .then(()=>{ const el=$('#cacheState'); if(el) el.textContent='Geïnstalleerd'; })
-            .catch(()=>{ const el=$('#cacheState'); if(el) el.textContent='Niet geïnstalleerd'; });
-        }
-      }catch(e){
-        showDiag('Data laden mislukte. Open de app even online?'); console.error(e);
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', boot);
-  })();
-  </script>
+  <!-- Externe app-logic -->
+  <script defer src="./js/app.js?v=2025-09-01-1"></script>
 </body>
 </html>
