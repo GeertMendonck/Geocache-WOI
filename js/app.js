@@ -231,6 +231,30 @@
     }, {enableHighAccuracy:true,maximumAge:10000,timeout:15000});
   }
   function stopWatch(){ if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; const gs=$('#geoState'); if(gs) gs.textContent='Inactief'; } }
+// --- PROBE: toon zichtbaar dat listeners bestaan en dat clicks binnenkomen ---
+function __wireIndicator(ok=true){
+  const el = document.getElementById('geoState');
+  if (el) el.textContent = ok ? 'Ready (listeners OK)' : 'Uit';
+  const toast = document.getElementById('toast');
+  if (toast) { toast.style.display='block'; toast.textContent = 'Listeners actief'; setTimeout(()=>toast.style.display='none',1500); }
+}
+
+// Bind onmiddellijk een generieke click-probe (nog vóór data/kaart)
+document.addEventListener('click', (e) => {
+  const b = e.target.closest && e.target.closest('button');
+  if (!b) return;
+  const id = b.id || b.textContent.trim();
+  const t = document.getElementById('toast');
+  if (t) { t.style.display='block'; t.textContent = 'CLICK → ' + id; setTimeout(()=>t.style.display='none',800); }
+  console.log('CLICK', id);
+});
+
+// Roep de indicator zodra core-listeners gezet zijn
+const __oldBind = (typeof bindCoreListeners === 'function') ? bindCoreListeners : null;
+bindCoreListeners = function(){
+  if (__oldBind) __oldBind();           // originele binding behouden
+  try { __wireIndicator(true); } catch {}
+};
 
   // ---------- Boot ----------
   document.addEventListener('DOMContentLoaded', async ()=>{
