@@ -7,42 +7,16 @@
   <meta name="theme-color" content="#0c2630"/>
   <link rel="manifest" href="manifest.webmanifest">
 
-  <!-- Leaflet & toGeoJSON -->
+  <!-- Onze CSS -->
+  <link rel="stylesheet" href="./css/app.css?v=2025-09-02" />
+
+  <!-- Leaflet & helpers (CDN) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <!-- GPX direct tekenen (geen toGeoJSON nodig voor GPX) -->
+  <script defer src="https://unpkg.com/leaflet-gpx@1.7.0/gpx.min.js"></script>
+  <!-- KML fallback (alleen nodig als je kmlPath gebruikt) -->
   <script defer src="https://unpkg.com/@mapbox/togeojson@0.16.0/dist/togeojson.umd.js"></script>
-
-  <style>
-    :root { --bg:#0b1a22; --card:#0f2430; --text:#e8f4f7; --muted:#9fb6bd; --accent:#3dd1c0; }
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
-    h1,h2{margin:.2rem 0 .6rem} h1{font-size:1.35rem} h2{font-size:1.1rem}
-    .wrap{max-width:980px;margin:0 auto;padding:14px}
-    .grid{display:grid;gap:12px} .two{grid-template-columns:1fr;} @media (min-width:840px){.two{grid-template-columns:1fr 1fr}}
-    .card{background:var(--card);border-radius:14px;padding:14px;box-shadow:0 6px 18px rgba(0,0,0,.22)}
-    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.right{justify-content:flex-end}
-    .small{font-size:.9rem}.muted{color:var(--muted)} .warn{color:#ffdf80}
-    .pill{display:inline-block;border:1px solid rgba(255,255,255,.15);padding:.25rem .6rem;border-radius:999px;margin:.15rem .25rem 0 0;white-space:nowrap}
-    button{background:#173743;color:#dff7fb;border:none;padding:8px 12px;border-radius:10px;cursor:pointer}
-    button.primary{background:#2db9a8;color:#062b33} button:disabled{opacity:.5;cursor:not-allowed}
-    select{background:#0f2a35;color:#eaf7fa;border:1px solid rgba(255,255,255,.15);padding:8px;border-radius:10px}
-    .ring{width:54px;height:54px;border-radius:999px;display:grid;place-items:center;background:conic-gradient(var(--accent) 0deg, rgba(255,255,255,.15) 0 360deg);box-shadow:0 2px 8px rgba(0,0,0,.25)}
-    .ring span{font-size:.75rem;color:#062b33;font-weight:700}
-    .kpi{justify-content:space-between}
-    #oneMap.leaflet-container { height: 420px; border-radius:12px; }
-    details{background:#0a1e27;border:1px solid rgba(255,255,255,.08);padding:8px 10px;border-radius:10px}
-    summary{cursor:pointer} .qs{margin:.4rem 0 0 .2rem;padding-left:1rem}.qs li{margin:.2rem 0}
-    #diag{position:fixed;right:10px;bottom:10px;background:#06151b;color:#bde8ef;border:1px solid rgba(255,255,255,.15);padding:8px 10px;border-radius:10px;font-size:.8rem;opacity:.9;z-index:9999;display:none}
-    #toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:10px 14px;border-radius:12px;z-index:9999;display:none}
-
-    /* Kaart-icoontjes */
-    .pin { width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.35) }
-    .pin.stop  { background:#4aa3ff }
-    .pin.start { background:#20c997 }
-    .pin.end   { background:#e74c3c }
-    .user-dot  { width:14px;height:14px;border-radius:50%;background:#3dd1c0;border:2px solid #fff;
-                 box-shadow:0 0 0 rgba(61,209,192,.7); animation:pulse 2s infinite }
-    @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(61,209,192,.7)} 70%{box-shadow:0 0 0 16px rgba(61,209,192,0)} 100%{box-shadow:0 0 0 0 rgba(61,209,192,0)} }
-  </style>
 </head>
 <body>
   <div class="wrap">
@@ -57,9 +31,9 @@
       <section class="card">
         <h2>Jouw personage</h2>
         <div class="small muted">Kiezen of wijzigen kan <b>alleen aan de startlocatie</b>. Zodra je vertrekt, wordt je keuze vergrendeld.</div>
-        <div id="pcInfo" class="small muted" style="margin:8px 0">Laden…</div>
+        <div id="pcInfo" class="small muted mt-6">Laden…</div>
         <div id="pcChooser" class="row small"></div>
-        <div class="row" style="gap:8px;margin-top:6px">
+        <div class="row mt-6">
           <button id="regenBtn">🎲 Willekeurig</button>
           <button id="savePcBtn" class="primary">✅ Bevestig keuze</button>
           <button id="exportBtn">💾 Exporteer voortgang</button>
@@ -73,7 +47,7 @@
         <div class="row kpi"><div>🎯 Dichtstbijzijnde stop:</div><div><b id="closest">—</b></div></div>
         <div class="row kpi"><div>↔️ Afstand:</div><div><b id="dist">—</b> m</div></div>
         <div class="row kpi"><div>🛡️ Straal:</div><div><b id="radius">—</b> m</div></div>
-        <div class="row" style="gap:8px;margin-top:8px">
+        <div class="row mt-8">
           <button id="startBtn" class="primary">▶️ Start locatie</button>
           <button id="stopBtn">⏸️ Pauzeer</button>
           <button id="demoBtn">🧪 Demo-nabij</button>
@@ -82,36 +56,37 @@
       </section>
     </div>
 
-    <section class="card" style="margin-top:12px">
+    <section class="card mt-12">
       <h2>Ontgrendelde verhalen</h2>
       <div id="unlockList" class="small muted">Nog niets ontgrendeld.</div>
     </section>
 
-    <section class="card" style="margin-top:12px">
+    <section class="card mt-12">
       <h2>Stops (overzicht)</h2>
       <div id="stopsList" class="small"></div>
     </section>
 
-    <section class="card" style="margin-top:12px">
+    <section class="card mt-12">
       <h2>Kaart</h2>
       <div class="small muted">Eén kaart met route + jouw live positie (werkt online; offline blijft de app bruikbaar zonder kaart).</div>
       <div id="oneMap"></div>
-      <div class="row small" style="margin-top:8px">
+      <div class="row small mt-8">
         <button id="recenterBtn">🎯 Centreer op mij</button>
         <a id="openInMaps" href="#" target="_blank" rel="noopener">📍 Open je positie in Google Maps</a>
       </div>
     </section>
 
-    <div class="row right" style="margin-top:12px">
+    <div class="row right mt-12">
       <button id="installHint">📲 Installeer</button>
       <button id="resetBtn">🧹 Reset app</button>
     </div>
   </div>
 
+  <!-- debug / toasts -->
   <div id="diag"></div>
   <div id="toast"></div>
 
   <!-- Externe app-logic -->
-  <script defer src="./js/app.js?v=2025-09-01-1"></script>
+  <script defer src="./js/app.js?v=2025-09-02-1"></script>
 </body>
 </html>
