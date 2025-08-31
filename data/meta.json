@@ -4,6 +4,6 @@
   "startStopId": "start_menenpoort",
   "endStopId": "end_menenpoort",
   "requiredStops": ["new_irish_farm", "langemark", "tyne_cot", "passchendaele_museum"],
-  "kmlPath": "./data/route.kml"
+  "kmlPath": "./data/route.kml",
   "routePath": "./data/route.gpx"
 }
