@@ -351,6 +351,19 @@
       }
     }
   }
+function renderProgress(){
+  try{
+    const st = store.get();
+    const req = DATA.meta.requiredStops || [];
+    const done = (st.unlocked||[]).filter(id=>req.includes(id)).length;
+    const total = req.length;
+    const deg = total ? (done/total)*360 : 0;
+    const ring = document.getElementById('progressRing');
+    const txt = document.getElementById('progressText');
+    if(ring) ring.style.background = `conic-gradient(var(--accent) ${deg}deg, rgba(255,255,255,.15) 0 360deg)`;
+    if(txt) txt.textContent = `${done}/${total}`;
+  }catch{}
+}
 
   // Map helpers
   let lastMapAt=0; let lastLat=null, lastLng=null;
@@ -400,6 +413,7 @@
   // Init
   ensureCharacter(); renderProfile(); renderStops(); renderUnlocked(); renderProgress();
   try{ const rm=document.getElementById('routeMap'); if(rm) rm.src = DATA.meta.myMapsEmbedUrl; }catch{}
+
   </script>
 </body>
 </html>
