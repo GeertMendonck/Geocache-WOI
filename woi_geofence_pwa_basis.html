@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WOI – Mijn Personage (Single‑file PWA)</title>
+  <meta name="theme-color" content="#111827" />
+  <!-- iOS home-screen support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="WOI Personage">
+  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsSAAALEgHS3X78AAABYElEQVR4nO2aS07DQBCEV+gq6i7wL7o6g2pGxC0a4qg0b9HqHqkqG6YwE2Sg0XGz9s8m8m1q1kQYgP5fC0rYH6b2m3iQw6B+0vQ2Ww2C2m4r6xw4l7p9m3x3lL3k7QyC0J4e7wQqg0w0i8K9Y6T2m4hM8qv8b8v1r9l0bQbJc2mQ4i0Gq0mYb9bYwq9Qm3b4mWcP5Q9u9u1nqC8mM1w7m0YvPf5hP2VY2d1h6l0QWk0G2JYhQb2bqkUQkq6iG2QmC9KcUjJzq2rVQwCkYF1hCAk2w8w0QkK8y2C2j3qg8m7fS5w1s0JY9qC7k4yqfQeV2wG4m5lq8m2mJZo2m0HcZru2b8g9jJc9xwXb0O+KcFjN9k0zjvZKX1GqQw3b9gqYV1bKQwBqf8c3fR2u0cQ3k5g3K8E2mRr1Qm3h2H0V3kqI9g8p9Yf0m3Hc1n3r2CwHx9ctR1l0o4m8g8K8YcIeb2xHkTiK6vK3Vg0q9E5oQq9H8J9J2i0c7gR8v8P+R5mQWl8lL6EoI7L2wA0w0w0w0w0w0w0w0w0w0y4D/AFz2Tqg8b2s2wAAAABJRU5ErkJggg==">
+  <style>
+    /* Minimal, clean UI – werkt volledig zonder externe assets */
+    :root{
+      --bg:#0b1220; --card:#121a2b; --muted:#8aa0c7; --text:#e6eefc; --accent:#98e3ff; --ok:#86efac; --warn:#fde68a;
+    }
+    html,body{height:100%;}
+    body{margin:0;background:radial-gradient(1200px 700px at 80% -10%,#13203c 0%, #0b1220 60%) fixed; color:var(--text); font:16px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
+    .wrap{max-width:900px;margin:0 auto;padding:16px 16px 80px;}
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between;margin:8px 0 16px}
+    h1{font-size:1.2rem;margin:0}
+    .badge{font-size:.8rem;color:#0b1220;background:var(--accent);padding:4px 8px;border-radius:999px}
+    .grid{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:760px){.grid{grid-template-columns:1fr 1fr}}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:14px 16px; box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .muted{color:var(--muted)}
+    button{appearance:none;border:1px solid rgba(255,255,255,.2);background:transparent;color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer}
+    button.primary{background:var(--accent);color:#063245;border-color:transparent}
+    .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .kpi{display:flex;gap:10px;align-items:baseline}
+    .kpi b{font-size:1.1rem}
+    details{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:8px 12px}
+    details+details{margin-top:8px}
+    summary{cursor:pointer;font-weight:600}
+    .pill{display:inline-block;border:1px solid rgba(255,255,255,.25);padding:2px 8px;border-radius:999px;margin:2px 6px 0 0;font-size:.8rem}
+    .ok{color:var(--ok)}
+    .warn{color:var(--warn)}
+    .small{font-size:.9rem}
+    .foot{position:fixed;left:0;right:0;bottom:0;padding:8px 12px;background:linear-gradient(0deg, rgba(11,18,32,.92), rgba(11,18,32,.6));backdrop-filter:blur(8px); border-top:1px solid rgba(255,255,255,.08)}
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.14);padding:6px 10px;border-radius:999px}
+    .sep{height:1px;background:rgba(255,255,255,.08);margin:8px 0}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>WOI – Mijn Personage</h1>
+      <span class="badge">Single‑file • Offline</span>
+    </header>
+
+    <div class="grid">
+      <section class="card" id="profileCard">
+        <h2 style="margin:.2rem 0 0">Jouw personage</h2>
+        <div class="muted small">Uniek toegewezen aan dit toestel (lokaal opgeslagen)</div>
+        <div id="pcInfo" style="margin-top:8px"></div>
+        <div class="row" style="margin-top:10px">
+          <button id="regenBtn" title="Willekeurig nieuw personage (reset)">🎲 Nieuw personage</button>
+          <button id="exportBtn" title="Exporteer je voortgang als tekst">⬇️ Exporteer voortgang</button>
+        </div>
+        <div class="sep"></div>
+        <div class="small muted">Tip: één keer openen met internet om te installeren, daarna werkt alles offline. Locatie is enkel nodig om stops te herkennen en verlaat je toestel niet.</div>
+      </section>
+
+      <section class="card" id="statusCard">
+        <h2 style="margin:.2rem 0 0">Locatiestatus</h2>
+        <div class="row kpi"><div>📍 <b id="coords">—</b></div><div class="muted">(± <span id="acc">—</span> m)</div></div>
+        <div class="row kpi"><div>🎯 Dichtstbijzijnde stop:</div><div><b id="closest">—</b></div></div>
+        <div class="row kpi"><div>↔️ Afstand:</div><div><b id="dist">—</b> m</div></div>
+        <div style="margin-top:8px" class="row">
+          <button id="startBtn" class="primary">▶️ Start locatie‑tracking</button>
+          <button id="stopBtn">⏸️ Pauzeer</button>
+          <button id="demoBtn" title="Simuleer nabijheid van de volgende stop">🧪 Demo‑nabij</button>
+        </div>
+        <div id="permNote" class="small muted" style="margin-top:8px"></div>
+      </section>
+    </div>
+
+    <section class="card" style="margin-top:12px">
+      <h2 style="margin:.2rem 0 8px">Ontgrendelde verhalen</h2>
+      <div id="unlockList" class="small"></div>
+    </section>
+
+    <section class="card" style="margin-top:12px">
+      <h2 style="margin:.2rem 0 8px">Stops (overzicht)</h2>
+      <div id="stopsList" class="small"></div>
+    </section>
+  </div>
+
+  <div class="foot small">
+    <div class="wrap" style="padding:0">
+      <div class="row" style="justify-content:space-between">
+        <div class="row">
+          <span class="chip">📦 <span class="mono" id="cacheState">Niet geïnstalleerd</span></span>
+          <span class="chip">🛰️ <span class="mono" id="geoState">Inactief</span></span>
+        </div>
+        <div class="row">
+          <button id="installHint">📲 Installatie‑hint</button>
+          <button id="resetBtn" title="Verwijder lokale gegevens (personage & voortgang)">🧹 Reset app</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- === SCENARIO‑DATA – bewerkbaar door de leerkracht === -->
+  <script id="scenario-data" type="application/json">{
+    "meta": {
+      "title": "WOI – Mijn Personage",
+      "radiusDefaultMeters": 200
+    },
+    "stops": [
+      {"id":"menin_gate","naam":"Menin Gate (Ieper)", "lat":50.8510, "lng":2.8910, "radius":180},
+      {"id":"tyne_cot","naam":"Tyne Cot Cemetery (Passendale)", "lat":50.8870, "lng":2.9993, "radius":220},
+      {"id":"langemark","naam":"Duitse Militaire Begraafplaats Langemark","lat":50.9153, "lng":2.9163, "radius":200}
+    ],
+    "personages": [
+      {
+        "id":"youssef_ben_salah",
+        "naam":"Youssef ben Salah",
+        "herkomst":"Fès, Marokko",
+        "rol":"Tirailleur (Frans koloniale infanterie)",
+        "bio":"Vrijwilliger uit Marokko, naar het Westelijk Front gestuurd in 1917.",
+        "verhalen": {
+          "menin_gate":"Bij de Menenpoort leest Youssef namen van vermisten. Hij herinnert zich hoe zijn eenheid in Ieper werd ingezet als versterking, zonder kaarten of tolken.",
+          "tyne_cot":"In Passendale ploeterde zijn compagnie door modder. Hij droeg munitie onder artillerievuur; een vriend kwam nooit terug.",
+          "langemark":"Na de slag wisselde Youssef voedsel met Duitse krijgsgevangenen. De menselijkheid tussen soldaten liet hem nooit los."
+        }
+      },
+      {
+        "id":"stanislaw_nowak",
+        "naam":"Stanisław Nowak",
+        "herkomst":"Galicië (toen Oostenrijk‑Hongarije)",
+        "rol":"Artilleriehelper",
+        "bio":"Boerenzoon, ingelijfd in 1915. Droomde van techniek en een vak na de oorlog.",
+        "verhalen": {
+          "menin_gate":"Stanisław begrijpt de stilte aan de Menenpoort: ook in zijn batterij bleven namen zonder graf.",
+          "tyne_cot":"Hij hielp een 18‑ponder bedienen; elke granaat voelde als een keuze die hij niet zelf maakte.",
+          "langemark":"Tijdens een wapenstilte hoorde hij een viool vanuit de Duitse linies. Even leek de oorlog te pauzeren."
+        }
+      },
+      {
+        "id":"aminata_diop",
+        "naam":"Aminata Diop",
+        "herkomst":"Saint‑Louis, Senegal",
+        "rol":"Verpleegster bij het Rode Kruis",
+        "bio":"Opgeleid als hulpkraamverzorgster; verzorgde gewonden in veldhospitalen.",
+        "verhalen": {
+          "menin_gate":"Aminata denkt aan de families zonder afscheid. In haar tent schreef ze brieven voor wie niet meer kon schrijven.",
+          "tyne_cot":"Ze leerde wonden spoelen met schaars water. De modder was overal, ook in het verband.",
+          "langemark":"Ze ruilde thee voor morfineampullen met een Britse arts. Zorg kende geen uniform."
+        }
+      }
+    ]
+  }</script>
+
+  <script>
+  // ===== Helper: afstand in meter (Haversine)
+  function distanceMeters(a, b){
+    const R = 6371e3;
+    const φ1 = a.lat * Math.PI/180, φ2 = b.lat * Math.PI/180;
+    const dφ = (b.lat - a.lat) * Math.PI/180;
+    const dλ = (b.lng - a.lng) * Math.PI/180;
+    const s = Math.sin(dφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(dλ/2)**2;
+    return 2*R*Math.asin(Math.sqrt(s));
+  }
+  const $ = sel => document.querySelector(sel);
+  const store = {
+    get(){ try{return JSON.parse(localStorage.getItem('woi_state')||'{}')}catch{return {}} },
+    set(v){ localStorage.setItem('woi_state', JSON.stringify(v)) }
+  };
+
+  const DATA = JSON.parse(document.getElementById('scenario-data').textContent);
+
+  // URL helpers
+  const urlParams = new URLSearchParams(location.search);
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)] }
+
+
+  // ===== Personage toekennen of ophalen
+  function ensureCharacter(){
+    const st = store.get();
+    // 1) URL override ?pcId=... or ?pc=...
+    const forced = urlParams.get('pcId') || urlParams.get('pc');
+    if(forced && DATA.personages.some(p=>p.id===forced)){
+      st.pcId = forced; st.unlocked = st.unlocked||[]; store.set(st); return st.pcId;
+    }
+    // 2) Existing local selection
+    if(st.pcId && DATA.personages.some(p=>p.id===st.pcId)) return st.pcId;
+    // 3) Random assign once
+    const pc = pick(DATA.personages);
+    st.pcId = pc.id; st.unlocked = st.unlocked||[]; store.set(st); return pc.id;
+  }
+  function currentPc(){ const id = store.get().pcId; return DATA.personages.find(p=>p.id===id)(){ const id = store.get().pcId; return DATA.personages.find(p=>p.id===id) }
+
+  // ===== UI renderers
+  function renderProfile(){
+    const pc = currentPc(); if(!pc) return;
+    $('#pcInfo').innerHTML = `
+      <div class="row">
+        <div class="pill">🧑‍🎓 <b>${pc.naam}</b></div>
+        <div class="pill">🌍 ${pc.herkomst}</div>
+        <div class="pill">🎖️ ${pc.rol}</div>
+      </div>
+      <p class="muted" style="margin:.6rem 0 0">${pc.bio}</p>
+    `;
+  }
+  function renderStops(){
+    const cont = $('#stopsList');
+    cont.innerHTML = DATA.stops.map(s=>`<div class="pill">${s.naam}</div>`).join('');
+  }
+  function renderUnlocked(){
+    const st = store.get(); const pc = currentPc();
+    const cont = $('#unlockList');
+    if(!st.unlocked || !st.unlocked.length){ cont.innerHTML = '<div class="muted">Nog niets ontgrendeld. Ga naar een stop om het verhaal te openen.</div>'; return; }
+    cont.innerHTML = st.unlocked.map(id=>{
+      const stop = DATA.stops.find(s=>s.id===id);
+      const txt = pc.verhalen[id];
+      return `<details open><summary>📘 ${stop?.naam||id}</summary><div style="margin-top:6px">${txt||'<span class=muted>(Nog geen tekst voor dit personage op deze stop)</span>'}</div></details>`;
+    }).join('');
+  }
+
+  // ===== Geofencing‑light
+  let watchId = null;
+  function startWatch(){
+    if(!('geolocation' in navigator)){ $('#permNote').textContent='Deze browser ondersteunt geen geolocatie.'; return; }
+    $('#geoState').textContent = 'Actief';
+    watchId = navigator.geolocation.watchPosition(pos=>{
+      const {latitude, longitude, accuracy} = pos.coords;
+      $('#coords').textContent = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+      $('#acc').textContent = Math.round(accuracy);
+
+      // Bepaal dichtstbijzijnde stop
+      const here = {lat: latitude, lng: longitude};
+      let best = null;
+      for(const s of DATA.stops){
+        const d = Math.round(distanceMeters(here, {lat:s.lat, lng:s.lng}));
+        if(!best || d < best.d) best = {id:s.id, name:s.naam, d, radius:(s.radius||DATA.meta.radiusDefaultMeters)};
+      }
+      if(best){
+        $('#closest').textContent = `${best.name}`;
+        $('#dist').textContent = `${best.d}`;
+        tryUnlock(best);
+      }
+    }, err=>{
+      $('#permNote').innerHTML = `<span class="warn">Locatie uitgeschakeld</span>: sta locatie toe in je browser/app (fout ${err.code}).`;
+      $('#geoState').textContent = 'Uit';
+    }, {enableHighAccuracy:true, maximumAge:10000, timeout:15000});
+  }
+  function stopWatch(){ if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; $('#geoState').textContent = 'Inactief'; } }
+
+  function tryUnlock(best){
+    if(best.d <= best.radius){
+      const st = store.get(); st.unlocked = st.unlocked||[];
+      if(!st.unlocked.includes(best.id)){
+        st.unlocked.push(best.id); store.set(st);
+        renderUnlocked();
+        toast(`✅ Verhaal ontgrendeld bij “${best.name}”`);
+      }
+    }
+  }
+
+  // ===== Kleine toast
+  let toastTimer; function toast(msg){
+    clearTimeout(toastTimer);
+    let t = document.getElementById('toast');
+    if(!t){ t = document.createElement('div'); t.id='toast'; document.body.appendChild(t); }
+    t.textContent = msg; Object.assign(t.style,{
+      position:'fixed',left:'50%',bottom:'76px',transform:'translateX(-50%)',
+      background:'rgba(0,0,0,.75)',color:'#fff',padding:'10px 14px',borderRadius:'12px',
+      border:'1px solid rgba(255,255,255,.25)',backdropFilter:'blur(6px)',zIndex:9999
+    });
+    toastTimer = setTimeout(()=>{ t.remove(); }, 2600);
+  }
+
+  // ===== Export & reset
+  function exportProgress(){
+    const st = store.get(); const pc = currentPc();
+    const lines = [];
+    lines.push(`# ${DATA.meta.title}`);
+    lines.push(`Personage: ${pc.naam} (${pc.herkomst}) – ${pc.rol}`);
+    lines.push('');
+    for(const id of (st.unlocked||[])){
+      const stop = DATA.stops.find(s=>s.id===id);
+      lines.push(`## ${stop?.naam||id}`);
+      lines.push(pc.verhalen[id]||'(geen tekst)');
+      lines.push('');
+    }
+    const blob = new Blob([lines.join('\n')], {type:'text/markdown'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='woi-voortgang.md'; a.click(); URL.revokeObjectURL(url);
+  }
+  function hardReset(){ localStorage.removeItem('woi_state'); location.reload(); }
+
+  // ===== Installatiehints
+  function showInstallHint(){
+    alert(`Installeren op smartphone:\n\n• Android (Chrome): menu ⋮ → "Toevoegen aan Startscherm".\n• iPhone (Safari): deel‑icoon → "Zet op beginscherm".\n\nOpen de app minstens één keer met internet voor caching; daarna werkt ze offline.`);
+  }
+
+  // ===== PWA (manifest + service worker) – alles inline
+  (function setupPWA(){
+    try{
+      const manifest = {
+        name: DATA.meta.title || 'WOI – Mijn Personage',
+        short_name: 'WOI Personage',
+        start_url: '.', display: 'standalone',
+        background_color: '#0b1220', theme_color: '#111827',
+        icons: []
+      };
+      const mUrl = URL.createObjectURL(new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'}));
+      const link = document.createElement('link'); link.rel='manifest'; link.href=mUrl; document.head.appendChild(link);
+
+      if('serviceWorker' in navigator){
+        const swCode = `
+          const CACHE='woi-pwa-v1';
+          self.addEventListener('install',e=>{
+            e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./'])));
+          });
+          self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim())});
+          self.addEventListener('fetch',e=>{
+            e.respondWith(
+              caches.match(e.request).then(r=> r || fetch(e.request).then(res=>{
+                // Cache alleen GET en dezelfde origin
+                try{
+                  if(e.request.method==='GET' && new URL(e.request.url).origin===location.origin){
+                    const copy = res.clone(); caches.open(CACHE).then(c=>c.put(e.request, copy));
+                  }
+                }catch{}
+                return res;
+              }).catch(()=>caches.match('./')))
+            );
+          });`;
+        const swUrl = URL.createObjectURL(new Blob([swCode], {type:'text/javascript'}));
+        navigator.serviceWorker.register(swUrl).then(()=>{
+          document.getElementById('cacheState').textContent = 'Geïnstalleerd';
+        }).catch(()=>{
+          document.getElementById('cacheState').textContent = 'Niet geïnstalleerd';
+        });
+      }
+    }catch(e){ console.warn('PWA setup faalde', e); }
+  })();
+
+  // ===== Events
+  document.getElementById('startBtn').addEventListener('click', startWatch);
+  document.getElementById('stopBtn').addEventListener('click', stopWatch);
+  document.getElementById('regenBtn').addEventListener('click', ()=>{ localStorage.removeItem('woi_state'); ensureCharacter(); renderProfile(); renderUnlocked(); toast('Nieuw personage toegewezen'); });
+  document.getElementById('exportBtn').addEventListener('click', exportProgress);
+  document.getElementById('resetBtn').addEventListener('click', hardReset);
+  let deferredPrompt=null;
+  window.addEventListener('beforeinstallprompt',(e)=>{ e.preventDefault(); deferredPrompt=e; const b=document.getElementById('installHint'); b.textContent='📲 Installeer app'; b.classList.add('primary'); });
+  document.getElementById('installHint').addEventListener('click', async ()=>{
+    if(deferredPrompt){ deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; }
+    else { showInstallHint(); }
+  });
+  document.getElementById('demoBtn').addEventListener('click', ()=>{
+    // Simuleer: ontgrendel de dichtstbijzijnde (eerste) stop – handig in klaslokaal
+    const best = DATA.stops[0]; tryUnlock({id:best.id, name:best.naam, d:0, radius:(best.radius||DATA.meta.radiusDefaultMeters)});
+  });
+
+  // ===== Init
+  ensureCharacter();
+  renderProfile();
+  renderStops();
+  renderUnlocked();
+  </script>
+</body>
+</html>
