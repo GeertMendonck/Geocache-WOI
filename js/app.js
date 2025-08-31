@@ -137,30 +137,13 @@
       });
       if(bounds.length) LMAP.fitBounds(bounds,{padding:[20,20]});
 
-(async ()=>{
-  const routePath = (DATA.meta.routePath || DATA.meta.kmlPath);
-  let hadLine=false, featureStats='';
+(async ()=>{const g = new L.GPX('./data/route.gpx', {
+  async: true,
+  polyline_options: { weight: 4, opacity: 0.95 }
+})
+.on('loaded', e => { LMAP.fitBounds(e.target.getBounds(), {padding:[20,20]}); })
+.addTo(LMAP);
 
-  if (routePath){
-    try{
-      const txt = await fetch(routePath, { cache:'no-store' }).then(r=>r.text());
-      const xml = new DOMParser().parseFromString(txt, 'text/xml');
-      const isGpx = routePath.toLowerCase().endsWith('.gpx');
-      const gj  = isGpx ? toGeoJSON.gpx(xml) : toGeoJSON.kml(xml);
-
-      // Inspectie: tel features per type
-      const types = {};
-      (gj.features||[]).forEach(f => { const t=f.geometry?.type||'unknown'; types[t]=(types[t]||0)+1; });
-      featureStats = Object.entries(types).map(([k,v])=>`${k}:${v}`).join(' · ') || '(geen features)';
-      hadLine = (gj.features||[]).some(f => /LineString|MultiLineString/i.test(f.geometry?.type||''));
-
-      // Teken exact wat in je file zit
-      const layer = L.geoJSON(gj, {
-        pointToLayer: (_f, latlng) => L.circleMarker(latlng, { radius:3, weight:1, opacity:.9, fillOpacity:.6 }),
-        style: (f) => /LineString|MultiLineString/i.test(f.geometry?.type||'')
-          ? { weight: 4, opacity: 0.95 }
-          : { weight: 1, opacity: 0.6 }
-      }).addTo(LMAP);
 
       try { LMAP.fitBounds(layer.getBounds(), { padding:[20,20] }); } catch {}
 
