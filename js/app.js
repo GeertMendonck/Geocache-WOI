@@ -137,28 +137,51 @@
       });
       if(bounds.length) LMAP.fitBounds(bounds,{padding:[20,20]});
 
-      (async ()=>{
-        const routePath = (DATA.meta.routePath || DATA.meta.kmlPath);
-        let hadLine=false;
-        if (routePath){
-          try{
-            const txt = await fetch(routePath, { cache:'no-store' }).then(r=>r.text());
-            const xml = new DOMParser().parseFromString(txt, 'text/xml');
-            const gj  = routePath.toLowerCase().endsWith('.gpx') ? toGeoJSON.gpx(xml) : toGeoJSON.kml(xml);
-            hadLine = (gj.features||[]).some(f => /LineString|MultiLineString/i.test(f.geometry?.type||''));
-            L.geoJSON(gj, {
-              pointToLayer: (_f, latlng) => L.circleMarker(latlng, { radius:3, weight:1, opacity:.9, fillOpacity:.6 }),
-              style: (f) => /LineString|MultiLineString/i.test(f.geometry?.type||'')
-                ? { weight: 4, opacity: 0.9 }
-                : { weight: 1, opacity: 0.6 }
-            }).addTo(LMAP);
-          }catch(err){ console.warn('Routebestand laden faalde:', err); }
-        }
-        if (!hadLine) {
-          const routePoints = DATA.stops.map(s => [s.lat, s.lng]);
-          drawOsrmRouteLatLngs(routePoints);
-        }
-      })();
+(async ()=>{
+  const routePath = (DATA.meta.routePath || DATA.meta.kmlPath);
+  let hadLine=false, featureStats='';
+
+  if (routePath){
+    try{
+      const txt = await fetch(routePath, { cache:'no-store' }).then(r=>r.text());
+      const xml = new DOMParser().parseFromString(txt, 'text/xml');
+      const isGpx = routePath.toLowerCase().endsWith('.gpx');
+      const gj  = isGpx ? toGeoJSON.gpx(xml) : toGeoJSON.kml(xml);
+
+      // Inspectie: tel features per type
+      const types = {};
+      (gj.features||[]).forEach(f => { const t=f.geometry?.type||'unknown'; types[t]=(types[t]||0)+1; });
+      featureStats = Object.entries(types).map(([k,v])=>`${k}:${v}`).join(' · ') || '(geen features)';
+      hadLine = (gj.features||[]).some(f => /LineString|MultiLineString/i.test(f.geometry?.type||''));
+
+      // Teken exact wat in je file zit
+      const layer = L.geoJSON(gj, {
+        pointToLayer: (_f, latlng) => L.circleMarker(latlng, { radius:3, weight:1, opacity:.9, fillOpacity:.6 }),
+        style: (f) => /LineString|MultiLineString/i.test(f.geometry?.type||'')
+          ? { weight: 4, opacity: 0.95 }
+          : { weight: 1, opacity: 0.6 }
+      }).addTo(LMAP);
+
+      try { LMAP.fitBounds(layer.getBounds(), { padding:[20,20] }); } catch {}
+
+    }catch(err){
+      console.warn('Routebestand laden faalde:', err);
+      showDiag('Route laden faalde: ' + (err.message||err));
+    }
+  } else {
+    showDiag('Geen routePath/kmlPath ingesteld in meta.json');
+  }
+
+  // Toon duidelijke status onderin als je ?debug=1 in de URL zet
+  if (new URLSearchParams(location.search).get('debug')==='1'){
+    showDiag((routePath? `Route: ${routePath}` : 'Geen routepad')
+      + (featureStats? ` • Features: ${featureStats}` : '')
+      + (hadLine? ' • Lijn: JA' : ' • Lijn: NEE'));
+  }
+
+  // ← OSRM fallback is hier bewust UITGESCHAKELD
+})();
+
 
       liveMarker = L.marker([0,0], { icon:iconUser, opacity:0 }).addTo(LMAP);
       accCircle  = L.circle([0,0], { radius:0, color:'#3dd1c0', fillOpacity:.1 }).addTo(LMAP);
