@@ -12,6 +12,18 @@
 
   <!-- Leaflet & helpers (CDN) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <script>
+  // Kill-switch: open met ?nosw=1 om service worker te verwijderen
+  if ('serviceWorker' in navigator && location.search.includes('nosw=1')) {
+    navigator.serviceWorker.getRegistrations().then(rs => {
+      Promise.all(rs.map(r => r.unregister())).then(() => {
+        // Volledig herladen zonder SW
+        location.replace(location.origin + location.pathname);
+      });
+    });
+  }
+</script>
+
   <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <!-- GPX direct tekenen (geen toGeoJSON nodig voor GPX) -->
   <script defer src="https://unpkg.com/leaflet-gpx@1.7.0/gpx.min.js"></script>
