@@ -1,5 +1,5 @@
 // sw.js – ultrakleine offline cache
-const CACHE = 'woi-pwa-v1';
+const CACHE = 'woi-pwa-v5';
 const ASSETS = ['./', './index.html', './manifest.webmanifest'];
 
 self.addEventListener('install', e => {
