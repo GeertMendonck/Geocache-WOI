@@ -119,13 +119,14 @@
     </div>
   </div>
 
-          <script id="scenario-data" type="application/json">{
+  <!-- Scenario data -->
+  <script id="scenario-data" type="application/json">{
   "meta": {
     "title": "WOI – Mijn Personage",
     "radiusDefaultMeters": 200,
     "startStopId": "start_menenpoort",
     "endStopId": "end_menenpoort",
-    "requiredStops": ["new_irish_farm","langemark","tyne_cot","passchendaele_museum"],
+    "requiredStops": ["new_irish_farm", "langemark", "tyne_cot", "passchendaele_museum"],
     "myMapsEmbedUrl": "https://www.google.com/maps/d/embed?mid=1PX9PLdEburE2dqbKbAj2C44SiCjtGSc&hl=nl&ehbc=2E312F"
   },
   "stops": [
@@ -139,7 +140,7 @@
       "vragen":["Wat zegt de schaal van deze plek over de slag hier?","Welke zin uit het verhaal bleef hangen en waarom?"]},
     {"id":"passchendaele_museum","naam":"Stop 4: Memorial Museum Passchendaele","lat":50.898700, "lng":3.000700, "radius":180,
       "vragen":["Wat doet het met je om objecten uit de oorlog achter glas te zien?","Welke vraag zou jij willen stellen aan iemand uit die tijd?"]},
-    {"id":"end_menenpoort","naam":"Einde: Menenpoort (Ieper)","lat":50.851003, "lng":2.890939, "radius":140,
+    {"id":"end_menenpoort","naam":"Einde: Menenpoort (Ieper)", "lat":50.851003, "lng":2.890939, "radius":140,
       "vragen":["Wat neem je mee uit de verhalen?","Voor wie wil jij hier even stilstaan?"]}
   ],
   "personages": [
@@ -241,7 +242,7 @@
   const store={get(){try{return JSON.parse(localStorage.getItem('woi_state')||'{}')}catch{return {}}},set(v){localStorage.setItem('woi_state',JSON.stringify(v))}};
   const DATA=JSON.parse(document.getElementById('scenario-data').textContent);
   const urlParams=new URLSearchParams(location.search);
-  function pick(arr){return arr[Math.floor(Math.random()*arr.length)]}
+  const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
 
   // Personage
   function ensureCharacter(){
@@ -249,32 +250,31 @@
     const forced=urlParams.get('pcId')||urlParams.get('pc');
     if(forced&&DATA.personages.some(p=>p.id===forced)){st.pcId=forced;st.unlocked=st.unlocked||[];store.set(st);return st.pcId;}
     if(st.pcId&&DATA.personages.some(p=>p.id===st.pcId))return st.pcId;
-    const pc=pick(DATA.personages);st.pcId=pc.id;st.unlocked=st.unlocked||[];store.set(st);return pc.id;
+    const pc=pick(DATA.personages); st.pcId=pc.id; st.unlocked=st.unlocked||[]; store.set(st); return pc.id;
   }
-  function currentPc(){const id=store.get().pcId;return DATA.personages.find(p=>p.id===id)}
+  const currentPc=()=>DATA.personages.find(p=>p.id===store.get().pcId);
 
   function renderProfile(){
     const pc=currentPc(); if(!pc) return;
     $('#pcInfo').innerHTML = `<div class="row">
-      <div class=\"pill\">🧑 <b>${pc.naam}</b></div>
-      <div class=\"pill\">🎂 ${pc.leeftijd} jaar</div>
-      <div class=\"pill\">🌍 ${pc.herkomst}</div>
-      <div class=\"pill\">🎖️ ${pc.rol}</div>
-    </div><p class=\"muted\">${pc.bio}</p>`;
+      <div class="pill">🧑 <b>${pc.naam}</b></div>
+      <div class="pill">🎂 ${pc.leeftijd} jaar</div>
+      <div class="pill">🌍 ${pc.herkomst}</div>
+      <div class="pill">🎖️ ${pc.rol}</div>
+    </div><p class="muted">${pc.bio}</p>`;
     renderCharacterChooser();
   }
+
   function renderCharacterChooser(){
-    const st=store.get();
-    const chooser=$('#pcChooser');
-    const options = DATA.personages.map(p=>`<option value=\"${p.id}\" ${p.id===st.pcId?'selected':''}>${p.naam} (${p.leeftijd}) — ${p.rol}</option>`).join('');
-    const locked = !!st.lockedPc;
-    const inside = window.__insideStart===true;
-    chooser.innerHTML = `<select id=\"pcSelect\" ${locked?'disabled':''} ${!inside&&!locked?'disabled':''}>${options}</select>
-      <span class=\"pill ${locked?'ok':''}\">${locked?'🔒 Keuze vergrendeld': (inside? '🟢 Je kan hier je personage kiezen' : '🔐 Kiesbaar enkel aan de start')}</span>`;
+    const st=store.get(); const chooser=$('#pcChooser');
+    const options = DATA.personages.map(p=>`<option value="${p.id}" ${p.id===st.pcId?'selected':''}>${p.naam} (${p.leeftijd}) — ${p.rol}</option>`).join('');
+    const locked = !!st.lockedPc; const inside = window.__insideStart===true;
+    chooser.innerHTML = `<select id="pcSelect" ${locked?'disabled':''} ${!inside&&!locked?'disabled':''}>${options}</select>
+      <span class="pill ${locked?'ok':''}">${locked?'🔒 Keuze vergrendeld': (inside? '🟢 Je kan hier je personage kiezen' : '🔐 Kiesbaar enkel aan de start')}</span>`;
   }
+
   function renderStops(){
     const cont=$('#stopsList'); const st=store.get(); const unlocked=new Set(st.unlocked||[]);
-    const reqSet=new Set(DATA.meta.requiredStops);
     const items = DATA.stops.map(s=>{
       const ok = unlocked.has(s.id);
       const isEnd = s.id===DATA.meta.endStopId;
@@ -283,9 +283,10 @@
     }).join('');
     cont.innerHTML = items;
   }
+
   function renderUnlocked(){
     const st=store.get(); const pc=currentPc(); const cont=$('#unlockList');
-    if(!st.unlocked||!st.unlocked.length){cont.innerHTML='<div class=\"muted\">Nog niets ontgrendeld.</div>';return;}
+    if(!st.unlocked||!st.unlocked.length){cont.innerHTML='<div class="muted">Nog niets ontgrendeld.</div>';return;}
     cont.innerHTML = st.unlocked.map(id=>{
       const stop = DATA.stops.find(s=>s.id===id);
       const txt = pc.verhalen?.[id];
@@ -300,10 +301,20 @@
       </details>`;
     }).join('');
     renderProgress();
-  }(){
-    const st=store.get(); const pc=currentPc(); const cont=$('#unlockList');
-    if(!st.unlocked||!st.unlocked.length){cont.innerHTML='<div class="muted">Nog niets ontgrendeld.</div>';return;}
-    cont.innerHTML=st.unlocked.map(id=>{const stop=DATA.stops.find(s=>s.id===id);const txt=pc.verhalen[id];return `<details open><summary>📘 ${stop?.naam||id}</summary><div>${txt||'<span class=muted>(Geen tekst)</span>'}</div></details>`}).join('');
+  }
+
+  function renderProgress(){
+    try{
+      const st = store.get();
+      const req = DATA.meta.requiredStops || [];
+      const done = (st.unlocked||[]).filter(id=>req.includes(id)).length;
+      const total = req.length;
+      const deg = total ? (done/total)*360 : 0;
+      const ring = document.getElementById('progressRing');
+      const txt = document.getElementById('progressText');
+      if(ring) ring.style.background = `conic-gradient(var(--accent) ${deg}deg, rgba(255,255,255,.15) 0 360deg)`;
+      if(txt) txt.textContent = `${done}/${total}`;
+    }catch{}
   }
 
   // Geoloc
@@ -329,7 +340,6 @@
   function stopWatch(){ if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; $('#geoState').textContent='Inactief'; } }
 
   function tryUnlock(best, acc){
-    // Eerlijke-afstand: gebruik effectieve afstand = gemeten afstand - nauwkeurigheid
     const effective = Math.max(0, best.d - (acc||0));
     if(effective <= best.radius){
       const st=store.get(); st.unlocked=st.unlocked||[];
@@ -344,26 +354,6 @@
       }
     }
   }
-      }
-      if(!st.unlocked.includes(best.id)){
-        st.unlocked.push(best.id); store.set(st);
-        renderUnlocked(); toast(`✅ Ontgrendeld: ${best.name}`);
-      }
-    }
-  }
-function renderProgress(){
-  try{
-    const st = store.get();
-    const req = DATA.meta.requiredStops || [];
-    const done = (st.unlocked||[]).filter(id=>req.includes(id)).length;
-    const total = req.length;
-    const deg = total ? (done/total)*360 : 0;
-    const ring = document.getElementById('progressRing');
-    const txt = document.getElementById('progressText');
-    if(ring) ring.style.background = `conic-gradient(var(--accent) ${deg}deg, rgba(255,255,255,.15) 0 360deg)`;
-    if(txt) txt.textContent = `${done}/${total}`;
-  }catch{}
-}
 
   // Map helpers
   let lastMapAt=0; let lastLat=null, lastLng=null;
@@ -390,7 +380,8 @@ function renderProgress(){
 
   // UI helpers
   let toastTimer; function toast(msg){ clearTimeout(toastTimer); let t=document.getElementById('toast'); if(!t){ t=document.createElement('div'); t.id='toast'; document.body.appendChild(t);} t.textContent=msg; Object.assign(t.style,{position:'fixed',left:'50%',bottom:'76px',transform:'translateX(-50%)',background:'rgba(0,0,0,.75)',color:'#fff',padding:'10px 14px',borderRadius:'12px',zIndex:9999}); toastTimer=setTimeout(()=>{t.remove()},2600); }
-  function exportProgress(){ const st=store.get(); const pc=currentPc(); const lines=[]; lines.push(`# ${DATA.meta.title}`); lines.push(`Personage: ${pc.naam} (${pc.herkomst}) – ${pc.rol}`); lines.push(''); for(const id of (st.unlocked||[])){ const stop=DATA.stops.find(s=>s.id===id); lines.push(`## ${stop?.naam||id}`); lines.push(pc.verhalen[id]||'(geen tekst)'); lines.push(''); } const blob=new Blob([lines.join('\n')],{type:'text/markdown'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='woi-voortgang.md'; a.click(); URL.revokeObjectURL(url); }
+  function exportProgress(){ const st=store.get(); const pc=currentPc(); const lines=[]; lines.push(`# ${DATA.meta.title}`); lines.push(`Personage: ${pc.naam} (${pc.herkomst}) – ${pc.rol}`); lines.push(''); for(const id of (st.unlocked||[])){ const stop=DATA.stops.find(s=>s.id===id); lines.push(`## ${stop?.naam||id}`); lines.push(pc.verhalen[id]||'(geen tekst)'); lines.push(''); } const blob=new Blob([lines.join('
+')],{type:'text/markdown'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='woi-voortgang.md'; a.click(); URL.revokeObjectURL(url); }
   function hardReset(){ localStorage.removeItem('woi_state'); location.reload(); }
 
   // Events
@@ -407,13 +398,12 @@ function renderProgress(){
   let deferredPrompt=null; window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;const b=document.getElementById('installHint'); b.textContent='📲 Installeer app'; b.classList.add('primary');});
   document.getElementById('installHint').addEventListener('click',async()=>{ if(deferredPrompt){ deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; } else { alert('Installeer via browser-menu: Chrome: ⋮ → Toevoegen aan startscherm. Safari: deel‑icoon → Zet op beginscherm.'); } });
 
-  // Service worker registratie
-  if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(()=>{ $('#cacheState').textContent='Geïnstalleerd'; }).catch(()=>{ $('#cacheState').textContent='Niet geïnstalleerd'; }); }
+  // Service worker registratie (met versie‑bust)
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js?v=2025-08-31-1',{scope:'./'}).then(()=>{ $('#cacheState').textContent='Geïnstalleerd'; }).catch(()=>{ $('#cacheState').textContent='Niet geïnstalleerd'; }); }
 
   // Init
   ensureCharacter(); renderProfile(); renderStops(); renderUnlocked(); renderProgress();
   try{ const rm=document.getElementById('routeMap'); if(rm) rm.src = DATA.meta.myMapsEmbedUrl; }catch{}
-
-  </script>
+</script>
 </body>
 </html>
