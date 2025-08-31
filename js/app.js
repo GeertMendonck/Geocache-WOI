@@ -259,7 +259,9 @@
           .catch(()=>{ $('#cacheState')?.textContent='Niet geïnstalleerd'; });
       }
       console.log('[WOI] boot klaar');
-      $('#diag').style.display='none'; // verberg “app.js geladen ✓”
+     $('#diag').textContent = 'app.js geladen ✓ — listeners gebonden, klaar.';
+$('#diag').style.display = 'block';
+
     }catch(e){
       showDiag('Data laden mislukte: ' + (e?.message || e));
       console.error(e);
