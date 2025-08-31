@@ -1,5 +1,5 @@
 // sw.js
-const CACHE = 'woi-pwa-v10';
+const CACHE = 'woi-pwa-v11';
 const PRECACHE = [
   './',
   './index.html',
