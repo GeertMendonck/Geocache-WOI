@@ -48,7 +48,11 @@
   <div class="wrap">
     <header>
       <h1>WOI – Mijn Personage</h1>
-      <span class=\"badge\">PWA • Offline<\/span><div class=\"ring\" id=\"progressRing\"><span id=\"progressText\">0\/0<\/span><\/div>
+      <div class="row" style="gap:8px;align-items:center;justify-content:flex-end">
+  <span class="badge">PWA: <span id="cacheState">Niet geïnstalleerd</span></span>
+  <div class="ring" id="progressRing"><span id="progressText">0/4</span></div>
+</div>
+
     </header>
 
     <div class="grid">
@@ -66,19 +70,21 @@
         <div class="small muted">Tip: installeer via menu (of knop hieronder) en open minstens één keer online; daarna werkt alles offline.</div>
       </section>
 
-      <section class="card" id="statusCard">
-        <h2>Locatiestatus</h2>
-        <div class="row kpi"><div>📍 <b id="coords">—</b></div><div class="muted">(± <span id="acc">—</span> m)</div></div>
-        <div class="row kpi"><div>🎯 Dichtstbijzijnde stop:</div><div><b id="closest">—</b></div></div>
-        <div class=\"row kpi\"><div>↔️ Afstand:<\/div><div><b id=\"dist\">—<\/b> m<\/div><\/div>
-        <div class=\"row kpi\"><div>🛡️ Straal:<\/div><div><b id=\"radius\">—<\/b> m<\/div><\/div>
-        <div style="margin-top:8px" class="row">
-          <button id="startBtn" class="primary">▶️ Start locatie</button>
-          <button id="stopBtn">⏸️ Pauzeer</button>
-          <button id="demoBtn">🧪 Demo‑nabij</button>
-        </div>
-        <div id="permNote" class="small muted"></div>
-      </section>
+<section class="card">
+  <h2>Locatiestatus</h2>
+  <div class="small muted" id="permNote"></div>
+  <div class="row kpi"><div>📍 (± <span id="acc">—</span> m)</div><div></div></div>
+  <div class="row kpi"><div>🎯 Dichtstbijzijnde stop:</div><div><b id="closest">—</b></div></div>
+  <div class="row kpi"><div>↔️ Afstand:</div><div><b id="dist">—</b> m</div></div>
+  <div class="row kpi"><div>🛡️ Straal:</div><div><b id="radius">—</b> m</div></div>
+  <div class="row" style="gap:8px;margin-top:8px">
+    <button id="startBtn" class="primary">▶️ Start locatie</button>
+    <button id="stopBtn">⏸️ Pauzeer</button>
+    <button id="demoBtn">🧪 Demo-nabij</button>
+  </div>
+  <div class="small muted">Status: <span id="geoState">Uit</span> • Coördinaten: <span id="coords">—</span></div>
+</section>
+
     </div>
 
     <section class="card" style="margin-top:12px">
