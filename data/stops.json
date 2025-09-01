@@ -1,5 +1,5 @@
 [
-  {"id":"start_menenpoort","naam":"Start: Menenpoort (Ieper)","lat":50.851003,"lng":2.890939,"radius":140,
+  {"id":"start_menenpoort","naam":"Start: Menenpoort (Ieper)","lat":50.85206,"lng":2.89116,"radius":140,
    "vragen":["Welke naam of inscriptie raakte je en waarom?","Wat verwacht je vandaag te leren?"]},
   {"id":"new_irish_farm","naam":"Stop 1: New Irish Farm Cemetery","lat":50.87289,"lng":2.89736,"radius":180,
    "vragen":["Wat viel je op aan de namen of symbolen op de graven?","Welke link hoor jij tussen dit landschap en het verhaal van jouw personage?"]},
@@ -7,8 +7,8 @@
    "vragen":["Wat betekent het voor jou dat hier vooral jonge studenten liggen?","Hoe verandert dit jouw kijk op ‘de vijand’?"]},
   {"id":"tyne_cot","naam":"Stop 3: Tyne Cot Cemetery","lat":50.887,"lng":2.9993,"radius":220,
    "vragen":["Wat zegt de schaal van deze plek over de slag hier?","Welke zin uit het verhaal bleef hangen en waarom?"]},
-  {"id":"passchendaele_museum","naam":"Stop 4: Memorial Museum Passchendaele","lat":50.8987,"lng":3.0007,"radius":180,
+  {"id":"passchendaele_museum","naam":"Stop 4: Memorial Museum Passchendaele","lat":50.87073,"lng":2.9886,"radius":180,
    "vragen":["Wat doet het met je om objecten uit de oorlog achter glas te zien?","Welke vraag zou jij willen stellen aan iemand uit die tijd?"]},
-  {"id":"end_menenpoort","naam":"Einde: Menenpoort (Ieper)","lat":50.851003,"lng":2.890939,"radius":140,
+  {"id":"end_menenpoort","naam":"Einde: Menenpoort (Ieper)","lat":50.85206,"lng":2.89116,"radius":140,
    "vragen":["Wat neem je mee uit de verhalen?","Voor wie wil jij hier even stilstaan?"]}
 ]
