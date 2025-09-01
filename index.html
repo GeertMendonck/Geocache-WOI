@@ -7,27 +7,27 @@
   <meta name="theme-color" content="#0c2630"/>
   <link rel="manifest" href="manifest.webmanifest">
 
+  <!-- Kill-switch: open met ?nosw=1 om service worker te verwijderen -->
+  <script>
+    if ('serviceWorker' in navigator && location.search.includes('nosw=1')) {
+      navigator.serviceWorker.getRegistrations().then(rs => {
+        Promise.all(rs.map(r => r.unregister())).then(() => {
+          // Volledig herladen zonder SW
+          location.replace(location.origin + location.pathname);
+        });
+      });
+    }
+  </script>
+
   <!-- Onze CSS -->
-  <link rel="stylesheet" href="./css/app.css?v=2025-09-02" />
+  <link rel="stylesheet" href="./css/app.css?v=2025-09-02-panic" />
 
   <!-- Leaflet & helpers (CDN) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <script>
-  // Kill-switch: open met ?nosw=1 om service worker te verwijderen
-  if ('serviceWorker' in navigator && location.search.includes('nosw=1')) {
-    navigator.serviceWorker.getRegistrations().then(rs => {
-      Promise.all(rs.map(r => r.unregister())).then(() => {
-        // Volledig herladen zonder SW
-        location.replace(location.origin + location.pathname);
-      });
-    });
-  }
-</script>
-
   <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <!-- GPX direct tekenen (geen toGeoJSON nodig voor GPX) -->
   <script defer src="https://unpkg.com/leaflet-gpx@1.7.0/gpx.min.js"></script>
-  <!-- KML fallback (alleen nodig als je kmlPath gebruikt) -->
+  <!-- KML fallback (alleen als je kmlPath gebruikt) -->
   <script defer src="https://unpkg.com/@mapbox/togeojson@0.16.0/dist/togeojson.umd.js"></script>
 </head>
 <body>
@@ -99,6 +99,24 @@
   <div id="toast"></div>
 
   <!-- Externe app-logic -->
-  <script defer src="./js/app.js?v=2025-09-02-1"></script>
+  <script>
+    // Flag zodat index.html kan detecteren of app.js echt draaide
+    window.__APP_BOUND__ = false;
+  </script>
+  <script defer src="./js/app.js?v=2025-09-02-v3"></script>
+
+  <!-- PANIC FALLBACK: als app.js NIET draaide binnen 1s, wire minimal clicks + melding -->
+  <script>
+    setTimeout(function(){
+      if(!window.__APP_BOUND__){
+        var d=document.getElementById('diag');
+        if(d){ d.style.display='block'; d.textContent='⚠️ app.js NIET geladen — fallback actief'; }
+        ['startBtn','stopBtn','resetBtn','recenterBtn','installHint','regenBtn','savePcBtn','exportBtn'].forEach(function(id){
+          var el=document.getElementById(id);
+          if(el) el.addEventListener('click', function(){ alert('Fallback listener: '+id); });
+        });
+      }
+    }, 1000);
+  </script>
 </body>
 </html>
