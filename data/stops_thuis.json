@@ -1,0 +1,68 @@
+[
+  {
+    "id": "start_menenpoort",
+    "naam": "Start: Thuis",
+    "lat": 51.22038011791722,
+    "lng": 4.440859173703975,
+    "radius": 120,
+    "vragen": [
+      "Wat wil je vandaag testen?",
+      "Welke functies wil je zeker uitproberen?"
+    ]
+  },
+  {
+    "id": "new_irish_farm",
+    "naam": "Stop 1: Krugerpark",
+    "lat": 51.21637744837854,
+    "lng": 4.4406549513845235,
+    "radius": 100,
+    "vragen": [
+      "Werkt de ontgrendeling hier zoals bedoeld?",
+      "Is de afstandsindicatie logisch en stabiel?"
+    ]
+  },
+  {
+    "id": "langemark",
+    "naam": "Stop 2: OLV ter Sneeuwkerk",
+    "lat": 51.21616987336369,
+    "lng": 4.433833093111876,
+    "radius": 100,
+    "vragen": [
+      "Hoe reageert de app wanneer je dichterbij komt?",
+      "Toont de kaart je live positie correct?"
+    ]
+  },
+  {
+    "id": "tyne_cot",
+    "naam": "Stop 3: Sint-Willibrorduskerk",
+    "lat": 51.2193360072171,
+    "lng": 4.431886670037614,
+    "radius": 100,
+    "vragen": [
+      "Werken de reflectievelden en de voorleesknop goed?",
+      "Voelt de UI vlot aan op jouw toestel?"
+    ]
+  },
+  {
+    "id": "passchendaele_museum",
+    "naam": "Stop 4: Stuyvenberg",
+    "lat": 51.22231751132612,
+    "lng": 4.435140060868664,
+    "radius": 100,
+    "vragen": [
+      "Werkt de export van je antwoorden correct?",
+      "Nog bugs of verbeteringen gezien?"
+    ]
+  },
+  {
+    "id": "end_menenpoort",
+    "naam": "Einde: Thuis",
+    "lat": 51.22038011791722,
+    "lng": 4.440859173703975,
+    "radius": 120,
+    "vragen": [
+      "Is alles ontgrendeld zoals verwacht?",
+      "Wat fixen of verbeteren we eerst?"
+    ]
+  }
+]
