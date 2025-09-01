@@ -107,10 +107,15 @@
         catch(e){ throw new Error(url+' → JSON parse error: '+e.message); }
       });
   }
+  function stopsFileFromQuery(){
+  var p = new URLSearchParams(location.search);
+  var name = p.get('stops') || 'stops'; // 'stops', 'stops_school', 'stops_thuis'
+  return './data/' + name + '.json';
+}
   function loadScenario(){
     return Promise.all([
       fetchJSON('./data/meta.json'),
-      fetchJSON('./data/stops.json'),
+      fetchJSON(stopsFileFromQuery()),
       fetchJSON('./data/personages.json')
     ]).then(function(arr){
       return { meta:arr[0], stops:arr[1], personages:arr[2] };
