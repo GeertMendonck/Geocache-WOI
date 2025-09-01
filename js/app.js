@@ -6,19 +6,6 @@
   try { if (typeof window !== 'undefined' && typeof window.__APP_BOUND__ === 'undefined') window.__APP_BOUND__ = false; } catch(e){}
 
   // ---------- Mini helpers ----------
-  function drawGeoJSONOnMap(gj, note){
-    var hasLine = false;
-    (gj.features||[]).forEach(function(f){
-      if (/LineString|MultiLineString/i.test((f.geometry && f.geometry.type) || '')) hasLine = true;
-    });
-    var layer = L.geoJSON(gj, {
-      pointToLayer: function(_f, latlng){ return L.circleMarker(latlng, { radius:3, weight:1, opacity:.9, fillOpacity:.6 }); },
-      style: function(f){ return /LineString|MultiLineString/i.test((f.geometry&&f.geometry.type)||'') ? { weight:4, opacity:.95 } : { weight:1, opacity:.6 }; }
-    }).addTo(LMAP);
-    try { LMAP.fitBounds(layer.getBounds(), { padding:[20,20] }); } catch(_e){}
-    showDiag((note||'Route') + ' → ' + (hasLine ? 'lijn getekend ✓' : 'GEEN lijn (alleen punten)'));
-  }
-
   function qs(id){ return document.getElementById(id); }
   function showDiag(msg){
     var d=qs('diag'); if(!d) return;
@@ -34,6 +21,12 @@
     get: function(){ try{ return JSON.parse(localStorage.getItem('woi_state')||'{}'); }catch(e){ return {}; } },
     set: function(v){ localStorage.setItem('woi_state', JSON.stringify(v)); }
   };
+  function distanceMeters(a,b){
+    var R=6371e3, φ1=a.lat*Math.PI/180, φ2=b.lat*Math.PI/180, dφ=(b.lat-a.lat)*Math.PI/180, dλ=(b.lng-a.lng)*Math.PI/180;
+    var s=Math.sin(dφ/2)*Math.sin(dφ/2)+Math.cos(φ1)*Math.cos(φ2)*Math.sin(dλ/2)*Math.sin(dλ/2);
+    return 2*R*Math.asin(Math.sqrt(s));
+  }
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
   // Antwoorden opslaan/halen
   function escapeHtml(s){return (s||'').replace(/[&<>"']/g,function(m){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);});}
@@ -43,53 +36,41 @@
   function setAns(stopId, qi, val){
     var st=store.get(); st.answers=st.answers||{}; st.answers[stopId]=st.answers[stopId]||{};
     st.answers[stopId][qi]=val; store.set(st);
-    // kleine “opgeslagen”-badge
     var tag=document.querySelector('.saveBadge[data-stop="'+stopId+'"][data-q="'+qi+'"]');
     if(tag){ tag.textContent='✔ opgeslagen'; setTimeout(function(){ tag.textContent=''; }, 1200); }
   }
 
-  function distanceMeters(a,b){
-    var R=6371e3, φ1=a.lat*Math.PI/180, φ2=b.lat*Math.PI/180, dφ=(b.lat-a.lat)*Math.PI/180, dλ=(b.lng-a.lng)*Math.PI/180;
-    var s=Math.sin(dφ/2)*Math.sin(dφ/2)+Math.cos(φ1)*Math.cos(φ2)*Math.sin(dλ/2)*Math.sin(dλ/2);
-    return 2*R*Math.asin(Math.sqrt(s));
+  // MIC detectie (aan/uit bij online/offline)
+  var MIC_OK = false;
+  function detectMic(){
+    MIC_OK = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+    if (MIC_OK && !navigator.onLine) MIC_OK = false; // Chrome ASR is online
   }
-  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-// --- MIC detectie (aan/uit bij online/offline) ---
-var MIC_OK = false;
-function detectMic(){
-  MIC_OK = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-  if (MIC_OK && !navigator.onLine) MIC_OK = false; // Chrome ASR is online
-}
-  function pauseFollowThenResume(){
-  followMe = false;
-  if (followResumeTimer) clearTimeout(followResumeTimer);
-  followResumeTimer = setTimeout(function(){ followMe = true; }, 15000);
-}
-LMAP.on('movestart zoomstart dragstart', pauseFollowThenResume);
 
+  // Web Audio "ding"
+  var audioCtx = null;
+  function initAudio(){ try { audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} }
+  function playDing(){
+    if(!audioCtx) return;
+    var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = 'sine'; o.frequency.value = 880;
+    o.connect(g); g.connect(audioCtx.destination);
+    var t = audioCtx.currentTime;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.08, t+0.01);
+    o.start(t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+0.20);
+    o.stop(t+0.21);
+  }
 
-// --- Web Audio "ding" ---
-var audioCtx = null;
-function initAudio(){ try { audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} }
-function playDing(){
-  if(!audioCtx) return;
-  var o = audioCtx.createOscillator(), g = audioCtx.createGain();
-  o.type = 'sine'; o.frequency.value = 880;
-  o.connect(g); g.connect(audioCtx.destination);
-  var t = audioCtx.currentTime;
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(0.08, t+0.01);
-  o.start(t);
-  g.gain.exponentialRampToValueAtTime(0.0001, t+0.20);
-  o.stop(t+0.21);
-}
-
-  // ---------- Globale state ----------
+  // ---------- Globale (module) state ----------
   var DATA = { meta:{}, stops:[], personages:[] };
-  var LMAP=null, liveMarker=null, accCircle=null, followMe=false;
-  var watchId=null; window.__insideStart=false;
-  var followMe = true; // standaard aan
-  var followResumeTimer = null;
+  var LMAP = null, liveMarker = null, accCircle = null;
+  var watchId = null; window.__insideStart = false;
+
+  // Follow-me
+  var followMe = true;          // standaard aan
+  var followResumeTimer = null; // auto hervatten na user-pan/zoom
 
   // ---------- Bewijs dat script draait ----------
   (function(){
@@ -100,12 +81,14 @@ function playDing(){
   // ---------- Core listeners: ALTIJD binden ----------
   function bindCoreListeners(){
     var b;
-    b=qs('startBtn'); if(b) b.addEventListener('click', startWatch);
-    b=qs('stopBtn'); if(b) b.addEventListener('click', stopWatch);
-    b=qs('resetBtn'); if(b) b.addEventListener('click', function(){ localStorage.removeItem('woi_state'); location.reload(); });
-    b=qs('recenterBtn'); if(b) b.addEventListener('click', function(){ followMe = true; });
+
+    // Audio primen + start geoloc
     document.addEventListener('pointerdown', initAudio, { once:true });
     b=qs('startBtn'); if(b) b.addEventListener('click', function(){ initAudio(); startWatch(); });
+
+    b=qs('stopBtn');  if(b) b.addEventListener('click', stopWatch);
+    b=qs('resetBtn'); if(b) b.addEventListener('click', function(){ localStorage.removeItem('woi_state'); location.reload(); });
+    b=qs('recenterBtn'); if(b) b.addEventListener('click', function(){ followMe = true; });
 
     // Install prompt
     var deferredPrompt=null;
@@ -141,10 +124,10 @@ function playDing(){
       });
   }
   function stopsFileFromQuery(){
-  var p = new URLSearchParams(location.search);
-  var name = p.get('stops') || 'stops'; // 'stops', 'stops_school', 'stops_thuis'
-  return './data/' + name + '.json';
-}
+    var p = new URLSearchParams(location.search);
+    var name = p.get('stops') || 'stops'; // 'stops', 'stops_school', 'stops_thuis'
+    return './data/' + name + '.json';
+  }
   function loadScenario(){
     return Promise.all([
       fetchJSON('./data/meta.json'),
@@ -210,7 +193,6 @@ function playDing(){
       var stop=null; for (var i=0;i<(DATA.stops||[]).length;i++){ if (DATA.stops[i].id===id){ stop=DATA.stops[i]; break; } }
       var txt = pc && pc.verhalen ? pc.verhalen[id] : null;
 
-      // Reflectievragen met invulvelden
       var qsArr = stop && stop.vragen ? stop.vragen : [];
       var qaHtml = '';
       if (qsArr.length){
@@ -266,6 +248,19 @@ function playDing(){
   }
 
   // ---------- Kaart ----------
+  function drawGeoJSONOnMap(gj, note){
+    var hasLine = false;
+    (gj.features||[]).forEach(function(f){
+      if (/LineString|MultiLineString/i.test((f.geometry && f.geometry.type) || '')) hasLine = true;
+    });
+    var layer = L.geoJSON(gj, {
+      pointToLayer: function(_f, latlng){ return L.circleMarker(latlng, { radius:3, weight:1, opacity:.9, fillOpacity:.6 }); },
+      style: function(f){ return /LineString|MultiLineString/i.test((f.geometry&&f.geometry.type)||'') ? { weight:4, opacity:.95 } : { weight:1, opacity:.6 }; }
+    }).addTo(LMAP);
+    try { LMAP.fitBounds(layer.getBounds(), { padding:[20,20] }); } catch(_e){}
+    showDiag((note||'Route') + ' → ' + (hasLine ? 'lijn getekend ✓' : 'GEEN lijn (alleen punten)'));
+  }
+
   function initLeafletMap(){
     try{
       var div = qs('oneMap'); if(!div || !window.L) return;
@@ -276,6 +271,16 @@ function playDing(){
       var start = (DATA.stops&&DATA.stops[0]) ? DATA.stops[0] : {lat:50.85,lng:2.89};
       LMAP = L.map(div, { zoomControl:true }).setView([start.lat, start.lng], 13);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap'}).addTo(LMAP);
+
+      // Pauzeer follow-me bij user-interactie, hervat na 15s
+      function pauseFollowThenResume(){
+        followMe = false;
+        if (followResumeTimer) clearTimeout(followResumeTimer);
+        followResumeTimer = setTimeout(function(){ followMe = true; }, 15000);
+      }
+      LMAP.on('movestart', pauseFollowThenResume);
+      LMAP.on('zoomstart',  pauseFollowThenResume);
+      LMAP.on('dragstart',  pauseFollowThenResume);
 
       var bounds=[];
       (DATA.stops||[]).forEach(function(s){
@@ -376,35 +381,33 @@ function playDing(){
   }
 
   // ---------- Geoloc ----------
-function tryUnlock(best, acc){
-  var effective = Math.max(0, best.d - (acc||0));
-  if(effective <= best.radius){
-    var st=store.get(); st.unlocked=st.unlocked||[];
-    var isEnd = best.id=== (DATA.meta?DATA.meta.endStopId:null);
-    if(isEnd){
-      var req = (DATA.meta && DATA.meta.requiredStops) ? DATA.meta.requiredStops : [];
-      var missing = req.filter(function(id){ return st.unlocked.indexOf(id)===-1; });
-      if(missing.length){
-        // toon welke nog ontbreken (gebruik namen)
-        var names = missing.map(function(id){
-          var s=(DATA.stops||[]).find(function(x){return x.id===id;});
-          return s ? s.naam : id;
-        }).join(', ');
-        toast('🔒 Eindlocatie pas na: '+names);
-        showDiag('Einde niet ontgrendeld; ontbreekt nog: '+names);
-        return;
+  function tryUnlock(best, acc){
+    var effective = Math.max(0, best.d - (acc||0));
+    if(effective <= best.radius){
+      var st=store.get(); st.unlocked=st.unlocked||[];
+      var isEnd = best.id=== (DATA.meta?DATA.meta.endStopId:null);
+      if(isEnd){
+        var req = (DATA.meta && DATA.meta.requiredStops) ? DATA.meta.requiredStops : [];
+        var missing = req.filter(function(id){ return st.unlocked.indexOf(id)===-1; });
+        if(missing.length){
+          var names = missing.map(function(id){
+            var s=(DATA.stops||[]).find(function(x){return x.id===id;});
+            return s ? s.naam : id;
+          }).join(', ');
+          toast('🔒 Eindlocatie pas na: '+names);
+          showDiag('Einde niet ontgrendeld; ontbreekt nog: '+names);
+          return;
+        }
+      }
+      if(st.unlocked.indexOf(best.id)===-1){
+        st.unlocked.push(best.id); store.set(st);
+        renderUnlocked(); renderStops(); toast('✅ Ontgrendeld: '+best.name);
+        playDing();
       }
     }
-    if(st.unlocked.indexOf(best.id)===-1){
-      st.unlocked.push(best.id); store.set(st);
-      renderUnlocked(); renderStops(); toast('✅ Ontgrendeld: '+best.name);
-      playDing(); // geluidje
-    }
   }
-}
-
   function startWatch(){
-    followMe=true;
+    followMe = true; // bij start weer volgen
     var gs=qs('geoState'); if(gs) gs.textContent='Actief';
     if(!('geolocation' in navigator)){ var pn=qs('permNote'); if(pn) pn.textContent=(pn.textContent||'')+' • Geen geolocatie'; return; }
     watchId = navigator.geolocation.watchPosition(function(pos){
@@ -446,101 +449,124 @@ function tryUnlock(best, acc){
     try{
       loadScenario().then(function(data){
         DATA = data;
+
         var st=store.get(); if(!st.pcId){ ensureCharacter(); }
         renderProfile(); renderStops(); renderUnlocked(); renderProgress();
+
         if (navigator.onLine) initLeafletMap();
         window.addEventListener('online', function(){ if(!LMAP) initLeafletMap(); });
+
         if('speechSynthesis' in window){ try{ pickVoice(); speechSynthesis.addEventListener('voiceschanged', pickVoice); }catch(e){} }
+
+        // Mic detecteren en UI bijwerken
+        detectMic();
+        window.addEventListener('online',  function(){ detectMic(); renderUnlocked(); });
+        window.addEventListener('offline', function(){ detectMic(); renderUnlocked(); });
 
         // Data-afhankelijke listeners
         var b;
         b=qs('regenBtn'); if(b) b.addEventListener('click', function(){ var st=store.get(); if(st.lockedPc && !window.__insideStart){ toast('🔒 Buiten startzone kan je niet wisselen.'); return; } st.pcId=null; store.set(st); ensureCharacter(); renderProfile(); renderUnlocked(); toast('🎲 Nieuw personage gekozen'); });
         b=qs('savePcBtn'); if(b) b.addEventListener('click', function(){ var st=store.get(); if(st.lockedPc && !window.__insideStart){ toast('🔒 Wijzigen kan enkel aan de start.'); return; } if(!window.__insideStart){ toast('🔐 Ga naar de startlocatie om te kiezen.'); return; } var sel=qs('pcSelect'); if(sel){ st.pcId=sel.value; store.set(st); renderProfile(); toast('✅ Personage bevestigd'); }});
- b=qs('exportBtn'); if(b) b.addEventListener('click', function(){
-  var st=store.get(); var pc=currentPc()||{}; var lines=[];
-  lines.push('# '+((DATA.meta&&DATA.meta.title)||'WOI – Mijn Personage'));
-  lines.push('Personage: '+(pc.naam||'—')+' ('+(pc.herkomst||'—')+') – '+(pc.rol||'—'));
-  lines.push('');
-  (st.unlocked||[]).forEach(function(id){
-    var stop=null; for (var i=0;i<(DATA.stops||[]).length;i++){ if (DATA.stops[i].id===id){ stop=DATA.stops[i]; break; } }
-    lines.push('## '+((stop&&stop.naam)||id));
-    lines.push(((pc.verhalen||{})[id])||'(geen tekst)');
-    if (stop && stop.vragen && stop.vragen.length){
-      lines.push('');
-      lines.push('**Reflectie**');
-      stop.vragen.forEach(function(q, qi){
-        var ans = getAns(stop.id, qi);
-        lines.push('- _'+q+'_');
-        lines.push('  - Antwoord: ' + (ans && ans.trim() ? ans.replace(/\r?\n/g,' ') : '(—)'));
-      });
-    }
-    lines.push('');
-  });
-  // UTF-8 + BOM (fix voor oudere Notepad)
-  var content = '\ufeff' + lines.join('\n');
-  var blob=new Blob([content],{type:'text/markdown;charset=utf-8'});
-  var url=URL.createObjectURL(blob); var a=document.createElement('a');
-  a.href=url; a.download='woi-voortgang.md'; a.click(); URL.revokeObjectURL(url);
-});
+        b=qs('exportBtn'); if(b) b.addEventListener('click', function(){
+          var st=store.get(); var pc=currentPc()||{}; var lines=[];
+          lines.push('# '+((DATA.meta&&DATA.meta.title)||'WOI – Mijn Personage'));
+          lines.push('Personage: '+(pc.naam||'—')+' ('+(pc.herkomst||'—')+') – '+(pc.rol||'—'));
+          lines.push('');
+          (st.unlocked||[]).forEach(function(id){
+            var stop=null; for (var i=0;i<(DATA.stops||[]).length;i++){ if (DATA.stops[i].id===id){ stop=DATA.stops[i]; break; } }
+            lines.push('## '+((stop&&stop.naam)||id));
+            lines.push(((pc.verhalen||{})[id])||'(geen tekst)');
+            if (stop && stop.vragen && stop.vragen.length){
+              lines.push('');
+              lines.push('**Reflectie**');
+              stop.vragen.forEach(function(q, qi){
+                var ans = getAns(stop.id, qi);
+                lines.push('- _'+q+'_');
+                lines.push('  - Antwoord: ' + (ans && ans.trim() ? ans.replace(/\r?\n/g,' ') : '(—)'));
+              });
+            }
+            lines.push('');
+          });
+          // UTF-8 + BOM (fix voor oudere Notepad)
+          var content = '\ufeff' + lines.join('\n');
+          var blob=new Blob([content],{type:'text/markdown;charset=utf-8'});
+          var url=URL.createObjectURL(blob); var a=document.createElement('a');
+          a.href=url; a.download='woi-voortgang.md'; a.click(); URL.revokeObjectURL(url);
+        });
 
         // Voorlezen + antwoorden (delegation op unlockList)
-var ul=qs('unlockList');
-if(ul){
-  // Voorleesknop + wissen + mic
-  ul.addEventListener('click', function(e){
-    // Voorlezen
-    var readBtn = e.target && (e.target.closest ? e.target.closest('button.readBtn') : null);
-    if(readBtn){
-      var id = readBtn.getAttribute('data-read');
-      var pc=currentPc(); var txt = pc && pc.verhalen ? pc.verhalen[id] : '';
-      if(txt){ if('speechSynthesis' in window && speechSynthesis.speaking){ speechSynthesis.cancel(); } else { speakText(txt); } }
-      return;
-    }
-    // Wissen
-    var clr = e.target && (e.target.closest ? e.target.closest('button.clearAns') : null);
-    if (clr){
-      var sid = clr.getAttribute('data-stop'), qi = parseInt(clr.getAttribute('data-q'),10);
-      setAns(sid, qi, '');
-      var ta = ul.querySelector('textarea.ans[data-stop="'+sid+'"][data-q="'+qi+'"]');
-      if(ta){ ta.value=''; ta.focus(); }
-      return;
-    }
-    // Mic (alleen als MIC_OK)
-    var mic = e.target && (e.target.closest ? e.target.closest('button.micBtn') : null);
-    if (mic){
-      if(!MIC_OK){ toast('Spraakherkenning niet beschikbaar (probeer online in Chrome).'); return; }
-      var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      var r = new Recognition(); r.lang='nl-NL'; r.interimResults=false; r.maxAlternatives=1;
-      var sid2 = mic.getAttribute('data-stop'), qi2 = parseInt(mic.getAttribute('data-q'),10);
-      r.onresult = function(ev){
-        var txt2 = ev.results[0][0].transcript || '';
-        var ta2 = ul.querySelector('textarea.ans[data-stop="'+sid2+'"][data-q="'+qi2+'"]');
-        if(ta2){ ta2.value = (ta2.value ? ta2.value+' ' : '') + txt2; setAns(sid2, qi2, ta2.value); }
-      };
-      r.onerror = function(ev){
-        var msg = (ev && ev.error) ? ev.error : 'mislukt';
-        // nuttige hints
-        if (msg==='not-allowed') msg = 'toegang geweigerd (controleer microfoonrechten)';
-        if (msg==='network') msg = 'offline? (internet vereist in Chrome)';
-        toast('🎙️ '+msg);
-      };
-      try { r.start(); toast('🎙️ Spreek maar…'); } catch(_e){ toast('🎙️ kon niet starten'); }
-      return;
+        var ul=qs('unlockList');
+        if(ul){
+          ul.addEventListener('click', function(e){
+            var readBtn = e.target && (e.target.closest ? e.target.closest('button.readBtn') : null);
+            if(readBtn){
+              var id = readBtn.getAttribute('data-read');
+              var pc=currentPc(); var txt = pc && pc.verhalen ? pc.verhalen[id] : '';
+              if(txt){ if('speechSynthesis' in window && speechSynthesis.speaking){ speechSynthesis.cancel(); } else { speakText(txt); } }
+              return;
+            }
+            var clr = e.target && (e.target.closest ? e.target.closest('button.clearAns') : null);
+            if (clr){
+              var sid = clr.getAttribute('data-stop'), qi = parseInt(clr.getAttribute('data-q'),10);
+              setAns(sid, qi, '');
+              var ta = ul.querySelector('textarea.ans[data-stop="'+sid+'"][data-q="'+qi+'"]');
+              if(ta){ ta.value=''; ta.focus(); }
+              return;
+            }
+            var mic = e.target && (e.target.closest ? e.target.closest('button.micBtn') : null);
+            if (mic){
+              if(!MIC_OK){ toast('Spraakherkenning niet beschikbaar (probeer online in Chrome).'); return; }
+              var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+              var r = new Recognition(); r.lang='nl-NL'; r.interimResults=false; r.maxAlternatives=1;
+              var sid2 = mic.getAttribute('data-stop'), qi2 = parseInt(mic.getAttribute('data-q'),10);
+              r.onresult = function(ev){
+                var txt2 = ev.results[0][0].transcript || '';
+                var ta2 = ul.querySelector('textarea.ans[data-stop="'+sid2+'"][data-q="'+qi2+'"]');
+                if(ta2){ ta2.value = (ta2.value ? ta2.value+' ' : '') + txt2; setAns(sid2, qi2, ta2.value); }
+              };
+              r.onerror = function(ev){
+                var msg = (ev && ev.error) ? ev.error : 'mislukt';
+                if (msg==='not-allowed') msg = 'toegang geweigerd (controleer microfoonrechten)';
+                if (msg==='network') msg = 'offline? (internet vereist in Chrome)';
+                toast('🎙️ '+msg);
+              };
+              try { r.start(); toast('🎙️ Spreek maar…'); } catch(_e){ toast('🎙️ kon niet starten'); }
+              return;
+            }
+          });
+          function handleSave(e){
+            var ta = e.target && e.target.matches && e.target.matches('textarea.ans');
+            if(!ta) return;
+            setAns(ta.getAttribute('data-stop'), parseInt(ta.getAttribute('data-q'),10), ta.value);
+          }
+          ul.addEventListener('input', handleSave);
+          ul.addEventListener('change', handleSave);
+          ul.addEventListener('blur', handleSave, true);
+        }
+
+        var cs=qs('cacheState'); if(cs) cs.textContent='Geïnstalleerd';
+        var d=qs('diag'); if(d){ d.style.display='block'; d.textContent='app.js geladen ✓ — listeners gebonden, klaar.'; }
+
+        window.__APP_BOUND__ = true;
+
+        // (optioneel) SW-registratie
+        if('serviceWorker' in navigator){
+          navigator.serviceWorker.register('./sw.js?v=2025-09-02-v3',{scope:'./'})
+            .then(function(){ var cs=qs('cacheState'); if(cs) cs.textContent='Geïnstalleerd'; })
+            .catch(function(){ var cs=qs('cacheState'); if(cs) cs.textContent='Niet geïnstalleerd'; });
+        }
+      }).catch(function(e){
+        showDiag('Data laden mislukte: ' + (e && e.message ? e.message : e));
+        if (window.console) console.error(e);
+      });
+    } catch(e){
+      showDiag('Boot error: ' + (e && e.message ? e.message : e));
+      if (window.console) console.error(e);
     }
   });
-
-  // Autosave: input + change + blur (voor zekerheid)
-  function handleSave(e){
-    var ta = e.target && e.target.matches && e.target.matches('textarea.ans');
-    if(!ta) return;
-    setAns(ta.getAttribute('data-stop'), parseInt(ta.getAttribute('data-q'),10), ta.value);
-  }
-  ul.addEventListener('input', handleSave);
-  ul.addEventListener('change', handleSave);
-  ul.addEventListener('blur', handleSave, true);
-}
 
   // Errors globaal tonen
   window.addEventListener('error', function(e){ showDiag('JS error: '+e.message); });
   window.addEventListener('unhandledrejection', function(e){ showDiag('Promise error: '+(e.reason && e.reason.message ? e.reason.message : e.reason)); });
+
 })();
