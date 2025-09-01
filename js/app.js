@@ -7,17 +7,17 @@
 
   // ---------- Mini helpers ----------
   function drawGeoJSONOnMap(gj, note){
-  var hasLine = false;
-  (gj.features||[]).forEach(function(f){
-    if (/LineString|MultiLineString/i.test((f.geometry && f.geometry.type) || '')) hasLine = true;
-  });
-  var layer = L.geoJSON(gj, {
-    pointToLayer: function(_f, latlng){ return L.circleMarker(latlng, { radius:3, weight:1, opacity:.9, fillOpacity:.6 }); },
-    style: function(f){ return /LineString|MultiLineString/i.test((f.geometry&&f.geometry.type)||'') ? { weight:4, opacity:.95 } : { weight:1, opacity:.6 }; }
-  }).addTo(LMAP);
-  try { LMAP.fitBounds(layer.getBounds(), { padding:[20,20] }); } catch(_e){}
-  showDiag((note||'Route') + ' → ' + (hasLine ? 'lijn getekend ✓' : 'GEEN lijn (alleen punten)'));
-}
+    var hasLine = false;
+    (gj.features||[]).forEach(function(f){
+      if (/LineString|MultiLineString/i.test((f.geometry && f.geometry.type) || '')) hasLine = true;
+    });
+    var layer = L.geoJSON(gj, {
+      pointToLayer: function(_f, latlng){ return L.circleMarker(latlng, { radius:3, weight:1, opacity:.9, fillOpacity:.6 }); },
+      style: function(f){ return /LineString|MultiLineString/i.test((f.geometry&&f.geometry.type)||'') ? { weight:4, opacity:.95 } : { weight:1, opacity:.6 }; }
+    }).addTo(LMAP);
+    try { LMAP.fitBounds(layer.getBounds(), { padding:[20,20] }); } catch(_e){}
+    showDiag((note||'Route') + ' → ' + (hasLine ? 'lijn getekend ✓' : 'GEEN lijn (alleen punten)'));
+  }
 
   function qs(id){ return document.getElementById(id); }
   function showDiag(msg){
@@ -34,18 +34,19 @@
     get: function(){ try{ return JSON.parse(localStorage.getItem('woi_state')||'{}'); }catch(e){ return {}; } },
     set: function(v){ localStorage.setItem('woi_state', JSON.stringify(v)); }
   };
+
   // Antwoorden opslaan/halen
-function escapeHtml(s){return (s||'').replace(/[&<>"']/g,function(m){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);});}
-function getAns(stopId, qi){
-  var st=store.get(); return (((st.answers||{})[stopId]||{})[qi])||'';
-}
-function setAns(stopId, qi, val){
-  var st=store.get(); st.answers=st.answers||{}; st.answers[stopId]=st.answers[stopId]||{};
-  st.answers[stopId][qi]=val; store.set(st);
-  // kleine “opgeslagen”-badge
-  var tag=document.querySelector('.saveBadge[data-stop="'+stopId+'"][data-q="'+qi+'"]');
-  if(tag){ tag.textContent='✔ opgeslagen'; setTimeout(function(){ tag.textContent=''; }, 1200); }
-}
+  function escapeHtml(s){return (s||'').replace(/[&<>"']/g,function(m){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);});}
+  function getAns(stopId, qi){
+    var st=store.get(); return (((st.answers||{})[stopId]||{})[qi])||'';
+  }
+  function setAns(stopId, qi, val){
+    var st=store.get(); st.answers=st.answers||{}; st.answers[stopId]=st.answers[stopId]||{};
+    st.answers[stopId][qi]=val; store.set(st);
+    // kleine “opgeslagen”-badge
+    var tag=document.querySelector('.saveBadge[data-stop="'+stopId+'"][data-q="'+qi+'"]');
+    if(tag){ tag.textContent='✔ opgeslagen'; setTimeout(function(){ tag.textContent=''; }, 1200); }
+  }
 
   function distanceMeters(a,b){
     var R=6371e3, φ1=a.lat*Math.PI/180, φ2=b.lat*Math.PI/180, dφ=(b.lat-a.lat)*Math.PI/180, dλ=(b.lng-a.lng)*Math.PI/180;
@@ -170,12 +171,30 @@ function setAns(stopId, qi, val){
     st.unlocked.forEach(function(id){
       var stop=null; for (var i=0;i<(DATA.stops||[]).length;i++){ if (DATA.stops[i].id===id){ stop=DATA.stops[i]; break; } }
       var txt = pc && pc.verhalen ? pc.verhalen[id] : null;
+
+      // Reflectievragen met invulvelden
       var qsArr = stop && stop.vragen ? stop.vragen : [];
-      var qHtml = (qsArr && qsArr.length)
-        ? '<div class="small" style="margin-top:6px"><b>Reflectie:</b><ul class="qs">'+qsArr.map(function(q){ return '<li>'+q+'</li>'; }).join('')+'</ul></div>'
-        : '';
-      html += '<details open><summary>📘 '+(stop?stop.naam:id)+' <button class="readBtn" data-read="'+id+'" title="Lees voor">🔊</button></summary>'
-        + '<div style="margin-top:6px">'+(txt || '<span class="muted">(Geen tekst)</span>')+'</div>'+qHtml+'</details>';
+      var qaHtml = '';
+      if (qsArr.length){
+        qaHtml = qsArr.map(function(q,qi){
+          var val = getAns(stop.id, qi);
+          return '<div class="qa">'
+            + '<div class="q"><b>Vraag '+(qi+1)+':</b> '+q+'</div>'
+            + '<div class="controls">'
+            + '  <textarea class="ans" data-stop="'+stop.id+'" data-q="'+qi+'" placeholder="Jouw antwoord...">'+escapeHtml(val)+'</textarea>'
+            + '  <button class="micBtn" data-stop="'+stop.id+'" data-q="'+qi+'" title="Spreek je antwoord in">🎙️</button>'
+            + '  <button class="clearAns" data-stop="'+stop.id+'" data-q="'+qi+'" title="Wis">✖</button>'
+            + '  <span class="saveBadge small muted" data-stop="'+stop.id+'" data-q="'+qi+'"></span>'
+            + '</div>'
+            + '</div>';
+        }).join('');
+      }
+
+      html += '<details open>'
+        + '<summary>📘 '+((stop&&stop.naam)||id)+' <button class="readBtn" data-read="'+id+'" title="Lees voor">🔊</button></summary>'
+        + '<div style="margin-top:6px">'+(txt || '<span class="muted">(Geen tekst)</span>')+'</div>'
+        + qaHtml
+        + '</details>';
     });
     cont.innerHTML=html;
     renderProgress();
@@ -231,78 +250,77 @@ function setAns(stopId, qi, val){
       });
       if(bounds.length) LMAP.fitBounds(bounds,{padding:[20,20]});
 
-// ==== ROUTE-LOADER unified (met handmatige fallback) ====
-(function(){
-  var routePath = (DATA.meta && (DATA.meta.routePath || DATA.meta.kmlPath)) ? (DATA.meta.routePath || DATA.meta.kmlPath) : null;
-  if(!routePath){ showDiag('Route: geen routePath/kmlPath in meta.json'); return; }
-  loadRouteUnified(routePath);
-})();
-function loadRouteUnified(routePath){
-  var ext = routePath.toLowerCase().endsWith('.gpx') ? 'gpx'
-          : routePath.toLowerCase().endsWith('.kml') ? 'kml' : 'unknown';
-  if (ext==='unknown'){ showDiag('Route: onbekende extensie voor '+routePath); return; }
+      // ==== ROUTE-LOADER unified (met handmatige fallback) ====
+      (function(){
+        var routePath = (DATA.meta && (DATA.meta.routePath || DATA.meta.kmlPath)) ? (DATA.meta.routePath || DATA.meta.kmlPath) : null;
+        if(!routePath){ showDiag('Route: geen routePath/kmlPath in meta.json'); return; }
+        loadRouteUnified(routePath);
+      })();
+      function loadRouteUnified(routePath){
+        var ext = routePath.toLowerCase().endsWith('.gpx') ? 'gpx'
+                : routePath.toLowerCase().endsWith('.kml') ? 'kml' : 'unknown';
+        if (ext==='unknown'){ showDiag('Route: onbekende extensie voor '+routePath); return; }
 
-  fetch(routePath, { cache:'no-store' })
-    .then(function(r){ if(!r.ok) throw new Error(routePath+' → HTTP '+r.status); return r.text(); })
-    .then(function(txt){
-      // 1) Probeer toGeoJSON (als beschikbaar)
-      try{
-        if (window.toGeoJSON){
-          var xml1 = new DOMParser().parseFromString(txt, 'text/xml');
-          var gj1  = (ext==='gpx') ? toGeoJSON.gpx(xml1) : toGeoJSON.kml(xml1);
-          if (gj1 && gj1.features && gj1.features.length){ drawGeoJSONOnMap(gj1, 'Route '+ext.toUpperCase()+' (toGeoJSON)'); return; }
-        }
-      }catch(e){ /* ga door naar fallback */ }
+        fetch(routePath, { cache:'no-store' })
+          .then(function(r){ if(!r.ok) throw new Error(routePath+' → HTTP '+r.status); return r.text(); })
+          .then(function(txt){
+            // 1) Probeer toGeoJSON (als beschikbaar)
+            try{
+              if (window.toGeoJSON){
+                var xml1 = new DOMParser().parseFromString(txt, 'text/xml');
+                var gj1  = (ext==='gpx') ? toGeoJSON.gpx(xml1) : toGeoJSON.kml(xml1);
+                if (gj1 && gj1.features && gj1.features.length){ drawGeoJSONOnMap(gj1, 'Route '+ext.toUpperCase()+' (toGeoJSON)'); return; }
+              }
+            }catch(e){ /* ga door naar fallback */ }
 
-      // 2) Handmatige fallback — GPX: <trkpt lat=… lon=…>
-      if (ext==='gpx'){
-        try{
-          var xml2 = new DOMParser().parseFromString(txt, 'text/xml');
-          var pts  = Array.prototype.slice.call(xml2.getElementsByTagNameNS('*','trkpt'));
-          var latlngs = pts.map(function(n){
-            return [parseFloat(n.getAttribute('lat')), parseFloat(n.getAttribute('lon'))];
-          }).filter(function(p){ return isFinite(p[0]) && isFinite(p[1]); });
-          if (latlngs.length>1){
-            var poly = L.polyline(latlngs, { weight:4, opacity:.95 }).addTo(LMAP);
-            try { LMAP.fitBounds(poly.getBounds(), { padding:[20,20] }); } catch(_e){}
-            showDiag('Route GPX: '+latlngs.length+' punten getekend ✓ (manual)');
-            return;
-          }
-        }catch(e){}
-        showDiag('Route GPX: geen <trkpt>-punten gevonden.');
-        return;
-      }
+            // 2) Handmatige fallback — GPX: <trkpt lat=… lon=…>
+            if (ext==='gpx'){
+              try{
+                var xml2 = new DOMParser().parseFromString(txt, 'text/xml');
+                var pts  = Array.prototype.slice.call(xml2.getElementsByTagNameNS('*','trkpt'));
+                var latlngs = pts.map(function(n){
+                  return [parseFloat(n.getAttribute('lat')), parseFloat(n.getAttribute('lon'))];
+                }).filter(function(p){ return isFinite(p[0]) && isFinite(p[1]); });
+                if (latlngs.length>1){
+                  var poly = L.polyline(latlngs, { weight:4, opacity:.95 }).addTo(LMAP);
+                  try { LMAP.fitBounds(poly.getBounds(), { padding:[20,20] }); } catch(_e){}
+                  showDiag('Route GPX: '+latlngs.length+' punten getekend ✓ (manual)');
+                  return;
+                }
+              }catch(e){}
+              showDiag('Route GPX: geen <trkpt>-punten gevonden.');
+              return;
+            }
 
-      // 3) Handmatige fallback — KML: <LineString><coordinates>lon,lat[,ele] ...</coordinates>
-      if (ext==='kml'){
-        try{
-          var xml3 = new DOMParser().parseFromString(txt, 'text/xml');
-          var coordsTags = Array.prototype.slice.call(xml3.getElementsByTagNameNS('*','coordinates'));
-          var latlngs2=[];
-          coordsTags.forEach(function(tag){
-            var pairs = (tag.textContent||'').trim().split(/\s+/);
-            pairs.forEach(function(p){
-              var parts = p.split(',');
-              var lon = parseFloat(parts[0]), lat = parseFloat(parts[1]);
-              if (isFinite(lat) && isFinite(lon)) latlngs2.push([lat,lon]);
-            });
+            // 3) Handmatige fallback — KML: <LineString><coordinates>lon,lat[,ele] ...</coordinates>
+            if (ext==='kml'){
+              try{
+                var xml3 = new DOMParser().parseFromString(txt, 'text/xml');
+                var coordsTags = Array.prototype.slice.call(xml3.getElementsByTagNameNS('*','coordinates'));
+                var latlngs2=[];
+                coordsTags.forEach(function(tag){
+                  var pairs = (tag.textContent||'').trim().split(/\s+/);
+                  pairs.forEach(function(p){
+                    var parts = p.split(',');
+                    var lon = parseFloat(parts[0]), lat = parseFloat(parts[1]);
+                    if (isFinite(lat) && isFinite(lon)) latlngs2.push([lat,lon]);
+                  });
+                });
+                if (latlngs2.length>1){
+                  var poly2 = L.polyline(latlngs2, { weight:4, opacity:.95 }).addTo(LMAP);
+                  try { LMAP.fitBounds(poly2.getBounds(), { padding:[20,20] }); } catch(_e){}
+                  showDiag('Route KML: '+latlngs2.length+' punten getekend ✓ (manual)');
+                  return;
+                }
+              }catch(e){}
+              showDiag('Route KML: geen LineString/coordinates gevonden.');
+              return;
+            }
+          })
+          .catch(function(err){
+            showDiag('Route laden faalde: '+(err && err.message ? err.message : err));
           });
-          if (latlngs2.length>1){
-            var poly2 = L.polyline(latlngs2, { weight:4, opacity:.95 }).addTo(LMAP);
-            try { LMAP.fitBounds(poly2.getBounds(), { padding:[20,20] }); } catch(_e){}
-            showDiag('Route KML: '+latlngs2.length+' punten getekend ✓ (manual)');
-            return;
-          }
-        }catch(e){}
-        showDiag('Route KML: geen LineString/coordinates gevonden.');
-        return;
       }
-    })
-    .catch(function(err){
-      showDiag('Route laden faalde: '+(err && err.message ? err.message : err));
-    });
-}
-
 
       // Live positie
       liveMarker = L.marker([0,0], { icon:iconUser, opacity:0 }).addTo(LMAP);
@@ -387,15 +405,77 @@ function loadRouteUnified(routePath){
         var b;
         b=qs('regenBtn'); if(b) b.addEventListener('click', function(){ var st=store.get(); if(st.lockedPc && !window.__insideStart){ toast('🔒 Buiten startzone kan je niet wisselen.'); return; } st.pcId=null; store.set(st); ensureCharacter(); renderProfile(); renderUnlocked(); toast('🎲 Nieuw personage gekozen'); });
         b=qs('savePcBtn'); if(b) b.addEventListener('click', function(){ var st=store.get(); if(st.lockedPc && !window.__insideStart){ toast('🔒 Wijzigen kan enkel aan de start.'); return; } if(!window.__insideStart){ toast('🔐 Ga naar de startlocatie om te kiezen.'); return; } var sel=qs('pcSelect'); if(sel){ st.pcId=sel.value; store.set(st); renderProfile(); toast('✅ Personage bevestigd'); }});
-        b=qs('exportBtn'); if(b) b.addEventListener('click', function(){ var st=store.get(); var pc=currentPc()||{}; var lines=[]; lines.push('# '+((DATA.meta&&DATA.meta.title)||'WOI – Mijn Personage')); lines.push('Personage: '+(pc.naam||'—')+' ('+(pc.herkomst||'—')+') – '+(pc.rol||'—')); lines.push(''); (st.unlocked||[]).forEach(function(id){ var stop=null; for (var i=0;i<(DATA.stops||[]).length;i++){ if (DATA.stops[i].id===id){ stop=DATA.stops[i]; break; } } lines.push('## '+((stop&&stop.naam)||id)); lines.push(((pc.verhalen||{})[id])||'(geen tekst)'); lines.push(''); }); var blob=new Blob([lines.join('\n')],{type:'text/markdown'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download='woi-voortgang.md'; a.click(); URL.revokeObjectURL(url); });
-        // Voorleesknop in ontgrendelde verhalen
-        var ul=qs('unlockList'); if(ul) ul.addEventListener('click', function(e){
-          var btn = e.target && (e.target.closest ? e.target.closest('button.readBtn') : null);
-          if(!btn) return;
-          var id = btn.getAttribute('data-read');
-          var pc=currentPc(); var txt = pc && pc.verhalen ? pc.verhalen[id] : '';
-          if(txt){ if('speechSynthesis' in window && speechSynthesis.speaking){ speechSynthesis.cancel(); } else { speakText(txt); } }
+        b=qs('exportBtn'); if(b) b.addEventListener('click', function(){
+          var st=store.get(); var pc=currentPc()||{}; var lines=[];
+          lines.push('# '+((DATA.meta&&DATA.meta.title)||'WOI – Mijn Personage'));
+          lines.push('Personage: '+(pc.naam||'—')+' ('+(pc.herkomst||'—')+') – '+(pc.rol||'—'));
+          lines.push('');
+          (st.unlocked||[]).forEach(function(id){
+            var stop=null; for (var i=0;i<(DATA.stops||[]).length;i++){ if (DATA.stops[i].id===id){ stop=DATA.stops[i]; break; } }
+            lines.push('## '+((stop&&stop.naam)||id));
+            lines.push(((pc.verhalen||{})[id])||'(geen tekst)');
+            // Reflectie met antwoorden
+            if (stop && stop.vragen && stop.vragen.length){
+              lines.push('');
+              lines.push('**Reflectie**');
+              stop.vragen.forEach(function(q, qi){
+                var ans = getAns(stop.id, qi);
+                lines.push('- _'+q+'_');
+                if (ans && ans.trim()) lines.push('  - Antwoord: ' + ans.replace(/\r?\n/g,' '));
+              });
+            }
+            lines.push('');
+          });
+          var blob=new Blob([lines.join('\n')],{type:'text/markdown'});
+          var url=URL.createObjectURL(blob); var a=document.createElement('a');
+          a.href=url; a.download='woi-voortgang.md'; a.click(); URL.revokeObjectURL(url);
         });
+
+        // Voorlezen + antwoorden (delegation op unlockList)
+        var ul=qs('unlockList');
+        if(ul){
+          // Voorleesknop
+          ul.addEventListener('click', function(e){
+            var readBtn = e.target && (e.target.closest ? e.target.closest('button.readBtn') : null);
+            if(readBtn){
+              var id = readBtn.getAttribute('data-read');
+              var pc=currentPc(); var txt = pc && pc.verhalen ? pc.verhalen[id] : '';
+              if(txt){ if('speechSynthesis' in window && speechSynthesis.speaking){ speechSynthesis.cancel(); } else { speakText(txt); } }
+              return;
+            }
+            // Wissen
+            var clr = e.target && (e.target.closest ? e.target.closest('button.clearAns') : null);
+            if (clr){
+              var sid = clr.getAttribute('data-stop'), qi = parseInt(clr.getAttribute('data-q'),10);
+              setAns(sid, qi, '');
+              var ta = ul.querySelector('textarea.ans[data-stop="'+sid+'"][data-q="'+qi+'"]');
+              if(ta){ ta.value=''; ta.focus(); }
+              return;
+            }
+            // Microfoon (optioneel)
+            var mic = e.target && (e.target.closest ? e.target.closest('button.micBtn') : null);
+            if (mic){
+              if(!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)){ toast('Spraakherkenning niet ondersteund.'); return; }
+              var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+              var r = new Recognition(); r.lang='nl-NL'; r.interimResults=false; r.maxAlternatives=1;
+              var sid2 = mic.getAttribute('data-stop'), qi2 = parseInt(mic.getAttribute('data-q'),10);
+              r.onresult = function(ev){
+                var txt2 = ev.results[0][0].transcript || '';
+                var ta2 = ul.querySelector('textarea.ans[data-stop="'+sid2+'"][data-q="'+qi2+'"]');
+                if(ta2){ ta2.value = (ta2.value ? ta2.value+' ' : '') + txt2; setAns(sid2, qi2, ta2.value); }
+              };
+              r.onerror = function(){ toast('🎙️ Mislukt'); };
+              r.start(); toast('🎙️ Spreek maar…');
+              return;
+            }
+          });
+          // Autosave bij typen
+          ul.addEventListener('input', function(e){
+            var ta = e.target && e.target.matches && e.target.matches('textarea.ans');
+            if(!ta) return;
+            setAns(ta.getAttribute('data-stop'), parseInt(ta.getAttribute('data-q'),10), ta.value);
+          });
+        }
 
         var cs=qs('cacheState'); if(cs) cs.textContent='Geïnstalleerd';
         var d=qs('diag'); if(d){ d.style.display='block'; d.textContent='app.js geladen ✓ — listeners gebonden, klaar.'; }
