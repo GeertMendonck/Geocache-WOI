@@ -60,6 +60,13 @@ function detectMic(){
   MIC_OK = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
   if (MIC_OK && !navigator.onLine) MIC_OK = false; // Chrome ASR is online
 }
+  function pauseFollowThenResume(){
+  followMe = false;
+  if (followResumeTimer) clearTimeout(followResumeTimer);
+  followResumeTimer = setTimeout(function(){ followMe = true; }, 15000);
+}
+LMAP.on('movestart zoomstart dragstart', pauseFollowThenResume);
+
 
 // --- Web Audio "ding" ---
 var audioCtx = null;
@@ -81,6 +88,8 @@ function playDing(){
   var DATA = { meta:{}, stops:[], personages:[] };
   var LMAP=null, liveMarker=null, accCircle=null, followMe=false;
   var watchId=null; window.__insideStart=false;
+  var followMe = true; // standaard aan
+  var followResumeTimer = null;
 
   // ---------- Bewijs dat script draait ----------
   (function(){
@@ -367,22 +376,35 @@ function playDing(){
   }
 
   // ---------- Geoloc ----------
-  function tryUnlock(best, acc){
-    var effective = Math.max(0, best.d - (acc||0));
-    if(effective <= best.radius){
-      var st=store.get(); st.unlocked=st.unlocked||[];
-      if(best.id=== (DATA.meta?DATA.meta.endStopId:null)){
-        var req = (DATA.meta && DATA.meta.requiredStops) ? DATA.meta.requiredStops : [];
-        var haveAll = req.every(function(id){ return st.unlocked.indexOf(id)>-1; });
-        if(!haveAll) return;
-      }
-      if(st.unlocked.indexOf(best.id)===-1){
-        st.unlocked.push(best.id); store.set(st);
-        renderUnlocked(); renderStops(); toast('✅ Ontgrendeld: '+best.name);
+function tryUnlock(best, acc){
+  var effective = Math.max(0, best.d - (acc||0));
+  if(effective <= best.radius){
+    var st=store.get(); st.unlocked=st.unlocked||[];
+    var isEnd = best.id=== (DATA.meta?DATA.meta.endStopId:null);
+    if(isEnd){
+      var req = (DATA.meta && DATA.meta.requiredStops) ? DATA.meta.requiredStops : [];
+      var missing = req.filter(function(id){ return st.unlocked.indexOf(id)===-1; });
+      if(missing.length){
+        // toon welke nog ontbreken (gebruik namen)
+        var names = missing.map(function(id){
+          var s=(DATA.stops||[]).find(function(x){return x.id===id;});
+          return s ? s.naam : id;
+        }).join(', ');
+        toast('🔒 Eindlocatie pas na: '+names);
+        showDiag('Einde niet ontgrendeld; ontbreekt nog: '+names);
+        return;
       }
     }
+    if(st.unlocked.indexOf(best.id)===-1){
+      st.unlocked.push(best.id); store.set(st);
+      renderUnlocked(); renderStops(); toast('✅ Ontgrendeld: '+best.name);
+      playDing(); // geluidje
+    }
   }
+}
+
   function startWatch(){
+    followMe=true;
     var gs=qs('geoState'); if(gs) gs.textContent='Actief';
     if(!('geolocation' in navigator)){ var pn=qs('permNote'); if(pn) pn.textContent=(pn.textContent||'')+' • Geen geolocatie'; return; }
     watchId = navigator.geolocation.watchPosition(function(pos){
