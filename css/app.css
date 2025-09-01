@@ -28,12 +28,21 @@ h2 { font-size:1.1rem; }
 
 /* Rijen mogen aflopen naar de volgende lijn */
 .row { display: flex; flex-wrap: wrap; gap: 8px; }
-
+.row > * { min-width: 0; } 
+/* 4) Het select-veld in 'Jouw personage' mag nooit breder zijn */
+#pcChooser select { display: block; width: 100%; max-width: 100%; }
 /* Debug/toast mogen breken i.p.v. het scherm op te rekken */
 #diag, #toast { overflow-wrap: anywhere; word-break: break-word; }
+/* 5) KPI-regels in 'Locatiestatus' netjes op 1 lijn zonder overflow */
+.row.kpi { align-items: center; }
+.row.kpi > div:first-child { flex: 1 1 auto; min-width: 0; }
+.row.kpi > div:last-child  { flex: 0 0 auto; text-align: right; min-width: 0; }
 
+/* 6) Kaart en kaarten passen zich aan */
+.card { width: 100%; max-width: 100%; }
 /* Kaart vult netjes de breedte, zonder over te lopen */
 #oneMap { width: 100%; height: 340px; }
+#diag, #toast { overflow-wrap: anywhere; word-break: break-word; } /* breek lange tekstjes */
 .card {
   background:var(--card);
   border-radius:14px;
