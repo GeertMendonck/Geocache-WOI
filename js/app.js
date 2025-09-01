@@ -6,6 +6,19 @@
   try { if (typeof window !== 'undefined' && typeof window.__APP_BOUND__ === 'undefined') window.__APP_BOUND__ = false; } catch(e){}
 
   // ---------- Mini helpers ----------
+  function drawGeoJSONOnMap(gj, note){
+  var hasLine = false;
+  (gj.features||[]).forEach(function(f){
+    if (/LineString|MultiLineString/i.test((f.geometry && f.geometry.type) || '')) hasLine = true;
+  });
+  var layer = L.geoJSON(gj, {
+    pointToLayer: function(_f, latlng){ return L.circleMarker(latlng, { radius:3, weight:1, opacity:.9, fillOpacity:.6 }); },
+    style: function(f){ return /LineString|MultiLineString/i.test((f.geometry&&f.geometry.type)||'') ? { weight:4, opacity:.95 } : { weight:1, opacity:.6 }; }
+  }).addTo(LMAP);
+  try { LMAP.fitBounds(layer.getBounds(), { padding:[20,20] }); } catch(_e){}
+  showDiag((note||'Route') + ' → ' + (hasLine ? 'lijn getekend ✓' : 'GEEN lijn (alleen punten)'));
+}
+
   function qs(id){ return document.getElementById(id); }
   function showDiag(msg){
     var d=qs('diag'); if(!d) return;
@@ -205,50 +218,78 @@
       });
       if(bounds.length) LMAP.fitBounds(bounds,{padding:[20,20]});
 
-// ==== ROUTE-LOADER: altijd via toGeoJSON (GPX of KML) ====
+// ==== ROUTE-LOADER unified (met handmatige fallback) ====
 (function(){
   var routePath = (DATA.meta && (DATA.meta.routePath || DATA.meta.kmlPath)) ? (DATA.meta.routePath || DATA.meta.kmlPath) : null;
   if(!routePath){ showDiag('Route: geen routePath/kmlPath in meta.json'); return; }
-
+  loadRouteUnified(routePath);
+})();
+function loadRouteUnified(routePath){
   var ext = routePath.toLowerCase().endsWith('.gpx') ? 'gpx'
           : routePath.toLowerCase().endsWith('.kml') ? 'kml' : 'unknown';
   if (ext==='unknown'){ showDiag('Route: onbekende extensie voor '+routePath); return; }
-  if (!window.toGeoJSON){ showDiag('Route: toGeoJSON ontbreekt (offline/blocked)'); return; }
 
   fetch(routePath, { cache:'no-store' })
-    .then(function(r){ if(!r.ok) throw new Error(routePath+' → '+r.status); return r.text(); })
+    .then(function(r){ if(!r.ok) throw new Error(routePath+' → HTTP '+r.status); return r.text(); })
     .then(function(txt){
-      var xml = new DOMParser().parseFromString(txt, 'text/xml');
-      var gj  = (ext==='gpx') ? toGeoJSON.gpx(xml) : toGeoJSON.kml(xml);
+      // 1) Probeer toGeoJSON (als beschikbaar)
+      try{
+        if (window.toGeoJSON){
+          var xml1 = new DOMParser().parseFromString(txt, 'text/xml');
+          var gj1  = (ext==='gpx') ? toGeoJSON.gpx(xml1) : toGeoJSON.kml(xml1);
+          if (gj1 && gj1.features && gj1.features.length){ drawGeoJSONOnMap(gj1, 'Route '+ext.toUpperCase()+' (toGeoJSON)'); return; }
+        }
+      }catch(e){ /* ga door naar fallback */ }
 
-      // splits: lijnen vs punten (diagnose)
-      var feats = (gj.features||[]);
-      var lines = [], others = [];
-      for (var i=0;i<feats.length;i++){
-        var t = (feats[i].geometry&&feats[i].geometry.type)||'';
-        (/LineString|MultiLineString/i.test(t) ? lines : others).push(feats[i]);
+      // 2) Handmatige fallback — GPX: <trkpt lat=… lon=…>
+      if (ext==='gpx'){
+        try{
+          var xml2 = new DOMParser().parseFromString(txt, 'text/xml');
+          var pts  = Array.prototype.slice.call(xml2.getElementsByTagNameNS('*','trkpt'));
+          var latlngs = pts.map(function(n){
+            return [parseFloat(n.getAttribute('lat')), parseFloat(n.getAttribute('lon'))];
+          }).filter(function(p){ return isFinite(p[0]) && isFinite(p[1]); });
+          if (latlngs.length>1){
+            var poly = L.polyline(latlngs, { weight:4, opacity:.95 }).addTo(LMAP);
+            try { LMAP.fitBounds(poly.getBounds(), { padding:[20,20] }); } catch(_e){}
+            showDiag('Route GPX: '+latlngs.length+' punten getekend ✓ (manual)');
+            return;
+          }
+        }catch(e){}
+        showDiag('Route GPX: geen <trkpt>-punten gevonden.');
+        return;
       }
 
-      if (lines.length){
-        var lineLayer = L.geoJSON({type:'FeatureCollection', features: lines}, {
-          style: { weight:4, opacity:0.95 } // kleur default Leaflet (blauw)
-        }).addTo(LMAP);
-        try { LMAP.fitBounds(lineLayer.getBounds(), { padding:[20,20] }); } catch(_e){}
-        showDiag('Route '+ext.toUpperCase()+': '+lines.length+' lijn(en) getekend ✓ · overige features: '+others.length);
-      } else {
-        // geen lijnen → toch alles tonen zodat je íets ziet
-        var lay = L.geoJSON(gj, {
-          pointToLayer: function(_f, latlng){ return L.circleMarker(latlng, { radius:3, weight:1, opacity:.9, fillOpacity:.6 }); },
-          style: { weight:1, opacity:.6 }
-        }).addTo(LMAP);
-        try { LMAP.fitBounds(lay.getBounds(), { padding:[20,20] }); } catch(_e){}
-        showDiag('Route '+ext.toUpperCase()+': GEEN lijn gevonden (alleen punten) – check export als “track/LineString”.');
+      // 3) Handmatige fallback — KML: <LineString><coordinates>lon,lat[,ele] ...</coordinates>
+      if (ext==='kml'){
+        try{
+          var xml3 = new DOMParser().parseFromString(txt, 'text/xml');
+          var coordsTags = Array.prototype.slice.call(xml3.getElementsByTagNameNS('*','coordinates'));
+          var latlngs2=[];
+          coordsTags.forEach(function(tag){
+            var pairs = (tag.textContent||'').trim().split(/\s+/);
+            pairs.forEach(function(p){
+              var parts = p.split(',');
+              var lon = parseFloat(parts[0]), lat = parseFloat(parts[1]);
+              if (isFinite(lat) && isFinite(lon)) latlngs2.push([lat,lon]);
+            });
+          });
+          if (latlngs2.length>1){
+            var poly2 = L.polyline(latlngs2, { weight:4, opacity:.95 }).addTo(LMAP);
+            try { LMAP.fitBounds(poly2.getBounds(), { padding:[20,20] }); } catch(_e){}
+            showDiag('Route KML: '+latlngs2.length+' punten getekend ✓ (manual)');
+            return;
+          }
+        }catch(e){}
+        showDiag('Route KML: geen LineString/coordinates gevonden.');
+        return;
       }
     })
     .catch(function(err){
       showDiag('Route laden faalde: '+(err && err.message ? err.message : err));
     });
-})();
+}
+
 
       // Live positie
       liveMarker = L.marker([0,0], { icon:iconUser, opacity:0 }).addTo(LMAP);
