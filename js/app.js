@@ -534,11 +534,18 @@
               return;
             }
           });
-          function handleSave(e){
-            var ta = e.target && e.target.matches && e.target.matches('textarea.ans');
-            if(!ta) return;
-            setAns(ta.getAttribute('data-stop'), parseInt(ta.getAttribute('data-q'),10), ta.value);
-          }
+ function handleSave(e){
+  var t = e.target;
+  // Zoek het dichtstbijzijnde <textarea class="ans"> (werkt ook bij blur van binnenin)
+  var ta = t && (t.matches && t.matches('textarea.ans') ? t
+            : (t.closest ? t.closest('textarea.ans') : null));
+  if(!ta || !ta.getAttribute) return; // extra safety
+
+  var stopId = ta.getAttribute('data-stop');
+  var qi     = parseInt(ta.getAttribute('data-q'), 10);
+  setAns(stopId, qi, ta.value);
+}
+
           ul.addEventListener('input', handleSave);
           ul.addEventListener('change', handleSave);
           ul.addEventListener('blur', handleSave, true);
