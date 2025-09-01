@@ -434,31 +434,32 @@ function playDing(){
         var b;
         b=qs('regenBtn'); if(b) b.addEventListener('click', function(){ var st=store.get(); if(st.lockedPc && !window.__insideStart){ toast('🔒 Buiten startzone kan je niet wisselen.'); return; } st.pcId=null; store.set(st); ensureCharacter(); renderProfile(); renderUnlocked(); toast('🎲 Nieuw personage gekozen'); });
         b=qs('savePcBtn'); if(b) b.addEventListener('click', function(){ var st=store.get(); if(st.lockedPc && !window.__insideStart){ toast('🔒 Wijzigen kan enkel aan de start.'); return; } if(!window.__insideStart){ toast('🔐 Ga naar de startlocatie om te kiezen.'); return; } var sel=qs('pcSelect'); if(sel){ st.pcId=sel.value; store.set(st); renderProfile(); toast('✅ Personage bevestigd'); }});
-        b=qs('exportBtn'); if(b) b.addEventListener('click', function(){
-          var st=store.get(); var pc=currentPc()||{}; var lines=[];
-          lines.push('# '+((DATA.meta&&DATA.meta.title)||'WOI – Mijn Personage'));
-          lines.push('Personage: '+(pc.naam||'—')+' ('+(pc.herkomst||'—')+') – '+(pc.rol||'—'));
-          lines.push('');
-          (st.unlocked||[]).forEach(function(id){
-            var stop=null; for (var i=0;i<(DATA.stops||[]).length;i++){ if (DATA.stops[i].id===id){ stop=DATA.stops[i]; break; } }
-            lines.push('## '+((stop&&stop.naam)||id));
-            lines.push(((pc.verhalen||{})[id])||'(geen tekst)');
-            // Reflectie met antwoorden
-            if (stop && stop.vragen && stop.vragen.length){
-              lines.push('');
-              lines.push('**Reflectie**');
-              stop.vragen.forEach(function(q, qi){
-                var ans = getAns(stop.id, qi);
-                lines.push('- _'+q+'_');
-                if (ans && ans.trim()) lines.push('  - Antwoord: ' + ans.replace(/\r?\n/g,' '));
-              });
-            }
-            lines.push('');
-          });
-          var blob=new Blob([lines.join('\n')],{type:'text/markdown'});
-          var url=URL.createObjectURL(blob); var a=document.createElement('a');
-          a.href=url; a.download='woi-voortgang.md'; a.click(); URL.revokeObjectURL(url);
-        });
+ b=qs('exportBtn'); if(b) b.addEventListener('click', function(){
+  var st=store.get(); var pc=currentPc()||{}; var lines=[];
+  lines.push('# '+((DATA.meta&&DATA.meta.title)||'WOI – Mijn Personage'));
+  lines.push('Personage: '+(pc.naam||'—')+' ('+(pc.herkomst||'—')+') – '+(pc.rol||'—'));
+  lines.push('');
+  (st.unlocked||[]).forEach(function(id){
+    var stop=null; for (var i=0;i<(DATA.stops||[]).length;i++){ if (DATA.stops[i].id===id){ stop=DATA.stops[i]; break; } }
+    lines.push('## '+((stop&&stop.naam)||id));
+    lines.push(((pc.verhalen||{})[id])||'(geen tekst)');
+    if (stop && stop.vragen && stop.vragen.length){
+      lines.push('');
+      lines.push('**Reflectie**');
+      stop.vragen.forEach(function(q, qi){
+        var ans = getAns(stop.id, qi);
+        lines.push('- _'+q+'_');
+        lines.push('  - Antwoord: ' + (ans && ans.trim() ? ans.replace(/\r?\n/g,' ') : '(—)'));
+      });
+    }
+    lines.push('');
+  });
+  // UTF-8 + BOM (fix voor oudere Notepad)
+  var content = '\ufeff' + lines.join('\n');
+  var blob=new Blob([content],{type:'text/markdown;charset=utf-8'});
+  var url=URL.createObjectURL(blob); var a=document.createElement('a');
+  a.href=url; a.download='woi-voortgang.md'; a.click(); URL.revokeObjectURL(url);
+});
 
         // Voorlezen + antwoorden (delegation op unlockList)
 var ul=qs('unlockList');
