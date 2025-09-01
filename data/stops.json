@@ -1,5 +1,5 @@
 [
-  {"id":"start_menenpoort","naam":"Start: Menenpoort (Ieper)","lat":51.21738787258125, "lng":4.40278127879937951.22056163775818,"radius":140,
+  {"id":"start_menenpoort","naam":"Start: Menenpoort (Ieper)","lat":51.21738787258125, "lng":4.40278127879937951,"radius":140,
    "vragen":["Welke naam of inscriptie raakte je en waarom?","Wat verwacht je vandaag te leren?"]},
   {"id":"new_irish_farm","naam":"Stop 1: New Irish Farm Cemetery","lat":50.87289,"lng":2.89736,"radius":180,
    "vragen":["Wat viel je op aan de namen of symbolen op de graven?","Welke link hoor jij tussen dit landschap en het verhaal van jouw personage?"]},
