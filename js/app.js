@@ -71,6 +71,10 @@
   // Follow-me
   var followMe = true;          // standaard aan
   var followResumeTimer = null; // auto hervatten na user-pan/zoom
+  // Keuzelijst behouden
+  var lastInsideStart = null;
+  var pcSelectBusyUntil = 0;
+
 
   // ---------- Bewijs dat script draait ----------
   (function(){
@@ -422,7 +426,13 @@
         if(!best||d<best.d) best={id:s.id,name:s.naam,d:d,radius:(s.radius||(DATA.meta?DATA.meta.radiusDefaultMeters:200))};
         if(s.id=== (DATA.meta?DATA.meta.startStopId:null)){ insideStart = d <= (s.radius||(DATA.meta?DATA.meta.radiusDefaultMeters:200)); }
       });
-      window.__insideStart = insideStart; renderCharacterChooser();
+      window.__insideStart = insideStart;
+      // Render enkel wanneer status wijzigt én de gebruiker niet net de picker open heeft
+      if (Date.now() >= pcSelectBusyUntil && insideStart !== lastInsideStart) {
+        lastInsideStart = insideStart;
+        renderCharacterChooser();
+      }
+
 
       var st=store.get(); st.flags=st.flags||{};
       if(insideStart){ st.flags.seenStart = true; store.set(st); }
@@ -452,6 +462,21 @@
 
         var st=store.get(); if(!st.pcId){ ensureCharacter(); }
         renderProfile(); renderStops(); renderUnlocked(); renderProgress();
+
+        var chooser = document.getElementById('pcChooser');
+        if (chooser) {
+          chooser.addEventListener('focusin', function(e){
+            if (e.target && e.target.id === 'pcSelect') {
+              pcSelectBusyUntil = Date.now() + 4000; // 4s rust terwijl de picker open is
+            }
+          });
+          chooser.addEventListener('touchstart', function(e){
+            if (e.target && (e.target.id === 'pcSelect' || e.target.closest && e.target.closest('#pcSelect'))) {
+              pcSelectBusyUntil = Date.now() + 4000;
+            }
+          }, {passive:true});
+        }
+
 
         if (navigator.onLine) initLeafletMap();
         window.addEventListener('online', function(){ if(!LMAP) initLeafletMap(); });
