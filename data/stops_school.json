@@ -12,7 +12,7 @@
   },
   {
     "id": "new_irish_farm",
-    "naam": "Stop 1: Sint-Lodewijk",
+    "naam": "Stop 1: Sint-Lodewijk - Secretariaat",
     "lat": 51.21742931212193,
     "lng": 4.402670253459137,
     "radius": 70,
@@ -37,7 +37,7 @@
     "naam": "Stop 3: Melkmarkt",
     "lat": 51.220737979616395,
     "lng": 4.402663358876329,
-    "radius": 100,
+    "radius": 70,
     "vragen": [
       "Werkt de kaart met je live positie correct?",
       "Blijft je personage correct vergrendeld?"
@@ -48,7 +48,7 @@
     "naam": "Stop 4: Carolus Borromeuskerk",
     "lat": 51.22103700541193,
     "lng": 4.4043799725602755,
-    "radius": 100,
+    "radius": 70,
     "vragen": [
       "Werken de reflectievelden en de voorleesknop goed?",
       "Wat zou je nog willen aanpassen?"
