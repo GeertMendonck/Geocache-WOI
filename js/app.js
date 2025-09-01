@@ -34,6 +34,19 @@
     get: function(){ try{ return JSON.parse(localStorage.getItem('woi_state')||'{}'); }catch(e){ return {}; } },
     set: function(v){ localStorage.setItem('woi_state', JSON.stringify(v)); }
   };
+  // Antwoorden opslaan/halen
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,function(m){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);});}
+function getAns(stopId, qi){
+  var st=store.get(); return (((st.answers||{})[stopId]||{})[qi])||'';
+}
+function setAns(stopId, qi, val){
+  var st=store.get(); st.answers=st.answers||{}; st.answers[stopId]=st.answers[stopId]||{};
+  st.answers[stopId][qi]=val; store.set(st);
+  // kleine “opgeslagen”-badge
+  var tag=document.querySelector('.saveBadge[data-stop="'+stopId+'"][data-q="'+qi+'"]');
+  if(tag){ tag.textContent='✔ opgeslagen'; setTimeout(function(){ tag.textContent=''; }, 1200); }
+}
+
   function distanceMeters(a,b){
     var R=6371e3, φ1=a.lat*Math.PI/180, φ2=b.lat*Math.PI/180, dφ=(b.lat-a.lat)*Math.PI/180, dλ=(b.lng-a.lng)*Math.PI/180;
     var s=Math.sin(dφ/2)*Math.sin(dφ/2)+Math.cos(φ1)*Math.cos(φ2)*Math.sin(dλ/2)*Math.sin(dλ/2);
