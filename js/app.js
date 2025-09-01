@@ -54,6 +54,28 @@
     return 2*R*Math.asin(Math.sqrt(s));
   }
   function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+// --- MIC detectie (aan/uit bij online/offline) ---
+var MIC_OK = false;
+function detectMic(){
+  MIC_OK = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  if (MIC_OK && !navigator.onLine) MIC_OK = false; // Chrome ASR is online
+}
+
+// --- Web Audio "ding" ---
+var audioCtx = null;
+function initAudio(){ try { audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} }
+function playDing(){
+  if(!audioCtx) return;
+  var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = 'sine'; o.frequency.value = 880;
+  o.connect(g); g.connect(audioCtx.destination);
+  var t = audioCtx.currentTime;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.08, t+0.01);
+  o.start(t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+0.20);
+  o.stop(t+0.21);
+}
 
   // ---------- Globale state ----------
   var DATA = { meta:{}, stops:[], personages:[] };
