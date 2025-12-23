@@ -177,7 +177,7 @@
     if(img){
       img.style.display = 'block';
       img.alt = 'Portret van ' + (pc.naam || 'personage');
-      img.src = './data/personages/' + pc.id + '.png';
+      img.src = './data/Personages/' + pc.id + '.png';
   
       img.onerror = function(){
         // als er geen image is, verberg hem netjes (of zet hier een placeholder)
