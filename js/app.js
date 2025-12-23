@@ -258,13 +258,22 @@
     renderProgress();
   }
   function renderProgress(){
-    var st=store.get(); var req=(DATA.meta && DATA.meta.requiredStops) ? DATA.meta.requiredStops : [];
-    var done=(st.unlocked||[]).filter(function(id){ return req.indexOf(id)>-1; }).length;
-    var total=req.length; var deg= total ? (done/total)*360 : 0;
+    var st=store.get();
+    var req=(DATA.meta && DATA.meta.requiredStops) ? DATA.meta.requiredStops : [];
+    var unlocked = st.unlocked || [];
+  
+    var done=0;
+    for (var i=0;i<req.length;i++){
+      if (reqIsDone(req[i], unlocked)) done++;
+    }
+  
+    var total=req.length;
+    var deg= total ? (done/total)*360 : 0;
     var ring=qs('progressRing'), txt=qs('progressText');
     if(ring) ring.style.background = 'conic-gradient(var(--accent) '+deg+'deg, rgba(255,255,255,.15) 0 360deg)';
     if(txt) txt.textContent = done+'/'+total;
   }
+  
 
   // ---------- TTS ----------
   var selectedVoice=null;
@@ -426,16 +435,17 @@
       var isEnd = best.id=== (DATA.meta?DATA.meta.endStopId:null);
       if(isEnd){
         var req = (DATA.meta && DATA.meta.requiredStops) ? DATA.meta.requiredStops : [];
-        var missing = req.filter(function(id){ return st.unlocked.indexOf(id)===-1; });
-        if(missing.length){
-          var names = missing.map(function(id){
-            var s=(DATA.stops||[]).find(function(x){return x.id===id;});
-            return s ? s.naam : id;
-          }).join(', ');
-          toast('🔒 Eindlocatie pas na: '+names);
-          showDiag('Einde niet ontgrendeld; ontbreekt nog: '+names);
-          return;
-        }
+var missingReq = [];
+for (var i=0;i<req.length;i++){
+  if (!reqIsDone(req[i], st.unlocked||[])) missingReq.push(req[i]);
+}
+if(missingReq.length){
+  var names = missingReq.map(reqDisplayName).join(', ');
+  toast('🔒 Eindlocatie pas na: '+names);
+  showDiag('Einde niet ontgrendeld; ontbreekt nog: '+names);
+  return;
+}
+
       }
       if(st.unlocked.indexOf(best.id)===-1){
         st.unlocked.push(best.id); store.set(st);
@@ -630,6 +640,31 @@
       if (window.console) console.error(e);
     }
   });
+  function reqIsDone(req, unlocked){
+    // req = "id" of ["id1","id2",...]
+    if (Array.isArray(req)){
+      for (var i=0;i<req.length;i++){
+        if (unlocked.indexOf(req[i])>-1) return true;
+      }
+      return false;
+    }
+    return unlocked.indexOf(req)>-1;
+  }
+  
+  function reqDisplayName(req){
+    // Voor de toast bij ontbrekende stops
+    if (Array.isArray(req)){
+      var names = req.map(function(id){
+        var s=(DATA.stops||[]).find(function(x){ return x.id===id; });
+        return s ? s.naam : id;
+      });
+      return names.join(' of ');
+    } else {
+      var s2=(DATA.stops||[]).find(function(x){ return x.id===req; });
+      return s2 ? s2.naam : req;
+    }
+  }
+  
 
   // Errors globaal tonen
   window.addEventListener('error', function(e){ showDiag('JS error: '+e.message); });

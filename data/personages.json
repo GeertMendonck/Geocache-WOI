@@ -1,260 +1,376 @@
 [
-      {"id":"aminata_diop","naam":"Aminata Diop","herkomst":"Saint-Louis, Senegal","leeftijd":22,"rol":"Verpleegster (Rode Kruis)","bio":"Verzorgde gewonden in veldhospitalen rond Ieper.","verhalen":{
-        "start_menenpoort":"Ik ben Aminata, dochter van een kleermaker uit Saint-Louis. Toen de oorlog kwam, zocht het Rode Kruis handen die konden verzorgen en harten die niet te snel braken. Ik dacht dat brieven schrijven voor gewonden mijn zwaarste taak zou zijn, tot ik leerde hoe stilte in een tent zwaarder kan wegen dan ieder verband.",
-        "new_irish_farm":"De Ierse jongens vroegen eerst om thee. Daarna om tijd. Loopgraafvoet, schrammen, koorts — en altijd modder. Ik leerde voeten drogen met zachte doeken en de blik af te wenden wanneer schaamte harder prikte dan jodium.",
-        "langemark":"We ruilden steriele doeken met een Duitse verpleger, kort en woordeloos. Aan beide kanten waren de handen even moe en even menselijk. In de schemer van de verbandtent leek het front heel even een gangpad in een ziekenhuis.",
-        "tyne_cot":"De brancards bleven komen. Morfine was schaars, hoop nog schaarser. Ik schreef voor wie niet meer kon: ‘Lieve moeder, maak u geen zorgen.’ De jongen die het dicteerde kneep mijn hand tot de woorden ophielden.",
-        "passchendaele_museum":"Achter glas blinken instrumenten schoon, maar ik hoor er de zenuwachtige ademhaling bij. Ik zie polsbandjes, etiketten, flessenkurken — kleine beloftes dat we ons best deden, ook als het niet genoeg was.",
-        "end_menenpoort":"Hier, tussen namen zonder graf, denk ik aan alle brieven die nooit verstuurd raakten. Ik vouw mijn herinneringen dicht zoals ik ooit gaas dichtvouwde: zorgvuldig, met de wens dat het iemand minder pijn doet."
-      }},
-      {"id":"youssef_ben_salah","naam":"Youssef ben Salah","herkomst":"Fès, Marokko","leeftijd":19,"rol":"Tirailleur (Frans)","bio":"Kwam in 1917 naar het Westelijk Front als versterking.","verhalen":{
-        "start_menenpoort":"Ik ben Youssef, zoon van een leerbewerker. Vrijwilliger uit Fès, overtuigd dat moed overal dezelfde taal spreekt. In Ieper voelde ik me klein tussen bogen en namen; ik herkende geen enkel woord, maar ik begreep de stilte.",
-        "new_irish_farm":"We ploeterden door aarde die aan je laarzen trok alsof ze je wilde houden. Het bevel was eenvoudig: vooruit. Ik droeg munitie, water, soms mijn eigen angst, en leerde dat zingen in het Arabisch ook warmte kan geven in een Vlaamse regenbui.",
-        "langemark":"Een Duitse gevangene vroeg om brood. Ik gaf hem een stuk en hij gaf me een woord terug — ‘danke’. Het klonk vreemd in mijn mond, maar menselijk in mijn oren. Voor heel even leek het front geen grens.",
-        "tyne_cot":"We telden niet meer in dagen maar in granaten. Een vriend verdween in rook zonder afscheid. Ik schreef zijn naam op een papiertje en stopte het bij mijn Koran, alsof papier kon bewaren wat de modder rooft.",
-        "passchendaele_museum":"Een bajonet achter glas is lichter dan in je handen. Ik raak het glas niet aan; sommige dingen houd je beter op afstand, anders kom je ze weer tegen in je slaap.",
-        "end_menenpoort":"Als ik terugkijk, vraag ik niet waarom ik bleef leven. Ik vraag wat ik met dat leven zal doen zodat zijn naam, die op mijn papiertje staat, blijft bestaan."
-      }},
-      {"id":"stanislaw_nowak","naam":"Stanisław Nowak","herkomst":"Koninkrijk Galicië en Lodomerië, Oostenrijk-Hongarije","leeftijd":21,"rol":"Artilleriehelper","bio":"Boerenzoon met een liefde voor techniek.","verhalen":{
-        "start_menenpoort":"Stanisław, zoon van een smid. Ik werd opgeleid bij de artillerie omdat ik snel begreep hoe katrollen en hulsliften werkten. Onder deze poort klinkt de stad als een grote klok: iedere echo tikt een naam aan.",
-        "new_irish_farm":"Het verzetten van een houwitser lijkt op ploegen: langzaam, samen, en met blaren. Ik leerde schatten zonder meetlint, voelen zonder te kijken. Soms wist ik aan de trilling al genoeg.",
-        "langemark":"Tussen twee beschietingen durfde iemand viool te spelen. Een melodie zonder vlag of rang. Even telde ik geen afstand in meters maar in maten.",
-        "tyne_cot":"Elke granaat heeft een nummer, maar geen geweten. Ik droeg hulzen weg en vroeg me af hoeveel stilte ze zouden achterlaten. Als de batterij zweeg, hoorde ik mijn hart eindelijk in een normaal tempo.",
-        "passchendaele_museum":"Instrumenten met naalden en wijzers fascineren me nog steeds. Ze meten, maar ze begrijpen niet. Misschien is dat beter zo.",
-        "end_menenpoort":"Ik wil na de oorlog machines maken die bouwen. Tandwielen die graan malen. Krachten die mensen optillen in plaats van neerhalen."
-      }},
-      {"id":"margot_vandamme","naam":"Margot Vandamme","herkomst":"Ieper, België","leeftijd":18,"rol":"Burger – brievenschrijfster","bio":"Schreef brieven voor gewonden die zelf niet meer konden.","verhalen":{
-        "start_menenpoort":"Ik ben Margot, dochter van een kruidenier. In de verbandpost vroeg een verpleger of ik wilde helpen schrijven. ‘Zij dicteren, jij noteert.’ Soms waren het drie woorden. Soms een hele avond stilte.",
-        "new_irish_farm":"Een Ierse jongen lachte om mijn accent toen ik ‘ma’ voorlas. Daarna beet hij op zijn lip om het huilen tegen te houden. Ik zette mijn hand op de rand van zijn bed en deed alsof we allebei sterk waren.",
-        "langemark":"De zwarte kruisen stonden dicht bij elkaar. Ik dacht aan hoe klein mensen worden als je ze alleen nog als naam leest. Ik stak een lintje in mijn zak, niet wetend voor wie ik het bewaarde.",
-        "tyne_cot":"Een Canadese verpleegster gaf me een stukje blauw lint. ‘Voor moed,’ zei ze. Ik had geen geweer, maar ik droeg het toch.",
-        "passchendaele_museum":"In een vitrine ligt een veldfles zoals mijn broer er een had. Ik zie mijn eigen gezicht in het glas weerspiegeld en vraag me af of herinneringen zwaarder worden of lichter door de jaren.",
-        "end_menenpoort":"Ik leg het lintje neer zonder naam. Voor de jongen, voor mijn broer, voor wie nooit werd voorgelezen. Soms is herdenken niets anders dan hardop blijven schrijven."
-      }},
-      {"id":"harinder_singh","naam":"Harinder Singh","herkomst":"Punjab, Brits-Indië","leeftijd":23,"rol":"Sikh infanterist","bio":"Diende in het Britse leger, hield vast aan geloof en turban.","verhalen":{
-        "start_menenpoort":"Ik ben Harinder. Mijn vader vertelde dat eer rechtop begint: in je rug en in je turban. Ik stapte aan boord omdat dienstplicht hier plicht heet en thuis eer.",
-        "new_irish_farm":"Modder maakt geen onderscheid. Ik deelde mijn brood en kreeg een grap terug. Voor even proefde ik thuis in een lach die ik niet helemaal begreep.",
-        "langemark":"Een kamerad vroeg of mijn haar nooit lastig was. Ik zei dat geloof je rug recht houdt, ook als je handen trillen. Hij knikte en reikte me draad aan om mijn turban opnieuw te winden.",
-        "tyne_cot":"Een scherf scheurde stof, niet huid. Ik dankte zacht, streek mijn tulband glad en keek of iedereen nog stond. Je telt je zegeningen soms in inches.",
-        "passchendaele_museum":"Een uniformpop staart de zaal in. Ik raak niets aan. Ik denk aan handen wassen met weinig water en toch proberen schoon te blijven van binnen.",
-        "end_menenpoort":"Ik spreek een kort gebed, niet voor overwinning, maar voor rust. Voor wie viel, en voor wie bleef dragen."
-      }},
-      {"id":"elsa_stein","naam":"Elsa Stein","herkomst":"Keulen, Duitsland","leeftijd":20,"rol":"Geneeskundestudente (vrijwilliger)","bio":"Kreeg opleiding in noodhospitaal net over de grens.","verhalen":{
-        "start_menenpoort":"Elsa, tweedejaars geneeskunde. Ik dacht dat anatomieboeken me zouden beschermen tegen echte wonden. De oorlog leerde me dat kennis helpt, maar dat handen het moeten doen.",
-        "new_irish_farm":"In de ochtend oefenden we hechtingen op sinaasappels. In de middag niet meer. Ik telde naalden alsof tellen controle gaf.",
-        "langemark":"Mijn accent maakte me verdacht. Toch hield iemand het gordijn open terwijl ik werkte. Ik keek niet op. Pijn heeft geen uniform.",
-        "tyne_cot":"Koorts, pols, adem — ritme tegen paniek. Soms hielp het een mens te vertellen wat ik aan het doen was, alsof uitleg zelf een medicijn was.",
-        "passchendaele_museum":"Instrumenten liggen stil, maar ik hoor nog de snelle adempjes van wie bang is. Ik hoop dat niemand ooit zal denken dat we niet probeerden.",
-        "end_menenpoort":"Ik keer terug naar de studie met handen die te veel hebben aangeraakt en een hart dat niet wil verharden. Misschien is dat genoeg."
-      }},
-      {"id":"mehmet_arslan","naam":"Mehmet Arslan","herkomst":"Ankara, Ottomaanse Rijk","leeftijd":26,"rol":"Sappeur","bio":"Groef en timmerde, vaak dichterbij dan goed was.","verhalen":{
-        "start_menenpoort":"Mehmet, zoon van een timmerman. Ik werd sappeur omdat ik recht kan zagen, ook als de grond beeft. Hier kijk ik naar bogen en denk ik aan draagkracht: wat houdt en wat breekt.",
-        "new_irish_farm":"Steunbalken kraken eerlijk; ze liegen niet. Ik klopte ze vast met een ritme dat luider was dan mijn gedachten.",
-        "langemark":"Tabak ruilen voor spijkers lijkt dwaas, totdat je dakbalken wil die blijven hangen. Ik stak een extra nagel waar niemand hem zag, gewoon voor de zekerheid.",
-        "tyne_cot":"Ondergronds klinkt oorlog als een verre onweer. Je leert luisteren naar zand dat beweegt, naar planken die ademen.",
-        "passchendaele_museum":"Een maquette van loopgraven ziet er netjes uit. In het echt is niets netjes behalve de discipline om terug te komen als iets los zit.",
-        "end_menenpoort":"Na dit alles wil ik huizen stutten die nooit meer hoeven te schuilen. Het is een bescheiden droom, maar hij draagt ver."
-      }},
-      {"id":"hua_zheng","naam":"Hua Zheng","herkomst":"Shandong, China","leeftijd":24,"rol":"Chinese Labour Corps","bio":"Arbeider aan wegen, sporen en logistiek.","verhalen":{
-        "start_menenpoort":"Ik ben Hua. In mijn dorp zei men: ‘Wie werkt met twee handen, reist ver.’ Ik tekende voor arbeid, niet voor oorlog, en toch droeg ik haar elke dag.",
-        "new_irish_farm":"Kratten sjouwen werd een lied zonder woorden: tillen, stappen, neerzetten, ademen. Aan het eind van de dag proefde ik stof, zout en soms een grap die overleefde.",
-        "langemark":"Ik leerde ‘dank u’ zeggen met een vreemd accent en iemand leerde mij ‘xie xie’ terug. We lachten omdat we allebei fout zaten en toch begrepen wat bedoeld werd.",
-        "tyne_cot":"We legden kiezels recht tussen witte stenen. Het gaf rust om iets te ordenen in een wereld die uit de maat was.",
-        "passchendaele_museum":"Op een foto zie ik gezichten die op de mijne lijken, maar donkerder van de modder. Ik vraag me af of iemand onze namen zal herinneren als het werk klaar is.",
-        "end_menenpoort":"Misschien is dit de plek waar arbeid ook herdenking wordt. Ik denk aan een weg die naar huis leidt, strak en vlak, zonder kraters."
-      }},
-      {"id":"aileen_omalley","naam":"Aileen O’Malley","herkomst":"Cork, Ierland","leeftijd":19,"rol":"Veldtelefoniste","bio":"Onderhield lijnen onder gevaarlijk vuur.","verhalen":{
-        "start_menenpoort":"Aileen, veldtelefoniste. Mijn werk was luisteren, knopen leggen en hopen dat stemmen elkaar bleven vinden. Ik leerde dat een rechte lijn soms de gevaarlijkste weg is.",
-        "new_irish_farm":"Een lijn brak, natuurlijk net wanneer het dringend was. Ik knoopte met stijve vingers en bad dat de vonk niet langs mij koos om over te springen.",
-        "langemark":"Aan de andere kant van de draad klonk iemand met een zwaar accent. ‘Linie vrij?’ vroeg hij. ‘Nog wel,’ antwoordde ik. Voor even waren we alleen techniek.",
-        "tyne_cot":"De stilste momenten zijn het luidst in je hoofd. Soms hield ik de koptelefoon net even van mijn oor, niet uit angst, maar om weer te kunnen tellen.",
-        "passchendaele_museum":"De telefooncentrale in de vitrine ruikt vast niet meer naar bakeliet en zweet. Ik weet nog hoe de schakelaars aanvoelden, als kleine beslissingen.",
-        "end_menenpoort":"‘Lijn hersteld,’ zeg ik zacht. Niet voor een officier, maar voor iedereen die nog iets wil zeggen tegen wie er niet meer is."
-      }},
-      {"id":"marcel_dupont","naam":"Marcel Dupont","herkomst":"Lille, Frankrijk","leeftijd":25,"rol":"Poilu (infanterist)","bio":"Doorstond de modder met droge humor.","verhalen":{
-        "start_menenpoort":"Marcel hier. Ik hield van brood met te veel korst en grappen met te weinig punt. Toen we marcheerden, zei ik dat de modder bang voor mij was. Ze lachte niet terug.",
-        "new_irish_farm":"We deelden sigaretten en schunnige liedjes, alsof lucht beter ademt met branie. De nacht was koud en de grappen warmden net genoeg.",
-        "langemark":"Iemand tekende thuis in mijn notitieboekje. Een straat, een vrouw achter een raam. Als ik het dichtklapte, voelde ik haar niet meer roepen dat ik moest eten.",
-        "tyne_cot":"— Hier neemt Louise, Marcels zus, over. Hij viel bij een aanval; de brief zei ‘onmiddellijk’ en ‘zonder pijn’. Later vond ik zijn boekje terug, nat en toch leesbaar. Ik blader erin alsof hij nog even moet lachen om iets wat ik niet snap.",
-        "passchendaele_museum":"Ik, Louise, sta hier en herken een gasmasker dat muf ruikt in mijn herinnering. Niet omdat ik het droeg, maar omdat Marcel erover schreef: dat je ademhalen dan ineens werk wordt.",
-        "end_menenpoort":"Ik leg zijn naam tussen andere namen. Ik weet niet of hij bang was. Ik weet wel dat hij altijd zei dat modder bang voor hem was. Misschien heeft hij het gewonnen."
-      }},
-      {"id":"anna_kowalska","naam":"Anna Kowalska","herkomst":"Łódź, Polen","leeftijd":22,"rol":"Chauffeuse (ambulance)","bio":"Reed gewonden over hobbelige wegen naar hulp.","verhalen":{
-        "start_menenpoort":"Anna, dochter van een wever. Ik leerde rijden op vrachtwagens die liever bleven staan. In oorlogstijd heet vooruitgang soms gewoon ‘in z’n twee en hopen’.",
-        "new_irish_farm":"Mijn lading ademde en kreunde. Bochten moesten zacht, anders deed ik meer kwaad dan goed. Ik praatte tegen de motor alsof hij een koppig paard was.",
-        "langemark":"Een paard stond echt midden op de weg. Ik legde mijn hand op zijn hals en beloofde niets, en toch ging hij opzij. Een soldaat lachte dat ik talen sprak die hij niet kende.",
-        "tyne_cot":"Banden plakken bij maanlicht is geduld oefenen. Ik telde tot honderd bij iedere slag van de pomp, zoals mijn moeder telt als ze bidt.",
-        "passchendaele_museum":"De ambulance in de zaal is kleiner dan ik me herinner. Misschien ben ik groter geworden, of is het verleden altijd net te knus in vitrines.",
-        "end_menenpoort":"Ik zet in gedachten de motor uit. Even niets dat trilt. Alleen adem, en de weg naar huis die stil voor me ligt."
-      }},
-      {"id":"ivan_petrov", "naam":"Ivan Petrov",
-        "herkomst":"Smolensk, Rusland",
-        "leeftijd":27,
-        "rol":"Krijgsgevangene (arbeidsdetachement)",
-        "bio":"Russische soldaat die na gevangenneming werd ingezet voor zware arbeid.",
-        "verhalen":{
-          "start_menenpoort":"Ik ben Ivan. Ooit droeg ik een uniform met knopen die te los zaten. Nu draag ik een schop. Onder deze poort hoor ik talen die ik niet ken, maar stilte klinkt overal hetzelfde.",
-          "new_irish_farm":"Wij groeven drainage, zodat anderen droge voeten zouden houden. Modder vreet zich vast, zelfs aan herinneringen. Soms telde ik slagen om niet aan thuis te denken.",
-          "langemark":"Ik zag kruisen zonder namen en dacht aan mijn moeder. Ze zei altijd dat niemand echt verdwijnt zolang iemand zijn naam fluistert. Ik fluisterde er vandaag veel.",
-          "tyne_cot":"De witte stenen staan recht, alsof ze op appèl wachten. Wij stonden ook ooit zo. Nu leer ik dat orde kan blijven bestaan, zelfs als mensen breken.",
-          "passchendaele_museum":"Een kaart toont frontlijnen alsof het potloodstrepen zijn. Geen streep laat zien hoe honger voelt of hoe zwaar wachten weegt.",
-          "end_menenpoort":"Ik weet niet of mijn naam hier ooit zal staan. Maar ik heb hem zelf onthouden, elke dag opnieuw."
-        }},
-      {
-  "id":"thomas_wilkins",
-  "naam":"Thomas Wilkins",
-  "herkomst":"Leeds, Engeland",
-  "leeftijd":34,
-  "rol":"Legerkok",
-  "bio":"Zorgde voor warme maaltijden dicht bij het front.",
-  "verhalen":{
-    "start_menenpoort":"Thomas Wilkins. Mijn wapen was een pollepel. Onder deze poort ruikt niets naar soep, maar ik proef toch zout — misschien van tranen die niemand ziet.",
-    "new_irish_farm":"Koken voor honderden betekent rekenen met tekorten. Te weinig vlees, te veel honger. Ik leerde water verdikken tot hoop.",
-    "langemark":"Een extra lepel voor wie het stilste was. Niemand zei dank u, maar kommen werden leeg teruggebracht. Dat was genoeg.",
-    "tyne_cot":"Ik bracht soep naar brancards. Sommigen konden niet meer slikken. Dan bleef ik staan tot de stoom verdwenen was.",
-    "passchendaele_museum":"De veldkeuken blinkt hier. In het echt was ze zwart van rook. Maar warmte is warmte, zelfs als ze er moe uitziet.",
-    "end_menenpoort":"Als ik hier sta, denk ik niet aan strijd. Ik denk aan tafels. Ooit zet ik er weer een, zonder haast."
-  }},
-      {
-  "id":"julie_vermeulen",
-  "naam":"Julie Vermeulen",
-  "herkomst":"Poperinge, België",
-  "leeftijd":20,
-  "rol":"Teruggekeerde vluchtelinge",
-  "bio":"Vluchte als tiener en keerde terug na de verwoesting.",
-  "verhalen":{
-    "start_menenpoort":"Ik ben Julie. Ik vertrok met één koffer en kwam terug met stilte. Deze poort kende mij vroeger niet, nu herken ik mezelf er niet meer.",
-    "new_irish_farm":"Waar velden waren, liggen nu kuilen. Ik stapte voorzichtig, alsof de grond zich nog kon bedenken.",
-    "langemark":"Ik zocht ons huis tussen namen en vond alleen richtingen. Iemand zei dat herinneringen ook een vorm van thuis zijn.",
-    "tyne_cot":"De stenen zijn proper. Mijn dorp was dat niet. Maar misschien begint herstel met rechte lijnen.",
-    "passchendaele_museum":"Ik zie maquettes van straten die ik kende. Ze passen in een vitrine. Mijn jeugd niet.",
-    "end_menenpoort":"Ik blijf. Niet omdat het makkelijk is, maar omdat vertrekken al gebeurd is."
-  }},
-      {
-  "id":"sipho_mbeki",
-  "naam":"Sipho Mbeki",
-  "herkomst":"Kaapstad, Unie van Zuid-Afrika",
-  "leeftijd":22,
-  "rol":"Brancardier",
-  "bio":"Vrijwilliger die gewonden evacueerde onder vuur.",
-  "verhalen":{
-    "start_menenpoort":"Sipho. Thuis keek ik uit over zee. Hier kijk ik naar namen. Ze bewegen niet, maar ze spreken luid.",
-    "new_irish_farm":"Tillen is ritme: samen ademen, samen stappen. Wie valt, dragen we hoger.",
-    "langemark":"Een man greep mijn mouw en vroeg of ik bleef. Ik bleef tot hij sliep.",
-    "tyne_cot":"Sommigen haalden het niet. Ik legde hen neer alsof ik hen kende.",
-    "passchendaele_museum":"Een brancard achter glas weegt niets. In mijn armen woog ze alles.",
-    "end_menenpoort":"Ik heb geen graf om te bezoeken. Alleen deze plek waar ik mag blijven dragen, in gedachten."
-  }},
-      {
-  "id":"lucien_moreau",
-  "naam":"Lucien Moreau",
-  "herkomst":"Tours, Frankrijk",
-  "leeftijd":28,
-  "rol":"Militair fotograaf",
-  "bio":"Legde het front vast, maar worstelde met wat niet op beeld paste.",
-  "verhalen":{
-    "start_menenpoort":"Lucien. Mijn camera zag meer dan ik wilde onthouden. Hier zie ik niets door een lens, en toch blijft alles scherp.",
-    "new_irish_farm":"Ik stelde scherp op gezichten die niet wilden blijven staan. Soms klikte ik te laat.",
-    "langemark":"Rook is lastig. Hij verbergt en onthult tegelijk. Net als herinneringen.",
-    "tyne_cot":"Ik nam geen foto’s van graven. Ik kende mijn grens.",
-    "passchendaele_museum":"Mijn beelden hangen hier misschien. Ik kijk liever naar de schaduwen ernaast.",
-    "end_menenpoort":"Sommige dingen leg je vast door ze niet meer vast te leggen."
-  }},
   {
-    "id":"ernesto_garcia",
-    "naam":"Ernesto García",
-    "herkomst":"Buenos Aires, Argentinië",
-    "leeftijd":24,
-    "rol":"Vrijwilliger – Rode Kruis chauffeur",
-    "bio":"Reed ambulances voor het Rode Kruis, ver van huis.",
-    "verhalen":{
-      "start_menenpoort":"Ik ben Ernesto. In Buenos Aires rook de haven naar koffie en olie. Hier ruikt alles naar steen en regen. Ik volgde de oorlog omdat hij overal sporen naliet, zelfs thuis.",
-      "new_irish_farm":"De weg was smal en kapot. Ik reed traag, luisterde naar het ritme van de motor en hoopte dat hij mij begreep zoals ik hem begreep.",
-      "langemark":"Een kaart zegt waar je bent. Een weg vertelt hoe je er geraakt. Vandaag koos ik voor de weg die minder trilde.",
-      "tyne_cot":"Ik zette de motor af naast rijen stenen. Het voelde ongepast om lawaai te maken op een plek waar alles fluistert.",
-      "passchendaele_museum":"De ambulance hier is stil en proper. De mijne was nooit stil. Zelfs niet als ik hem parkeerde.",
-      "end_menenpoort":"Ik kijk omhoog en denk aan reizen zonder sirenes. Ooit rijd ik weer gewoon, zonder bestemming die pijn doet."
+    "id": "aminata_diop",
+    "naam": "Aminata Diop",
+    "herkomst": "Saint-Louis, Senegal",
+    "leeftijd": 22,
+    "rol": "Verpleegster (Rode Kruis)",
+    "bio": "Verzorgde gewonden in veldhospitalen rond Ieper.",
+    "verhalen": {
+      "start_menenpoort": "Ik ben Aminata, dochter van een kleermaker uit Saint-Louis. Toen de oorlog kwam, zocht het Rode Kruis handen die konden verzorgen en harten die niet te snel braken. Ik dacht dat brieven schrijven voor gewonden mijn zwaarste taak zou zijn, tot ik leerde hoe stilte in een tent zwaarder kan wegen dan ieder verband. Soms is de echte pijn niet wat je ziet, maar wat je niet meer durft te vragen.",
+      "new_irish_farm": "De Ierse jongens vroegen eerst om thee. Daarna om tijd. Loopgraafvoet, schrammen, koorts — en altijd modder. Ik leerde voeten drogen met zachte doeken en de blik af te wenden wanneer schaamte harder prikte dan jodium. En wanneer iemand ‘dank u’ zei alsof het een gebed was, wist ik dat mijn handen even belangrijk waren als alle geweren samen.",
+      "flanders_fields_museum": "In het museum is alles netjes gerangschikt, alsof je chaos in lades kunt stoppen. Ik herken brancardlabels, veldflessen, oude verbanddozen — en plots zie ik weer gezichten die ik niet kende maar toch verzorgde. Hier heb je tijd om te kijken, maar dat maakt het soms net zwaarder. Ik denk aan de momenten waarop ik deed alsof ik zeker wist wat ik deed, gewoon om iemand gerust te stellen.",
+      "langemark": "We ruilden steriele doeken met een Duitse verpleger, kort en woordeloos. Aan beide kanten waren de handen even moe en even menselijk. In de schemer van de verbandtent leek het front heel even een gangpad in een ziekenhuis. Ik merkte dat medelijden niet vraagt aan welke kant je staat, alleen of je nog kan blijven kijken.",
+      "tyne_cot": "De brancards bleven komen. Morfine was schaars, hoop nog schaarser. Ik schreef voor wie niet meer kon: ‘Lieve moeder, maak u geen zorgen.’ De jongen die het dicteerde kneep mijn hand tot de woorden ophielden. Daarna bleef ik zitten, alsof opstaan zou betekenen dat ik het allemaal normaal vond.",
+      "passchendaele_museum": "Achter glas blinken instrumenten schoon, maar ik hoor er de zenuwachtige ademhaling bij. Ik zie polsbandjes, etiketten, flessenkurken — kleine beloftes dat we ons best deden, ook als het niet genoeg was. Er zijn dingen die je niet steriliseert: schuld, angst, en de vraag of je iemand had kunnen redden als je één minuut sneller was geweest. Toch is zelfs die vraag een bewijs dat we nog mens waren.",
+      "end_menenpoort": "Hier, tussen namen zonder graf, denk ik aan alle brieven die nooit verstuurd raakten. Ik vouw mijn herinneringen dicht zoals ik ooit gaas dichtvouwde: zorgvuldig, met de wens dat het iemand minder pijn doet. En ik besef: herdenken is soms gewoon blijven dragen wat niemand anders ziet. Zacht, maar hardnekkig."
     }
   },
   {
-    "id":"sofia_ivanova",
-    "naam":"Sofia Ivanova",
-    "herkomst":"Odessa, Russische Rijk",
-    "leeftijd":21,
-    "rol":"Telegrafiste",
-    "bio":"Werkte met morse en berichten die te zwaar waren voor papier.",
-    "verhalen":{
-      "start_menenpoort":"Sofia. Ik leerde luisteren naar tikken en pauzes. Hier hoor ik geen code, maar ik begrijp de onderbrekingen.",
-      "new_irish_farm":"De lijn was onbetrouwbaar. Soms bleef alleen ruis over. Ik schreef toch mee, alsof stilte ook een bericht was.",
-      "langemark":"Een fout in een signaal kan levens kosten. Ik controleerde elke punt, elke streep, tot mijn ogen brandden.",
-      "tyne_cot":"Ik zond berichten over verliezen die ik zelf niet kende. Daarna waste ik mijn handen en deed alsof ze schoon waren.",
-      "passchendaele_museum":"Het toestel in de vitrine tikt niet meer. In mijn hoofd blijft het doorgaan.",
-      "end_menenpoort":"Als ik hier sta, hoor ik geen morse. Alleen namen. En die kan ik niet corrigeren."
+    "id": "youssef_ben_salah",
+    "naam": "Youssef ben Salah",
+    "herkomst": "Fès, Marokko",
+    "leeftijd": 19,
+    "rol": "Tirailleur (Frans)",
+    "bio": "Kwam in 1917 naar het Westelijk Front als versterking.",
+    "verhalen": {
+      "start_menenpoort": "Ik ben Youssef, zoon van een leerbewerker. Vrijwilliger uit Fès, overtuigd dat moed overal dezelfde taal spreekt. In Ieper voelde ik me klein tussen bogen en namen; ik herkende geen enkel woord, maar ik begreep de stilte. En ik dacht: als stenen kunnen onthouden, dan kan ik dat misschien ook.",
+      "new_irish_farm": "We ploeterden door aarde die aan je laarzen trok alsof ze je wilde houden. Het bevel was eenvoudig: vooruit. Ik droeg munitie, water, soms mijn eigen angst, en leerde dat zingen in het Arabisch ook warmte kan geven in een Vlaamse regenbui. Wanneer mijn keel droog was, zong ik stiller — maar ik bleef zingen.",
+      "flanders_fields_museum": "In het museum hangt oorlog niet aan je kleren, maar aan je ogen. Ik zie uniformen en kaarten, alsof iemand het allemaal heeft willen samenvatten in lijnen en labels. Toch kan ik bij een helm bijna voelen hoe zwaar hij wordt wanneer je bang bent. Ik denk aan de liedjes die we zongen: niet om dapper te zijn, maar om niet te breken.",
+      "langemark": "Een Duitse gevangene vroeg om brood. Ik gaf hem een stuk en hij gaf me een woord terug — ‘danke’. Het klonk vreemd in mijn mond, maar menselijk in mijn oren. Voor heel even leek het front geen grens. En daarna schaamde ik me dat zo’n klein moment me zoveel opluchting gaf.",
+      "tyne_cot": "We telden niet meer in dagen maar in granaten. Een vriend verdween in rook zonder afscheid. Ik schreef zijn naam op een papiertje en stopte het bij mijn Koran, alsof papier kon bewaren wat de modder rooft. Soms streel ik dat papiertje, niet uit bijgeloof, maar omdat ik niet wil dat zijn naam alleen in mijn hoofd sterft.",
+      "passchendaele_museum": "Een bajonet achter glas is lichter dan in je handen. Ik raak het glas niet aan; sommige dingen houd je beter op afstand, anders kom je ze weer tegen in je slaap. Wat hier stil ligt, was ooit een besluit. En ik vraag me af hoeveel beslissingen iemand neemt vóór hij vergeet dat hij nog kiest.",
+      "end_menenpoort": "Als ik terugkijk, vraag ik niet waarom ik bleef leven. Ik vraag wat ik met dat leven zal doen zodat zijn naam, die op mijn papiertje staat, blijft bestaan. Misschien is dat mijn nieuwe opdracht: bewaren. Niet in steen, maar in woorden en daden."
     }
   },
   {
-    "id":"william_carter",
-    "naam":"William Carter",
-    "herkomst":"Melbourne, Australië",
-    "leeftijd":29,
-    "rol":"Ingenieur – bruggenbouw",
-    "bio":"Bouwde en herstelde bruggen onder druk.",
-    "verhalen":{
-      "start_menenpoort":"William. Bruggen verbinden oevers die elkaar niet vertrouwen. Onder deze poort lijkt alles verbonden door verlies.",
-      "new_irish_farm":"We bouwden snel en slordig. Toch hield het. Soms is dat genoeg.",
-      "langemark":"Ik testte balken met mijn gewicht. Niet uit moed, maar uit noodzaak.",
-      "tyne_cot":"Ik keek naar stenen die nooit instorten. Ik was jaloers op hun zekerheid.",
-      "passchendaele_museum":"De maquettes tonen perfecte lijnen. Ik zie liever de scheuren die het haalden.",
-      "end_menenpoort":"Na de oorlog bouw ik bruggen waar niemand aan hoeft te twijfelen."
+    "id": "stanislaw_nowak",
+    "naam": "Stanisław Nowak",
+    "herkomst": "Koninkrijk Galicië en Lodomerië, Oostenrijk-Hongarije",
+    "leeftijd": 21,
+    "rol": "Artilleriehelper",
+    "bio": "Boerenzoon met een liefde voor techniek.",
+    "verhalen": {
+      "start_menenpoort": "Stanisław, zoon van een smid. Ik werd opgeleid bij de artillerie omdat ik snel begreep hoe katrollen en hulsliften werkten. Onder deze poort klinkt de stad als een grote klok: iedere echo tikt een naam aan. Ik luister en probeer te geloven dat techniek ooit weer voor iets eenvoudigs zal dienen.",
+      "new_irish_farm": "Het verzetten van een houwitser lijkt op ploegen: langzaam, samen, en met blaren. Ik leerde schatten zonder meetlint, voelen zonder te kijken. Soms wist ik aan de trilling al genoeg. En toch: zelfs als je alles juist afstelt, kan één fout iemand van de wereld vegen.",
+      "flanders_fields_museum": "In het museum staan instrumenten alsof ze trots zijn op hun precisie. Wijzers, schalen, metalen randen — ik kan er uren naar kijken. Maar ik weet ook hoe diezelfde precisie iemand in stukken kan rekenen. Hier lijkt het allemaal logisch; buiten was logica vaak het eerste slachtoffer.",
+      "langemark": "Tussen twee beschietingen durfde iemand viool te spelen. Een melodie zonder vlag of rang. Even telde ik geen afstand in meters maar in maten. Daarna begon het weer, en voelde de stilte vóór de volgende knal bijna als een meetfout.",
+      "tyne_cot": "Elke granaat heeft een nummer, maar geen geweten. Ik droeg hulzen weg en vroeg me af hoeveel stilte ze zouden achterlaten. Als de batterij zweeg, hoorde ik mijn hart eindelijk in een normaal tempo. Ik dacht dat ik dan rust zou voelen, maar soms voelde ik juist leegte: alsof mijn lichaam vergat wat ‘normaal’ was.",
+      "passchendaele_museum": "Instrumenten met naalden en wijzers fascineren me nog steeds. Ze meten, maar ze begrijpen niet. Misschien is dat beter zo. Als een machine ooit begrip krijgt, zou ze dan weigeren? Of zouden wij haar toch dwingen?",
+      "end_menenpoort": "Ik wil na de oorlog machines maken die bouwen. Tandwielen die graan malen. Krachten die mensen optillen in plaats van neerhalen. En als iemand vraagt waar ik dat leerde, zal ik niet over techniek praten, maar over wat er gebeurt wanneer techniek geen grenzen meer kent."
     }
   },
   {
-    "id":"fatima_el_khouri",
-    "naam":"Fatima El Khouri",
-    "herkomst":"Beiroet, Ottomaanse Rijk",
-    "leeftijd":26,
-    "rol":"Naaister – uniformherstel",
-    "bio":"Herstelde kledij en verbanden voor soldaten.",
-    "verhalen":{
-      "start_menenpoort":"Ik ben Fatima. Mijn moeder leerde me dat draad geduld vraagt. Hier is geduld schaars.",
-      "new_irish_farm":"Uniformen kwamen gescheurd terug. Ik naaide alsof stof levens kon samenhouden.",
-      "langemark":"Bloedvlekken wassen lukt niet altijd. Dan bleef ik gewoon langer schrobben.",
-      "tyne_cot":"Ik herkende mannen aan hun knopen. Niet aan hun gezichten.",
-      "passchendaele_museum":"De stoffen hier zijn schoon. Ze kennen geen handen die trillen.",
-      "end_menenpoort":"Ik vouw mijn naalden weg. Voor nu is herstellen alleen nog herinneren."
+    "id": "margot_vandamme",
+    "naam": "Margot Vandamme",
+    "herkomst": "Ieper, België",
+    "leeftijd": 18,
+    "rol": "Burger – brievenschrijfster",
+    "bio": "Schreef brieven voor gewonden die zelf niet meer konden.",
+    "verhalen": {
+      "start_menenpoort": "Ik ben Margot, dochter van een kruidenier. In de verbandpost vroeg een verpleger of ik wilde helpen schrijven. ‘Zij dicteren, jij noteert.’ Soms waren het drie woorden. Soms een hele avond stilte. En ik leerde: papier kan een bed zijn voor gedachten die nergens anders willen liggen.",
+      "new_irish_farm": "Een Ierse jongen lachte om mijn accent toen ik ‘ma’ voorlas. Daarna beet hij op zijn lip om het huilen tegen te houden. Ik zette mijn hand op de rand van zijn bed en deed alsof we allebei sterk waren. Ik schreef traag, zodat hij tijd had om te ademen tussen de woorden.",
+      "flanders_fields_museum": "In het museum zie ik brieven achter glas, alsof ze heilig zijn. Ik herken de vouwlijnen, de haastige inkt, de plekken waar iemand te hard drukte. Hier leest men ze om te begrijpen; toen schreven we ze om te overleven. Ik vraag me af hoeveel van mijn woorden nu ook ergens in stilte liggen te wachten op een lezer.",
+      "langemark": "De zwarte kruisen stonden dicht bij elkaar. Ik dacht aan hoe klein mensen worden als je ze alleen nog als naam leest. Ik stak een lintje in mijn zak, niet wetend voor wie ik het bewaarde. En ik hoorde in mijn hoofd de stemmen van wie ik ooit ‘groeten’ liet zeggen, alsof groeten een terugkeer konden toveren.",
+      "tyne_cot": "Een Canadese verpleegster gaf me een stukje blauw lint. ‘Voor moed,’ zei ze. Ik had geen geweer, maar ik droeg het toch. Soms is moed gewoon blijven zitten wanneer je eigenlijk wilt weglopen. Ik voelde het lint als een zachte herinnering dat ik ook ergens bij hoorde.",
+      "passchendaele_museum": "In een vitrine ligt een veldfles zoals mijn broer er een had. Ik zie mijn eigen gezicht in het glas weerspiegeld en vraag me af of herinneringen zwaarder worden of lichter door de jaren. De objecten zijn klein, maar de verhalen eromheen zijn groot. En ik besef: ik ben een deel van die verhalen, ook al stond ik nooit in een foto.",
+      "end_menenpoort": "Ik leg het lintje neer zonder naam. Voor de jongen, voor mijn broer, voor wie nooit werd voorgelezen. Soms is herdenken niets anders dan hardop blijven schrijven. En soms is het: eindelijk durven stoppen, zonder te vergeten."
     }
   },
   {
-    "id":"pieter_de_smet",
-    "naam":"Pieter De Smet",
-    "herkomst":"Diksmuide, België",
-    "leeftijd":31,
-    "rol":"Militair postbode",
-    "bio":"Verdeelde brieven aan en van het front.",
-    "verhalen":{
-      "start_menenpoort":"Pieter. Ik droeg meer woorden dan kogels. Toch wogen ze zwaarder.",
-      "new_irish_farm":"Ik kende de handschriften. Sommige brieven gaf ik liever niet af.",
-      "langemark":"Een brief zonder antwoord blijft in je zak branden.",
-      "tyne_cot":"Ik las namen die nooit meer zouden schrijven. Ik onthield ze.",
-      "passchendaele_museum":"De postzak hier is leeg. De mijne was dat nooit.",
-      "end_menenpoort":"Ik ben klaar met dragen. Maar sommige woorden neem ik mee."
+    "id": "harinder_singh",
+    "naam": "Harinder Singh",
+    "herkomst": "Punjab, Brits-Indië",
+    "leeftijd": 23,
+    "rol": "Sikh infanterist",
+    "bio": "Diende in het Britse leger, hield vast aan geloof en turban.",
+    "verhalen": {
+      "start_menenpoort": "Ik ben Harinder. Mijn vader vertelde dat eer rechtop begint: in je rug en in je turban. Ik stapte aan boord omdat dienstplicht hier plicht heet en thuis eer. Onder deze poort voel ik hoe ver ‘thuis’ kan zijn, zelfs wanneer je naast honderden staat.",
+      "new_irish_farm": "Modder maakt geen onderscheid. Ik deelde mijn brood en kreeg een grap terug. Voor even proefde ik thuis in een lach die ik niet helemaal begreep. Daarna trok ik mijn turban opnieuw strak, alsof ik daarmee ook mijn gedachten kon ordenen.",
+      "flanders_fields_museum": "In het museum kijk ik naar uniformen alsof het huiden zijn die iemand achterliet. Ik zie hoe men probeert te tonen wat er gebeurde, maar sommige dingen passen niet op panelen. Mijn geloof leerde me stilte niet te vrezen; de oorlog leerde me dat stilte soms schreeuwt. Toch zoek ik hier naar een plek in mezelf die niet meegevochten heeft.",
+      "langemark": "Een kamerad vroeg of mijn haar nooit lastig was. Ik zei dat geloof je rug recht houdt, ook als je handen trillen. Hij knikte en reikte me draad aan om mijn turban opnieuw te winden. Zo’n klein gebaar kan groter zijn dan een bevel.",
+      "tyne_cot": "Een scherf scheurde stof, niet huid. Ik dankte zacht, streek mijn tulband glad en keek of iedereen nog stond. Je telt je zegeningen soms in inches. En je leert: geluk is niet luid, het is gewoon dat je nog kan ademen.",
+      "passchendaele_museum": "Een uniformpop staart de zaal in. Ik raak niets aan. Ik denk aan handen wassen met weinig water en toch proberen schoon te blijven van binnen. Niet alles wat vuil is, zit op je vingers.",
+      "end_menenpoort": "Ik spreek een kort gebed, niet voor overwinning, maar voor rust. Voor wie viel, en voor wie bleef dragen. En ik hoop dat eer ook kan betekenen: later zacht leven."
     }
   },
   {
-    "id":"hiroshi_tanaka",
-    "naam":"Hiroshi Tanaka",
-    "herkomst":"Osaka, Japan",
-    "leeftijd":27,
-    "rol":"Militair waarnemer",
-    "bio":"Observeerde en rapporteerde, zonder zelf te vechten.",
-    "verhalen":{
-      "start_menenpoort":"Hiroshi. Observeren is afstand houden. Hier is afstand moeilijk.",
-      "new_irish_farm":"Ik noteerde posities en bewegingen. De modder liet zich niet noteren.",
-      "langemark":"Een verrekijker vergroot alles, behalve begrip.",
-      "tyne_cot":"Ik keek naar rijen graven en wist dat geen rapport dit kon samenvatten.",
-      "passchendaele_museum":"Mijn notities liggen ergens in een archief. Dit blijft.",
-      "end_menenpoort":"Ik buig licht. Niet als soldaat, maar als mens."
+    "id": "elsa_stein",
+    "naam": "Elsa Stein",
+    "herkomst": "Keulen, Duitsland",
+    "leeftijd": 20,
+    "rol": "Geneeskundestudente (vrijwilliger)",
+    "bio": "Kreeg opleiding in noodhospitaal net over de grens.",
+    "verhalen": {
+      "start_menenpoort": "Elsa, tweedejaars geneeskunde. Ik dacht dat anatomieboeken me zouden beschermen tegen echte wonden. De oorlog leerde me dat kennis helpt, maar dat handen het moeten doen. En dat ‘rustig blijven’ vaak betekent dat je trilt terwijl je toch doorwerkt.",
+      "new_irish_farm": "In de ochtend oefenden we hechtingen op sinaasappels. In de middag niet meer. Ik telde naalden alsof tellen controle gaf. Soms herhaalde ik in mijn hoofd de stappen, zoals een gebed: schoonmaken, drukken, hechten, hopen.",
+      "flanders_fields_museum": "In het museum lijken instrumenten te slapen. Ik zie klemmen en scharen die ooit haast hadden, en ik voel mijn vingers vanzelf meebewegen. Hier kan je rustig kijken, maar mijn hoofd blijft in tempo versnellen. Misschien is dat mijn litteken: niet op de huid, maar in de manier waarop ik tijd ervaar.",
+      "langemark": "Mijn accent maakte me verdacht. Toch hield iemand het gordijn open terwijl ik werkte. Ik keek niet op. Pijn heeft geen uniform. En schaamte ook niet.",
+      "tyne_cot": "Koorts, pols, adem — ritme tegen paniek. Soms hielp het een mens te vertellen wat ik aan het doen was, alsof uitleg zelf een medicijn was. ‘Nu druk ik hier.’ ‘Nu adem je met mij mee.’ Soms was dat het enige dat nog werkte.",
+      "passchendaele_museum": "Instrumenten liggen stil, maar ik hoor nog de snelle adempjes van wie bang is. Ik hoop dat niemand ooit zal denken dat we niet probeerden. Want zelfs wanneer we faalden, was het geen onverschilligheid. Het was grenzen botsen op werkelijkheid.",
+      "end_menenpoort": "Ik keer terug naar de studie met handen die te veel hebben aangeraakt en een hart dat niet wil verharden. Misschien is dat genoeg. Misschien is dat precies wat ik moet bewaken: zacht blijven zonder stuk te gaan."
+    }
+  },
+  {
+    "id": "mehmet_arslan",
+    "naam": "Mehmet Arslan",
+    "herkomst": "Ankara, Ottomaanse Rijk",
+    "leeftijd": 26,
+    "rol": "Sappeur",
+    "bio": "Groef en timmerde, vaak dichterbij dan goed was.",
+    "verhalen": {
+      "start_menenpoort": "Mehmet, zoon van een timmerman. Ik werd sappeur omdat ik recht kan zagen, ook als de grond beeft. Hier kijk ik naar bogen en denk ik aan draagkracht: wat houdt en wat breekt. In oorlog meet je dat niet in kilo’s, maar in mensen.",
+      "new_irish_farm": "Steunbalken kraken eerlijk; ze liegen niet. Ik klopte ze vast met een ritme dat luider was dan mijn gedachten. Elke slag was een belofte: nog even blijven staan. En soms, wanneer alles trilde, vertrouwde ik meer op hout dan op bevelen.",
+      "flanders_fields_museum": "Een maquette toont loopgraven alsof ze netjes zijn uitgezet met een liniaal. Ik zie de rechte lijnen en moet bijna lachen: het echte hout was krom, nat, en koppig. Hier lijkt alles begrijpelijk, maar buiten was begrijpen een luxe. Toch kijk ik graag: het herinnert me eraan dat we zelfs in chaos probeerden te bouwen.",
+      "langemark": "Tabak ruilen voor spijkers lijkt dwaas, totdat je dakbalken wil die blijven hangen. Ik stak een extra nagel waar niemand hem zag, gewoon voor de zekerheid. De zekerheid was zelden echt, maar soms voelde het goed om één ding ‘af’ te hebben.",
+      "tyne_cot": "Ondergronds klinkt oorlog als een verre onweer. Je leert luisteren naar zand dat beweegt, naar planken die ademen. Ik telde knallen zoals anderen tellen voor het slapen. En ik wist: als ik ooit weer stilte hoor, ga ik haar eerst niet vertrouwen.",
+      "passchendaele_museum": "Een maquette van loopgraven ziet er netjes uit. In het echt is niets netjes behalve de discipline om terug te komen als iets los zit. Ik zie gereedschap en denk aan handen die het vasthielden, niet aan het metaal zelf. Gereedschap is onschuldig; het werk niet altijd.",
+      "end_menenpoort": "Na dit alles wil ik huizen stutten die nooit meer hoeven te schuilen. Het is een bescheiden droom, maar hij draagt ver. En als iemand mij vraagt waarom ik zo precies werk, zal ik zeggen: omdat instorten te duur is."
+    }
+  },
+  {
+    "id": "hua_zheng",
+    "naam": "Hua Zheng",
+    "herkomst": "Shandong, China",
+    "leeftijd": 24,
+    "rol": "Chinese Labour Corps",
+    "bio": "Arbeider aan wegen, sporen en logistiek.",
+    "verhalen": {
+      "start_menenpoort": "Ik ben Hua. In mijn dorp zei men: ‘Wie werkt met twee handen, reist ver.’ Ik tekende voor arbeid, niet voor oorlog, en toch droeg ik haar elke dag. Onder deze poort voel ik dat reizen soms ook betekent: verdwijnen in andermans verhaal.",
+      "new_irish_farm": "Kratten sjouwen werd een lied zonder woorden: tillen, stappen, neerzetten, ademen. Aan het eind van de dag proefde ik stof, zout en soms een grap die overleefde. Ik leerde gezichten herkennen aan hun moeheid, niet aan hun taal.",
+      "flanders_fields_museum": "In het museum zie ik foto’s van werkploegen zoals de onze. Gezichten die op de mijne lijken, maar met ogen die al te veel hebben gezien. Hier heet het ‘geschiedenis’, maar voor mij was het gewoon maandag, dinsdag, woensdag… Ik vraag me af of iemand ooit begrijpt hoe zwaar ‘gewoon werken’ kan zijn in een wereld die stuk is.",
+      "langemark": "Ik leerde ‘dank u’ zeggen met een vreemd accent en iemand leerde mij ‘xie xie’ terug. We lachten omdat we allebei fout zaten en toch begrepen wat bedoeld werd. Soms is fout zeggen beter dan niets zeggen.",
+      "tyne_cot": "We legden kiezels recht tussen witte stenen. Het gaf rust om iets te ordenen in een wereld die uit de maat was. Ik merkte dat mijn handen graag werk hadden, want dan had mijn hoofd minder ruimte om te dwalen.",
+      "passchendaele_museum": "Op een foto zie ik gezichten die op de mijne lijken, maar donkerder van de modder. Ik vraag me af of iemand onze namen zal herinneren als het werk klaar is. Misschien is dat mijn angst: dat je alleen zichtbaar bent zolang je iets tilt.",
+      "end_menenpoort": "Misschien is dit de plek waar arbeid ook herdenking wordt. Ik denk aan een weg die naar huis leidt, strak en vlak, zonder kraters. En ik hoop dat iemand ooit zegt: ze waren hier, en ze telden mee."
+    }
+  },
+  {
+    "id": "aileen_omalley",
+    "naam": "Aileen O’Malley",
+    "herkomst": "Cork, Ierland",
+    "leeftijd": 19,
+    "rol": "Veldtelefoniste",
+    "bio": "Onderhield lijnen onder gevaarlijk vuur.",
+    "verhalen": {
+      "start_menenpoort": "Aileen, veldtelefoniste. Mijn werk was luisteren, knopen leggen en hopen dat stemmen elkaar bleven vinden. Ik leerde dat een rechte lijn soms de gevaarlijkste weg is. En dat nieuws altijd sneller reist dan troost.",
+      "new_irish_farm": "Een lijn brak, natuurlijk net wanneer het dringend was. Ik knoopte met stijve vingers en bad dat de vonk niet langs mij koos om over te springen. Je leert werken zonder je adem te laten horen. Want zelfs je eigen geluid kan ineens te luid voelen.",
+      "flanders_fields_museum": "Hier staan telefooncentrales alsof ze speelgoed zijn, maar ik weet hoe zwaar zo’n toestel kan zijn wanneer alles ervan afhangt. Ik kijk naar schakelaars en hoor weer stemmen die ‘nu’ riepen, altijd ‘nu’. In een museum is er tijd; in mijn hoofd gaat het nog altijd in meldingen. Misschien is dat mijn oorlog: de stilte tussen twee oproepen.",
+      "langemark": "Aan de andere kant van de draad klonk iemand met een zwaar accent. ‘Linie vrij?’ vroeg hij. ‘Nog wel,’ antwoordde ik. Voor even waren we alleen techniek. En techniek voelt veilig, tot je beseft dat achter elk woord iemand staat te wachten.",
+      "tyne_cot": "De stilste momenten zijn het luidst in je hoofd. Soms hield ik de koptelefoon net even van mijn oor, niet uit angst, maar om weer te kunnen tellen. Eén, twee, drie… alsof tellen de wereld weer op de rails zet. Daarna zet je hem terug op, en doe je alsof je niet bang bent voor wat je gaat horen.",
+      "passchendaele_museum": "De telefooncentrale in de vitrine ruikt vast niet meer naar bakeliet en zweet. Ik weet nog hoe de schakelaars aanvoelden, als kleine beslissingen. Soms vraag ik me af hoeveel levens aan een verkeerde verbinding hingen. En toch: zonder die draden was er alleen maar chaos.",
+      "end_menenpoort": "‘Lijn hersteld,’ zeg ik zacht. Niet voor een officier, maar voor iedereen die nog iets wil zeggen tegen wie er niet meer is. En ik denk: sommige boodschappen komen nooit aan, maar je blijft toch proberen."
+    }
+  },
+  {
+    "id": "marcel_dupont",
+    "naam": "Marcel Dupont",
+    "herkomst": "Lille, Frankrijk",
+    "leeftijd": 25,
+    "rol": "Poilu (infanterist)",
+    "bio": "Doorstond de modder met droge humor.",
+    "verhalen": {
+      "start_menenpoort": "Marcel hier. Ik hield van brood met te veel korst en grappen met te weinig punt. Toen we marcheerden, zei ik dat de modder bang voor mij was. Ze lachte niet terug. Maar ik bleef grappen maken, want een grap is soms het enige droge dat je nog bezit.",
+      "new_irish_farm": "We deelden sigaretten en schunnige liedjes, alsof lucht beter ademt met branie. De nacht was koud en de grappen warmden net genoeg. Ik vertelde dat ik na de oorlog schoenen zou kopen die zelfs modder zouden beledigen. Iemand lachte, en dat was al bijna een overwinning.",
+      "flanders_fields_museum": "— Hier neemt Louise, Marcels zus, even over. Ik keek ooit naar zijn notitieboek en vond tussen de grappen plots één zin zonder lach: ‘Vandaag was ik moe van binnen.’ In het museum zie ik foto’s van mannen met dezelfde blik, en ik begrijp dat humor soms gewoon een jas is. Je draagt hem tot hij nat is, en toch blijf je hem aantrekken.",
+      "langemark": "Iemand tekende thuis in mijn notitieboekje. Een straat, een vrouw achter een raam. Als ik het dichtklapte, voelde ik haar niet meer roepen dat ik moest eten. Ik deed alsof ik kwaad werd op de tekening, maar eigenlijk was ik bang dat ik haar gezicht zou vergeten. Dus keek ik stiekem nog eens, heel snel, alsof snel kijken minder pijn doet.",
+      "tyne_cot": "— Louise opnieuw. Hij viel bij een aanval; de brief zei ‘onmiddellijk’ en ‘zonder pijn’. Later vond ik zijn boekje terug, nat en toch leesbaar. Ik blader erin alsof hij nog even moet lachen om iets wat ik niet snap. En telkens ik een grap lees, hoor ik de stilte erachter.",
+      "passchendaele_museum": "Ik, Louise, sta hier en herken een gasmasker dat muf ruikt in mijn herinnering. Niet omdat ik het droeg, maar omdat Marcel erover schreef: dat je ademhalen dan ineens werk wordt. Ik zie vitrines vol voorwerpen en denk: niemand kan een grap in een vitrine leggen. Daarom lees ik zijn boekje luidop, al is het alleen voor mezelf.",
+      "end_menenpoort": "Ik leg zijn naam tussen andere namen. Ik weet niet of hij bang was. Ik weet wel dat hij altijd zei dat modder bang voor hem was. Misschien heeft hij het gewonnen — niet door te vechten, maar door te blijven lachen totdat hij niet meer kon."
+    }
+  },
+  {
+    "id": "anna_kowalska",
+    "naam": "Anna Kowalska",
+    "herkomst": "Łódź, Polen",
+    "leeftijd": 22,
+    "rol": "Chauffeuse (ambulance)",
+    "bio": "Reed gewonden over hobbelige wegen naar hulp.",
+    "verhalen": {
+      "start_menenpoort": "Anna, dochter van een wever. Ik leerde rijden op vrachtwagens die liever bleven staan. In oorlogstijd heet vooruitgang soms gewoon ‘in z’n twee en hopen’. En als de motor start, is dat al een soort opluchting die je bijna niet durft voelen.",
+      "new_irish_farm": "Mijn lading ademde en kreunde. Bochten moesten zacht, anders deed ik meer kwaad dan goed. Ik praatte tegen de motor alsof hij een koppig paard was. Soms antwoordde hij met een kuch, en toch reed hij verder — net zoals wij.",
+      "flanders_fields_museum": "In het museum staat een ambulance alsof ze op vakantie is: schoon, stil, braaf. Ik glimlach bijna, maar mijn maag draait, omdat ik weet hoeveel lawaai stilte kan maken. Ik denk aan handen die ik niet kende, maar die ik toch vervoerde. En ik besef: ik reed niet alleen over wegen, ik reed over grenzen van wat een mens kan zien.",
+      "langemark": "Een paard stond echt midden op de weg. Ik legde mijn hand op zijn hals en beloofde niets, en toch ging hij opzij. Een soldaat lachte dat ik talen sprak die hij niet kende. Misschien sprak ik gewoon ‘rust’, en dat is een taal die iedereen begrijpt.",
+      "tyne_cot": "Banden plakken bij maanlicht is geduld oefenen. Ik telde tot honderd bij iedere slag van de pomp, zoals mijn moeder telt als ze bidt. En in dat tellen vond ik iets van thuis: ritme, orde, het idee dat je iets kan afmaken.",
+      "passchendaele_museum": "De ambulance in de zaal is kleiner dan ik me herinner. Misschien ben ik groter geworden, of is het verleden altijd net te knus in vitrines. Ik zie een brancard en voel mijn schouders al spannen. Sommige spieren vergeten nooit wat ze droegen.",
+      "end_menenpoort": "Ik zet in gedachten de motor uit. Even niets dat trilt. Alleen adem, en de weg naar huis die stil voor me ligt. En ik hoop dat de stilte daar niet dezelfde zal zijn als hier."
+    }
+  },
+  {
+    "id": "ivan_petrov",
+    "naam": "Ivan Petrov",
+    "herkomst": "Smolensk, Rusland",
+    "leeftijd": 27,
+    "rol": "Krijgsgevangene (arbeidsdetachement)",
+    "bio": "Russische soldaat die na gevangenneming werd ingezet voor zware arbeid.",
+    "verhalen": {
+      "start_menenpoort": "Ik ben Ivan. Ooit droeg ik een uniform met knopen die te los zaten. Nu draag ik een schop. Onder deze poort hoor ik talen die ik niet ken, maar stilte klinkt overal hetzelfde. Soms vraag ik me af of stilte mijn enige paspoort is.",
+      "new_irish_farm": "Wij groeven drainage, zodat anderen droge voeten zouden houden. Modder vreet zich vast, zelfs aan herinneringen. Soms telde ik slagen om niet aan thuis te denken. En wanneer iemand mij aankeek alsof ik lucht was, leerde ik hoe makkelijk een mens onzichtbaar wordt.",
+      "flanders_fields_museum": "In het museum zie ik kaarten alsof oorlog een bordspel was. Pijlen, lijnen, kleuren — netjes, helder, onmenselijk. Ik denk aan mijn schop, aan handen die splijten, aan honger die geen legenda heeft. Als iemand mij hier vraagt wat ik deed, zeg ik misschien: ik hield de grond in beweging, zodat anderen konden blijven staan.",
+      "langemark": "Ik zag kruisen zonder namen en dacht aan mijn moeder. Ze zei altijd dat niemand echt verdwijnt zolang iemand zijn naam fluistert. Ik fluisterde er vandaag veel. Ik hoopte dat de wind ze niet meteen zou meenemen.",
+      "tyne_cot": "De witte stenen staan recht, alsof ze op appèl wachten. Wij stonden ook ooit zo. Nu leer ik dat orde kan blijven bestaan, zelfs als mensen breken. En toch voel ik: als je lang genoeg breekt, wordt zelfs orde iets dat pijn doet.",
+      "passchendaele_museum": "Een kaart toont frontlijnen alsof het potloodstrepen zijn. Geen streep laat zien hoe honger voelt of hoe zwaar wachten weegt. Ik kijk naar vitrines en zie vooral wat ontbreekt: de geur, de kou, de schaamte. Misschien is dat wat musea doen: ze tonen wat kan, niet wat blijft.",
+      "end_menenpoort": "Ik weet niet of mijn naam hier ooit zal staan. Maar ik heb hem zelf onthouden, elke dag opnieuw. En zolang ik hem kan zeggen, ben ik niet helemaal verdwenen."
+    }
+  },
+  {
+    "id": "thomas_wilkins",
+    "naam": "Thomas Wilkins",
+    "herkomst": "Leeds, Engeland",
+    "leeftijd": 34,
+    "rol": "Legerkok",
+    "bio": "Zorgde voor warme maaltijden dicht bij het front.",
+    "verhalen": {
+      "start_menenpoort": "Thomas Wilkins. Mijn wapen was een pollepel. Onder deze poort ruikt niets naar soep, maar ik proef toch zout — misschien van tranen die niemand ziet. Ik heb geleerd: honger is luid, maar schaamte is stiller.",
+      "new_irish_farm": "Koken voor honderden betekent rekenen met tekorten. Te weinig vlees, te veel honger. Ik leerde water verdikken tot hoop. En wanneer iemand zei dat het ‘lekker’ was, wist ik dat hij eigenlijk ‘dank u dat ik nog leef’ bedoelde.",
+      "flanders_fields_museum": "Hier staat een veldkeuken alsof ze een tentoonstellingsstuk is, maar ik herken de plekken waar rook zich vastbijt. In mijn hoofd hoor ik nog het rammelen van pannen en het ongeduld van magen. Mensen denken dat soep simpel is; maar op sommige dagen was soep het laatste touwtje dat ons bij elkaar hield. Als je iets warms geeft, geef je ook een reden om nog even te blijven.",
+      "langemark": "Een extra lepel voor wie het stilste was. Niemand zei dank u, maar kommen werden leeg teruggebracht. Dat was genoeg. Soms is waardering gewoon een lege kom die toch nog dampte.",
+      "tyne_cot": "Ik bracht soep naar brancards. Sommigen konden niet meer slikken. Dan bleef ik staan tot de stoom verdwenen was. En ik leerde dat je zelfs met eten soms niets kunt terughalen.",
+      "passchendaele_museum": "De veldkeuken blinkt hier. In het echt was ze zwart van rook. Maar warmte is warmte, zelfs als ze er moe uitziet. Ik kijk naar de potten en denk: er zitten meer verhalen in een lepel dan men ooit zal noteren.",
+      "end_menenpoort": "Als ik hier sta, denk ik niet aan strijd. Ik denk aan tafels. Ooit zet ik er weer een, zonder haast. En ik hoop dat niemand ooit nog ‘genoeg’ moet maken van te weinig."
+    }
+  },
+  {
+    "id": "julie_vermeulen",
+    "naam": "Julie Vermeulen",
+    "herkomst": "Poperinge, België",
+    "leeftijd": 20,
+    "rol": "Teruggekeerde vluchtelinge",
+    "bio": "Vluchte als tiener en keerde terug na de verwoesting.",
+    "verhalen": {
+      "start_menenpoort": "Ik ben Julie. Ik vertrok met één koffer en kwam terug met stilte. Deze poort kende mij vroeger niet, nu herken ik mezelf er niet meer. Soms voelt terugkeren alsof je in je eigen huis op bezoek bent.",
+      "new_irish_farm": "Waar velden waren, liggen nu kuilen. Ik stapte voorzichtig, alsof de grond zich nog kon bedenken. Elke voetstap was een vraag: ‘Mag ik hier weer zijn?’ En nergens kreeg ik antwoord.",
+      "flanders_fields_museum": "In het museum zie ik maquettes van straten die ik kende — maar kleiner, properder, alsof alles weer te redden valt. Ik herken bochten en pleinen, en toch voelt het vreemd: mijn herinnering past niet in vitrines. Hier praten mensen zacht, alsof het verleden slaapt. Maar in mij is het wakker gebleven, en het vraagt nog altijd waar ik al die tijd was.",
+      "langemark": "Ik zocht ons huis tussen namen en vond alleen richtingen. Iemand zei dat herinneringen ook een vorm van thuis zijn. Ik knikte, maar dacht: herinneringen zijn ook een plek waar je kunt verdwalen. Toch hield ik me eraan vast, zoals je je aan een koffer vastklampt als je niet weet waar je heen moet.",
+      "tyne_cot": "De stenen zijn proper. Mijn dorp was dat niet. Maar misschien begint herstel met rechte lijnen. Misschien begint het ook met durven kijken, zonder meteen weg te draaien. Ik wil geloven dat een nieuwe dag niet altijd als verraad voelt.",
+      "passchendaele_museum": "Ik zie maquettes van straten die ik kende. Ze passen in een vitrine. Mijn jeugd niet. Toch is het ergens troostend dat er iets is dat men bewaart, ook al is het maar een schaalmodel van wat we verloren.",
+      "end_menenpoort": "Ik blijf. Niet omdat het makkelijk is, maar omdat vertrekken al gebeurd is. En ik wil niet dat mijn leven alleen uit ‘weggaan’ bestaat. Misschien is blijven mijn eerste echte keuze."
+    }
+  },
+  {
+    "id": "sipho_mbeki",
+    "naam": "Sipho Mbeki",
+    "herkomst": "Kaapstad, Unie van Zuid-Afrika",
+    "leeftijd": 22,
+    "rol": "Brancardier",
+    "bio": "Vrijwilliger die gewonden evacueerde onder vuur.",
+    "verhalen": {
+      "start_menenpoort": "Sipho. Thuis keek ik uit over zee. Hier kijk ik naar namen. Ze bewegen niet, maar ze spreken luid. En ik vraag me af hoeveel mensen de zee nooit meer zullen zien, terwijl ik hem nog in mijn hoofd kan ruiken.",
+      "new_irish_farm": "Tillen is ritme: samen ademen, samen stappen. Wie valt, dragen we hoger. Mijn armen leerden sneller dan mijn hoofd. En elke keer dat iemand ‘rustig’ fluisterde, voelde ik hoe zwaar een woord kan zijn.",
+      "flanders_fields_museum": "Een brancard achter glas weegt niets. In mijn armen woog ze alles. Ik kijk naar foto’s en denk: dat was mijn werk, maar niemand noemt het heldhaftig. Toch weet ik: iemand uit de modder halen is soms het dapperste wat je die dag kunt doen. Ik sta hier en voel mijn schouders opnieuw strak worden, alsof het gewicht terugkomt.",
+      "langemark": "Een man greep mijn mouw en vroeg of ik bleef. Ik bleef tot hij sliep. Daarna moest ik weer verder, alsof slapen een soort toestemming was om weg te gaan. Ik haatte dat moment, elke keer opnieuw.",
+      "tyne_cot": "Sommigen haalden het niet. Ik legde hen neer alsof ik hen kende. Omdat je anders niet kunt dragen. Als je elke naam ‘vreemd’ blijft vinden, breek je sneller dan je rug.",
+      "passchendaele_museum": "Een brancard achter glas is rustig. Geen kreet, geen haast, geen bloed. Maar in mijn hoofd beweegt hij nog. Ik vraag me af hoeveel stappen ik gezet heb voor mensen die ik nooit terug zag. En toch: ik zou het opnieuw doen.",
+      "end_menenpoort": "Ik heb geen graf om te bezoeken. Alleen deze plek waar ik mag blijven dragen, in gedachten. Misschien is dat mijn manier van rouwen: blijven tillen, maar nu zonder schoten."
+    }
+  },
+  {
+    "id": "lucien_moreau",
+    "naam": "Lucien Moreau",
+    "herkomst": "Tours, Frankrijk",
+    "leeftijd": 28,
+    "rol": "Militair fotograaf",
+    "bio": "Legde het front vast, maar worstelde met wat niet op beeld paste.",
+    "verhalen": {
+      "start_menenpoort": "Lucien. Mijn camera zag meer dan ik wilde onthouden. Hier zie ik niets door een lens, en toch blijft alles scherp. Ik heb geleerd: een foto bevriest een moment, maar niet de geur of de angst. En toch bleef ik klikken, omdat iemand later moest weten dat dit echt was.",
+      "new_irish_farm": "Ik stelde scherp op gezichten die niet wilden blijven staan. Soms klikte ik te laat. Soms klikte ik te vroeg en voelde ik me een dief. Ik zei tegen mezelf dat het voor de geschiedenis was, maar geschiedenis voelde soms als een slecht excuus.",
+      "flanders_fields_museum": "In het museum hangen foto’s zoals de mijne, netjes belicht en gekaderd. Mensen kijken ernaar met rustige ogen, alsof afstand alles draaglijk maakt. Ik zie de randen van het beeld en weet wat er net buiten viel: een kreet, een val, een hand die de lens wegduwde. Hier leer ik dat een foto niet liegt, maar ook nooit volledig kan spreken.",
+      "langemark": "Rook is lastig. Hij verbergt en onthult tegelijk. Net als herinneringen. Ik leerde wachten op een windstoot, alsof wind mijn assistent was. En soms dacht ik: laat het maar verborgen blijven.",
+      "tyne_cot": "Ik nam geen foto’s van graven. Ik kende mijn grens. Sommige beelden zijn te makkelijk: ze maken verdriet ‘mooi’. Ik wilde geen schoonheid uit pijn persen.",
+      "passchendaele_museum": "Mijn beelden hangen hier misschien. Ik kijk liever naar de schaduwen ernaast. Wat niet gefotografeerd werd, leeft vaak het hardst in je hoofd. En ik vermoed dat iedereen hier zijn eigen onzichtbare foto’s meebrengt.",
+      "end_menenpoort": "Sommige dingen leg je vast door ze niet meer vast te leggen. Ik stop mijn camera in gedachten weg. En ik kijk eindelijk met mijn eigen ogen, zonder klik."
+    }
+  },
+  {
+    "id": "ernesto_garcia",
+    "naam": "Ernesto García",
+    "herkomst": "Buenos Aires, Argentinië",
+    "leeftijd": 24,
+    "rol": "Vrijwilliger – Rode Kruis chauffeur",
+    "bio": "Reed ambulances voor het Rode Kruis, ver van huis.",
+    "verhalen": {
+      "start_menenpoort": "Ik ben Ernesto. In Buenos Aires rook de haven naar koffie en olie. Hier ruikt alles naar steen en regen. Ik volgde de oorlog omdat hij overal sporen naliet, zelfs thuis. En ik ontdekte: hoe verder je reist, hoe duidelijker je leert wat je mist.",
+      "new_irish_farm": "De weg was smal en kapot. Ik reed traag, luisterde naar het ritme van de motor en hoopte dat hij mij begreep zoals ik hem begreep. Elke kuil was een risico, niet voor mij, maar voor wie achterin lag. Ik leerde sturen alsof ik een glas water droeg dat niet mocht morsen.",
+      "flanders_fields_museum": "In het museum staan voertuigen stil, alsof ze nooit moesten kiezen tussen snelheid en zachtheid. Ik herken de vorm van een brancard en voel opnieuw de spanning in mijn vingers op het stuur. Hier kan je kijken zonder sirenes, maar in mij blijft de drang om ‘door te rijden’. Ik denk aan de mensen die ik bracht, en vraag me af of ze ooit nog ergens aankwamen.",
+      "langemark": "Een kaart zegt waar je bent. Een weg vertelt hoe je er geraakt. Vandaag koos ik voor de weg die minder trilde. Soms is dat alles wat je kunt doen: de pijn niet groter maken. Het voelt klein, maar het is niet niets.",
+      "tyne_cot": "Ik zette de motor af naast rijen stenen. Het voelde ongepast om lawaai te maken op een plek waar alles fluistert. Ik bleef even zitten, handen op het stuur, alsof ik toestemming vroeg om te ademen. Dan stapte ik uit en liet ik de stilte me inhalen.",
+      "passchendaele_museum": "De ambulance hier is stil en proper. De mijne was nooit stil. Zelfs niet als ik hem parkeerde. Ik besef: zelfs wanneer ik stopte, reed mijn hoofd verder. En ik vrees dat het nog lang zal blijven doorrijden.",
+      "end_menenpoort": "Ik kijk omhoog en denk aan reizen zonder sirenes. Ooit rijd ik weer gewoon, zonder bestemming die pijn doet. En ik hoop dat ‘gewoon’ dan eindelijk weer normaal voelt."
+    }
+  },
+  {
+    "id": "sofia_ivanova",
+    "naam": "Sofia Ivanova",
+    "herkomst": "Odessa, Russische Rijk",
+    "leeftijd": 21,
+    "rol": "Telegrafiste",
+    "bio": "Werkte met morse en berichten die te zwaar waren voor papier.",
+    "verhalen": {
+      "start_menenpoort": "Sofia. Ik leerde luisteren naar tikken en pauzes. Hier hoor ik geen code, maar ik begrijp de onderbrekingen. Stilte is ook een signaal, alleen zonder afzender. En soms wens ik dat ik haar kon terugsturen: ‘Ontvangen. Begrepen.’",
+      "new_irish_farm": "De lijn was onbetrouwbaar. Soms bleef alleen ruis over. Ik schreef toch mee, alsof stilte ook een bericht was. Wanneer mijn vingers pijn deden, dacht ik: er zijn ergere pijnen. Dat dacht ik te vaak.",
+      "flanders_fields_museum": "In het museum staan toestellen die niet meer tikken. Geen ruis, geen fout, geen paniek. Maar in mijn hoofd blijft het doorgaan: punt-streep, punt-punt, pauze, opnieuw. Ik kijk naar draden en denk aan berichten die ik nooit had willen zenden. En toch zond ik ze, want iemand moest het doen.",
+      "langemark": "Een fout in een signaal kan levens kosten. Ik controleerde elke punt, elke streep, tot mijn ogen brandden. Zelfs dan bleef ik bang dat ik iets miste. Je leert dat perfectie niet bestaat, maar dat men het wel van je verwacht.",
+      "tyne_cot": "Ik zond berichten over verliezen die ik zelf niet kende. Daarna waste ik mijn handen en deed alsof ze schoon waren. Maar woorden blijven plakken. Soms voel ik ze nog onder mijn nagels.",
+      "passchendaele_museum": "Het toestel in de vitrine tikt niet meer. In mijn hoofd blijft het doorgaan. Misschien is dat het echte telegraferen: niet berichten sturen, maar berichten niet meer kunnen stoppen. Ik wil één dag zonder code in mijn lichaam.",
+      "end_menenpoort": "Als ik hier sta, hoor ik geen morse. Alleen namen. En die kan ik niet corrigeren. Ik kan ze enkel onthouden, één voor één, zoals je vroeger signalen onthoudt."
+    }
+  },
+  {
+    "id": "william_carter",
+    "naam": "William Carter",
+    "herkomst": "Melbourne, Australië",
+    "leeftijd": 29,
+    "rol": "Ingenieur – bruggenbouw",
+    "bio": "Bouwde en herstelde bruggen onder druk.",
+    "verhalen": {
+      "start_menenpoort": "William. Bruggen verbinden oevers die elkaar niet vertrouwen. Onder deze poort lijkt alles verbonden door verlies. Ik kijk naar bogen en denk: zelfs steen leunt ergens op. En ik vraag me af waarop mensen nog leunden toen alles begon te schuiven.",
+      "new_irish_farm": "We bouwden snel en slordig. Toch hield het. Soms is dat genoeg. Ik leerde rekenen met hout dat nat was en met tijd die te kort was. En ik leerde: een brug breekt niet altijd door gewicht, soms door paniek.",
+      "flanders_fields_museum": "In het museum lijken constructies perfect: rechte lijnen, nette verbindingen, mooie maquettes. Ik zie liever de rommelige reparaties, de noodoplossingen die toch bleven staan. Hier kan je doen alsof alles ontworpen was, maar veel was gewoon improviseren. Misschien is dat het meest menselijke aan techniek: dat je blijft proberen, ook zonder garantie.",
+      "langemark": "Ik testte balken met mijn gewicht. Niet uit moed, maar uit noodzaak. Als het kraakte, hield ik mijn adem in. En als het niet kraakte, liet ik mijn adem weer los alsof ik hem even kwijt was geweest.",
+      "tyne_cot": "Ik keek naar stenen die nooit instorten. Ik was jaloers op hun zekerheid. Ik dacht aan bruggen die in één nacht verdwenen, en aan mensen die erover moesten alsof het vanzelfsprekend was. Soms is vertrouwen gewoon geen keuze hebben.",
+      "passchendaele_museum": "De maquettes tonen perfecte lijnen. Ik zie liever de scheuren die het haalden. Ik vraag me af of men ooit een maquette maakt van twijfel, of van moed die niet stoer is. Maar misschien zit dat in elke kleine versteviging die niemand opmerkt.",
+      "end_menenpoort": "Na de oorlog bouw ik bruggen waar niemand aan hoeft te twijfelen. En ik zal altijd één extra bout plaatsen. Niet omdat het moet, maar omdat ik weet wat er gebeurt als ‘net genoeg’ plots niet genoeg meer is."
+    }
+  },
+  {
+    "id": "fatima_el_khouri",
+    "naam": "Fatima El Khouri",
+    "herkomst": "Beiroet, Ottomaanse Rijk",
+    "leeftijd": 26,
+    "rol": "Naaister – uniformherstel",
+    "bio": "Herstelde kledij en verbanden voor soldaten.",
+    "verhalen": {
+      "start_menenpoort": "Ik ben Fatima. Mijn moeder leerde me dat draad geduld vraagt. Hier is geduld schaars. Ik kijk naar deze poort en denk aan steken: je ziet pas later wat ze bijeenhouden. En je hoopt dat het blijft.",
+      "new_irish_farm": "Uniformen kwamen gescheurd terug. Ik naaide alsof stof levens kon samenhouden. Soms vond ik zand in de naden, en ik vroeg me af of dat ooit nog weg zou gaan. Ik leerde dat herstellen ook betekent: sporen aanvaarden.",
+      "flanders_fields_museum": "In het museum hangen stoffen schoon en plat, alsof ze nooit een lichaam moesten beschermen. Ik zie knopen en naden en herken mijn werk in stilte. Niemand juicht voor een goede steek, maar iedereen merkt het als hij loskomt. Hier besef ik: ik was een onzichtbare hand in een zichtbaar verhaal.",
+      "langemark": "Bloedvlekken wassen lukt niet altijd. Dan bleef ik gewoon langer schrobben. Niet omdat het beter werd, maar omdat stoppen voelde als opgeven. Soms is hard werken gewoon een manier om niet te denken.",
+      "tyne_cot": "Ik herkende mannen aan hun knopen. Niet aan hun gezichten. Het klinkt koud, maar het was mijn manier om functioneel te blijven. Als je iedereen ‘een mens’ noemt, kan je soms niet meer verder.",
+      "passchendaele_museum": "De stoffen hier zijn schoon. Ze kennen geen handen die trillen. Ik denk aan mijn vingers die pijn deden van het trekken, en aan mijn ogen die moe werden van zoeken naar scheuren. En ik vraag me af of iemand ooit begreep dat ik ook bang was, alleen op een stillere manier.",
+      "end_menenpoort": "Ik vouw mijn naalden weg. Voor nu is herstellen alleen nog herinneren. En ik hoop dat de wereld ooit weer stoffen maakt voor feesten in plaats van voor fronten."
+    }
+  },
+  {
+    "id": "pieter_de_smet",
+    "naam": "Pieter De Smet",
+    "herkomst": "Diksmuide, België",
+    "leeftijd": 31,
+    "rol": "Militair postbode",
+    "bio": "Verdeelde brieven aan en van het front.",
+    "verhalen": {
+      "start_menenpoort": "Pieter. Ik droeg meer woorden dan kogels. Toch wogen ze zwaarder. Onder deze poort voel ik hoe woorden kunnen blijven hangen, zelfs wanneer de schrijver al lang weg is. Soms was mijn postzak een hele wereld op mijn rug.",
+      "new_irish_farm": "Ik kende de handschriften. Sommige brieven gaf ik liever niet af. Niet omdat ik mocht kiezen, maar omdat ik al voelde hoe ze zouden landen. Ik leerde lopen alsof ik breekbaar glas vervoerde, want dat waren sommige zinnen ook.",
+      "flanders_fields_museum": "In het museum zie ik brieven als artefacten, netjes bewaard. Ik denk aan mijn vingers die altijd naar papier roken en aan ogen die te snel lazen. Hier leest men rustig; toen was elk woord een storm. Ik vraag me af hoeveel mensen vandaag naar een vitrine kijken zonder te beseffen dat er ooit een hand trilde boven precies zo’n blad.",
+      "langemark": "Een brief zonder antwoord blijft in je zak branden. Ik droeg er soms twee: één die ik moest afgeven, en één die ik liever nooit zou bezorgen. Want sommige antwoorden bestaan niet. En toch blijft iemand ze hopen.",
+      "tyne_cot": "Ik las namen die nooit meer zouden schrijven. Ik onthield ze. Het voelde onlogisch dat post bleef komen voor wie niet meer was. Maar oorlog is een slechte administrateur: hij blijft sturen, ook als niemand meer kan ontvangen.",
+      "passchendaele_museum": "De postzak hier is leeg. De mijne was dat nooit. Ik kijk ernaar en voel weer het gewicht, niet van papier, maar van verwachtingen. Misschien is dat wat post is in oorlog: draagbaar verdriet.",
+      "end_menenpoort": "Ik ben klaar met dragen. Maar sommige woorden neem ik mee. En als iemand mij vraagt waarom ik ze niet loslaat, zeg ik: omdat ze iemands laatste thuis waren."
+    }
+  },
+  {
+    "id": "hiroshi_tanaka",
+    "naam": "Hiroshi Tanaka",
+    "herkomst": "Osaka, Japan",
+    "leeftijd": 27,
+    "rol": "Militair waarnemer",
+    "bio": "Observeerde en rapporteerde, zonder zelf te vechten.",
+    "verhalen": {
+      "start_menenpoort": "Hiroshi. Observeren is afstand houden. Hier is afstand moeilijk. Onder deze poort zie ik geen beweging, en toch voel ik de druk van duizenden verhalen. Het is vreemd: zelfs stilte heeft hier een schaduw.",
+      "new_irish_farm": "Ik noteerde posities en bewegingen. De modder liet zich niet noteren. Ik probeerde woorden te vinden voor iets dat niet in cijfers past. En ik ontdekte: hoe meer je ziet, hoe minder je begrijpt.",
+      "flanders_fields_museum": "In het museum is observeren makkelijk: je kijkt en niets kijkt terug. Ik zie rapporten en kaarten en herken de taal van afstand. Maar achter elk symbool zat een lichaam dat ademde. Ik vraag me af of mijn notities iemand geholpen hebben, of alleen maar netjes op papier stonden terwijl de wereld instortte.",
+      "langemark": "Een verrekijker vergroot alles, behalve begrip. Ik zag gezichten groter worden, maar de reden van hun blik bleef klein en ongrijpbaar. Soms klapte ik hem dicht omdat ik bang werd voor mijn eigen koelte.",
+      "tyne_cot": "Ik keek naar rijen graven en wist dat geen rapport dit kon samenvatten. Ik schreef toch. Dat is mijn vloek en mijn taak: blijven beschrijven wat nooit volledig beschreven kan worden. En toch, als ik stop, lijkt het alsof ik het ontken.",
+      "passchendaele_museum": "Mijn notities liggen ergens in een archief. Dit blijft. Ik zie vitrines en denk: ook dit is een verslag, maar dan met voorwerpen. Misschien is dat eerlijker dan mijn woorden ooit waren.",
+      "end_menenpoort": "Ik buig licht. Niet als soldaat, maar als mens. En ik neem me voor: als ik ooit weer observeer, zal ik ook proberen te voelen. Alleen kijken is niet genoeg."
     }
   }
 ]
-

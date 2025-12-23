@@ -3,7 +3,13 @@
   "radiusDefaultMeters": 200,
   "startStopId": "start_menenpoort",
   "endStopId": "end_menenpoort",
-  "requiredStops": ["new_irish_farm", "langemark", "tyne_cot", "passchendaele_museum"],
+  "requiredStops": [
+  "start_menenpoort",
+  ["new_irish_farm", "flanders_fields_museum"],
+  "langemark",
+  "tyne_cot",
+  "passchendaele_museum"
+],
   "kmlPath": "./data/route.kml",
   "routePath": "./data/route.gpx"
 }
