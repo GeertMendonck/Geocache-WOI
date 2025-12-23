@@ -156,4 +156,13 @@ summary { cursor:pointer; }
 }
 .qa button{ height:36px; }
 .saveBadge{ min-width:96px; }
+.pc-img{
+  width: 140px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 14px;
+  display: none;           /* pas tonen als er een image is */
+  border: 1px solid rgba(0,0,0,.15);
+  margin-top: 10px;
+}
 
