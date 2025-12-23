@@ -165,4 +165,49 @@ summary { cursor:pointer; }
   border: 1px solid rgba(0,0,0,.15);
   margin-top: 10px;
 }
+.pc-head{
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 12px;
+  align-items: start;
+  margin-top: 10px;
+}
+
+.pc-img{
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+}
+
+.pc-head-meta{ min-width: 0; }
+
+.pc-title{
+  font-weight: 800;
+  font-size: 16px;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.pc-pills{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.pc-bio{
+  color: rgba(255,255,255,.75);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+/* mobiel: portret bovenaan */
+@media (max-width: 420px){
+  .pc-head{ grid-template-columns: 1fr; }
+  .pc-img{ width: 100%; height: auto; aspect-ratio: 1/1; }
+}
+
 

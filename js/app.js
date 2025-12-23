@@ -158,29 +158,40 @@
   }
   function renderProfile(){
     var pc=currentPc();
+    var img=qs('pcImg');
+  
     if(!pc){
-      var pci=qs('pcInfo'); if(pci) pci.textContent='(Geen personages geladen)';
-      var img0=qs('pcImg'); if(img0) img0.style.display='none';
+      var t=qs('pcTitle'); if(t) t.textContent='(Geen personages geladen)';
+      var pills=qs('pcPills'); if(pills) pills.innerHTML='';
+      var bio=qs('pcBio'); if(bio) bio.textContent='';
+      if(img) img.style.display='none';
+      renderCharacterChooser();
       return;
     }
   
-    var el=qs('pcInfo');
-    if(el) el.innerHTML = '<div class="row">'
-      + '<div class="pill">🧑 <b>'+pc.naam+'</b></div>'
-      + '<div class="pill">🎂 '+pc.leeftijd+' jaar</div>'
-      + '<div class="pill">🌍 '+pc.herkomst+'</div>'
-      + '<div class="pill">🎖️ '+pc.rol+'</div>'
-      + '</div><p class="muted">'+pc.bio+'</p>';
+    // Titel
+    var title=qs('pcTitle');
+    if(title) title.textContent = pc.naam;
   
-    // --- afbeelding ---
-    var img=qs('pcImg');
+    // Pills (mooie volgorde)
+    var pillsEl=qs('pcPills');
+    if(pillsEl){
+      pillsEl.innerHTML =
+        '<span class="pill">🎂 <b>'+pc.leeftijd+' jaar</b></span>' +
+        '<span class="pill">🌍 <b>'+pc.herkomst+'</b></span>' +
+        '<span class="pill">🎖️ <b>'+pc.rol+'</b></span>';
+    }
+  
+    // Bio
+    var bioEl=qs('pcBio');
+    if(bioEl) bioEl.textContent = pc.bio || '';
+  
+    // Afbeelding
     if(img){
       img.style.display = 'block';
       img.alt = 'Portret van ' + (pc.naam || 'personage');
       img.src = './data/Personages/' + pc.id + '.png';
-  
       img.onerror = function(){
-        // als er geen image is, verberg hem netjes (of zet hier een placeholder)
         img.onerror = null;
         img.style.display = 'none';
       };
@@ -188,6 +199,7 @@
   
     renderCharacterChooser();
   }
+  
   
   function renderCharacterChooser(){
     var st=store.get(); var el=qs('pcChooser'); if(!el) return;
