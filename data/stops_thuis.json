@@ -98,8 +98,8 @@
       "id": "thuis_einde",
       "slot": "end",
       "naam": "Einde: Thuis",
-      "lat": 51.220418,
-      "lng": 4.440854,
+      "lat": 51.220428,
+      "lng": 4.440834,
       "radius": 120,
       "vragen": [
         "Is alles ontgrendeld zoals verwacht?",
