@@ -240,6 +240,31 @@
       };
     });
   }
+  (function bindPcSelectOnce(){
+    if(document.__pcSelectBound) return;
+    document.__pcSelectBound = true;
+  
+    document.addEventListener('change', function(e){
+      var t = e.target;
+      if(!t || t.id !== 'pcSelect') return;
+  
+      var st = store.get();
+  
+      // respecteer je regels
+      if(st.lockedPc){
+        toast('🔒 Keuze vergrendeld');
+        t.value = st.pcId || t.value;
+        return;
+      }
+      if(window.__insideStart !== true){
+        toast('🔐 Kiesbaar enkel aan de start');
+        t.value = st.pcId || t.value;
+        return;
+      }
+  
+      setPcId(t.value);
+    });
+  })();
   
 
   // ---------- UI renders ----------
@@ -299,35 +324,42 @@
   
     renderCharacterChooser();
   }
+  function setPcId(newId){
+    var st = store.get();
+    st.pcId = newId;
+    store.set(st);
+  
+    // alles dat van pc afhangt opnieuw tekenen
+    renderProfile();     // <- jouw Ernesto-kaart
+    renderUnlocked();    // verhalen + vragen
+    renderStops();       // overzicht
+  }
   
   
   function renderCharacterChooser(){
-    var st=store.get(); 
-    var el=qs('pcChooser'); 
-    if(!el) return;
-  
-    var inside = window.__insideStart===true; 
-    var locked = !!st.lockedPc;
-    var disabled = locked || !inside;
+    var st=store.get(); var el=qs('pcChooser'); if(!el) return;
   
     var opts='';
     (DATA.personages||[]).forEach(function(p){
       opts += '<option value="'+p.id+'" '+(p.id===st.pcId?'selected':'')+'>'
-        + p.naam+' ('+p.leeftijd+') — '+p.rol
-        + '</option>';
+           +  p.naam+' ('+p.leeftijd+') — '+p.rol
+           + '</option>';
     });
-    if(!opts) opts = '<option value="">Demo</option>';
+    if(!opts) opts = '<option>Demo</option>';
+  
+    var inside = window.__insideStart===true;
+    var locked = !!st.lockedPc;
+    var canChoose = inside && !locked;
   
     el.innerHTML =
-        '<select id="pcSelect" '+(disabled?'disabled':'')+'>'+opts+'</select>'
+        '<select id="pcSelect" '+(canChoose?'':'disabled')+'>'+opts+'</select>'
       + '<span class="pill '+(locked?'ok':'')+'">'
-      + (locked ? '🔒 Keuze vergrendeld' : (inside ? '🟢 Je kan hier je personage kiezen' : '🔐 Kiesbaar enkel aan de start'))
+      + (locked ? '🔒 Keuze vergrendeld'
+                : (inside ? '🟢 Je kan hier je personage kiezen'
+                          : '🔐 Kiesbaar enkel aan de start'))
       + '</span>';
-  
-    // extra zekerheid: zet value na render
-    var sel = qs('pcSelect');
-    if(sel && st.pcId) sel.value = st.pcId;
   }
+  
   
   function renderStops(){
     var cont = qs('stopsList'); if(!cont) return;
