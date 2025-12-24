@@ -270,12 +270,14 @@
   // ---------- UI renders ----------
   function ensureCharacter(){
     var st = store.get();
-    if(st.pcId && DATA.personages.some(function(p){ return p.id===st.pcId; })){
-      st.unlocked=st.unlocked||[]; st.flags=st.flags||{}; store.set(st); return st.pcId;
-    }
-    var pc = pick(DATA.personages && DATA.personages.length ? DATA.personages : [{id:'demo',naam:'Demo',leeftijd:'—',herkomst:'—',rol:'—',bio:'—',verhalen:{}}]);
-    st.pcId=pc.id; st.unlocked=st.unlocked||[]; st.flags=st.flags||{}; store.set(st); return pc.id;
+    if(st.pcId && DATA.personages.some(p => p.id === st.pcId)) return st.pcId;
+  
+    var pc = pick(DATA.personages || []);
+    st.pcId = pc ? pc.id : null;
+    store.set(st);
+    return st.pcId;
   }
+  
   function currentPc(){
     var st=store.get();
     for (var i=0;i<(DATA.personages||[]).length;i++){ if (DATA.personages[i].id===st.pcId) return DATA.personages[i]; }
