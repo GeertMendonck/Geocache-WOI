@@ -13,8 +13,8 @@
       "id": "thuis",
       "slot": "start",
       "naam": "Start: Thuis",
-      "lat": 51.220,
-      "lng": 4.440,
+      "lat": 51.22105,
+      "lng": 4.44105,
       "radius": 120,
       "vragen": [
         "Wat wil je vandaag testen?",
