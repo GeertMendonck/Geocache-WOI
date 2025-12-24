@@ -595,13 +595,22 @@
   function addStopMarkers(){
     if(!LMAP || !window.L) return;
   
-    // (optioneel) oude markers opruimen
+    // oude markers opruimen
     if(window.__stopMarkerLayer){
       try { LMAP.removeLayer(window.__stopMarkerLayer); } catch(e){}
     }
     window.__stopMarkerLayer = L.layerGroup().addTo(LMAP);
   
     var locs = DATA.locaties || DATA.stops || [];
+  
+    // tel hoeveel locaties per slot (voor split-stops)
+    var perSlotCount = {};
+    for (var k=0; k<locs.length; k++){
+      var a = locs[k];
+      if(!a || !a.slot) continue;
+      perSlotCount[a.slot] = (perSlotCount[a.slot]||0) + 1;
+    }
+  
     for(var i=0;i<locs.length;i++){
       var s = locs[i];
       if(!s || s.lat==null || s.lng==null) continue;
@@ -611,15 +620,17 @@
       for (var j=0;j<(DATA.slots||[]).length;j++){
         if(DATA.slots[j].id === s.slot){ so = DATA.slots[j]; break; }
       }
-      var req = so ? so.required : true;
+      var req = so ? !!so.required : true;
   
-      var icon = makeSlotIcon(s.slot, req);
+      var variants = perSlotCount[s.slot] || 1;
+      var icon = makeSlotIcon(s.slot, req, variants);
   
       L.marker([s.lat, s.lng], { icon: icon })
         .bindPopup('<b>'+escapeHtml(s.naam||s.id)+'</b>')
         .addTo(window.__stopMarkerLayer);
     }
   }
+  
   
   function initLeafletMap(){
     try{
