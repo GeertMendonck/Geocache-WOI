@@ -1103,7 +1103,24 @@
 
         // Data-afhankelijke listeners
         var b;
-        b=qs('regenBtn'); if(b) b.addEventListener('click', function(){ var st=store.get(); if(st.lockedPc && !window.__insideStart){ toast('🔒 Buiten startzone kan je niet wisselen.'); return; } st.pcId=null; store.set(st); ensureCharacter(); renderProfile(); renderUnlocked(); toast('🎲 Nieuw personage gekozen'); });
+        b = qs('regenBtn');
+        if(b){
+          b.addEventListener('click', function(){
+            var st = store.get();
+        
+            if(st.lockedPc && !window.__insideStart){
+              toast('🔒 Buiten startzone kan je niet wisselen.');
+              return;
+            }
+        
+            // kies willekeurig, maar centraal
+            var pc = pick(DATA.personages);
+            setPcId(pc.id);
+        
+            toast('🎲 Nieuw personage gekozen');
+          });
+        }
+        
         b=qs('savePcBtn'); if(b) b.addEventListener('click', function(){ var st=store.get(); if(st.lockedPc && !window.__insideStart){ toast('🔒 Wijzigen kan enkel aan de start.'); return; } if(!window.__insideStart){ toast('🔐 Ga naar de startlocatie om te kiezen.'); return; } var sel=qs('pcSelect'); if(sel){ st.pcId=sel.value; store.set(st); renderProfile(); toast('✅ Personage bevestigd'); }});
         b=qs('exportBtn'); if(b) b.addEventListener('click', function(){
           var st=store.get(); var pc=currentPc()||{}; var lines=[];
