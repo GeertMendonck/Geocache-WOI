@@ -564,7 +564,12 @@
       pointToLayer: function(_f, latlng){ return L.circleMarker(latlng, { radius:3, weight:1, opacity:.9, fillOpacity:.6 }); },
       style: function(f){ return /LineString|MultiLineString/i.test((f.geometry&&f.geometry.type)||'') ? { weight:4, opacity:.95 } : { weight:1, opacity:.6 }; }
     }).addTo(LMAP);
-    try { LMAP.fitBounds(layer.getBounds(), { padding:[20,20] }); } catch(_e){}
+    try { 
+      if (LMAP) {
+        try { LMAP.fitBounds(poly.getBounds(), { padding:[20,20] }); } catch(_e){}
+      }
+    
+    } catch(_e){}
     showDiag((note||'Route') + ' → ' + (hasLine ? 'lijn getekend ✓' : 'GEEN lijn (alleen punten)'));
   }
   function slotShortLabel(slotId){
@@ -626,7 +631,10 @@
           if(!locs[i] || locs[i].lat==null || locs[i].lng==null) continue;
           bounds.push([locs[i].lat, locs[i].lng]);
         }
-        if(bounds.length) LMAP.fitBounds(bounds,{padding:[20,20]});
+        if (LMAP && bounds.length) {
+          LMAP.fitBounds(bounds, { padding:[20,20] });
+        }
+        
 
         // --- markers met S/E/01/02 + optional styling ---
         addStopMarkers();
@@ -668,7 +676,10 @@
                 }).filter(function(p){ return isFinite(p[0]) && isFinite(p[1]); });
                 if (latlngs.length>1){
                   var poly = L.polyline(latlngs, { weight:4, opacity:.95 }).addTo(LMAP);
-                  try { LMAP.fitBounds(poly.getBounds(), { padding:[20,20] }); } catch(_e){}
+                  try { 
+                    (poly.getBounds(), { padding:[20,20] }); 
+                  } 
+                    catch(_e){}
                   showDiag('Route GPX: '+latlngs.length+' punten getekend ✓ (manual)');
                   return;
                 }
@@ -710,7 +721,8 @@
       // Live positie
       liveMarker = L.marker([0,0], { icon:iconUser, opacity:0 }).addTo(LMAP);
       accCircle  = L.circle([0,0], { radius:0, color:'#3dd1c0', fillOpacity:.1 }).addTo(LMAP);
-    }catch(e){ if (window.console) console.error(e); showDiag('Kaart error: '+e.message); }
+    }catch(e){ 
+      if (window.console) console.error(e); showDiag('Kaart error: '+e.message); }
   
   
   }
