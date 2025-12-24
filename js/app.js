@@ -328,7 +328,7 @@
   
       // ✅ Belangrijk: split-slot zichtbaar houden vóór unlock
       if(locs.length > 1 && !unlockedMap[sid]){
-        return '(' + locs.length + ' opties)';
+        return '🔀 (' + locs.length + ' opties)';
       }
   
       // Als unlocked: toon de effectief gekozen locatie (via lastUnlockedLocationBySlot)
@@ -363,6 +363,7 @@
   
     cont.innerHTML = html || '<span class="muted">(Geen stops geladen)</span>';
   }
+ 
   
   
   
