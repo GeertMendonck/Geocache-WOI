@@ -1,15 +1,6 @@
 {
   "title": "WOI – Mijn Personage",
   "radiusDefaultMeters": 200,
-  "startStopId": "start_menenpoort",
-  "endStopId": "end_menenpoort",
-  "requiredStops": [
-  "start_menenpoort",
-  ["new_irish_farm", "flanders_fields_museum"],
-  "langemark",
-  "tyne_cot",
-  "passchendaele_museum"
-],
   "kmlPath": "./data/route.kml",
   "routePath": "./data/route.gpx"
 }

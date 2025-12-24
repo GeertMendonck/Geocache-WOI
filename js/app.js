@@ -39,6 +39,18 @@
     var tag=document.querySelector('.saveBadge[data-stop="'+stopId+'"][data-q="'+qi+'"]');
     if(tag){ tag.textContent='✔ opgeslagen'; setTimeout(function(){ tag.textContent=''; }, 1200); }
   }
+  function locationIdForSlot(slotId){
+    var st = store.get();
+    var map = st.lastUnlockedLocationBySlot || st.unlockedBySlot || {};
+    if(map && map[slotId]) return map[slotId];
+  
+    // fallback: eerste locatie die dit slot gebruikt
+    for (var i=0; i<(DATA.stops||[]).length; i++){
+      if(DATA.stops[i] && DATA.stops[i].slot === slotId) return DATA.stops[i].id;
+    }
+    return null;
+  }
+  
 
   // MIC detectie (aan/uit bij online/offline)
   var MIC_OK = false;
@@ -138,9 +150,66 @@
       fetchJSON(stopsFileFromQuery()),
       fetchJSON('./data/personages.json')
     ]).then(function(arr){
-      return { meta:arr[0], stops:arr[1], personages:arr[2] };
+      var meta = arr[0] || {};
+      var stopsRaw = arr[1];
+      var personages = arr[2] || [];
+  
+      // ---- Nieuw model: { slots:[], locaties:[] } ----
+      var slots = null;
+      var locaties = null;
+  
+      if (stopsRaw && typeof stopsRaw === 'object' && !Array.isArray(stopsRaw) && stopsRaw.locaties && stopsRaw.slots) {
+        slots = stopsRaw.slots || [];
+        locaties = stopsRaw.locaties || [];
+      } else {
+        // ---- Oud model: [ {id, naam, lat, lng, ...}, ... ] ----
+        locaties = Array.isArray(stopsRaw) ? stopsRaw : [];
+        slots = []; // best-effort afgeleid
+  
+        // Unieke slotnamen afleiden als ze bestaan, anders alles als stopNN
+        var seen = {};
+        locaties.forEach(function(l){
+          var s = l && l.slot ? l.slot : null;
+          if (s && !seen[s]) { seen[s] = true; slots.push({ id:s, label:s, required:true }); }
+        });
+  
+        // Als er geen slots in de data zitten, dan vallen we terug op meta of op "start/stop01.."
+        if (!slots.length) {
+          // (je kan dit later nog verfijnen, maar voor compat is dit voldoende)
+          slots = [
+            { id:'start', label:'Start', required:true },
+            { id:'end', label:'Einde', required:true }
+          ];
+        }
+      }
+  
+      var startSlot = meta.startSlot || 'start';
+      var endSlot   = meta.endSlot   || 'end';
+  
+      // Volgorde = volgorde in slots-array (jouw nieuwe regel)
+      var slotOrder = (slots || []).map(function(s){ return s.id; });
+  
+      // Required slots = required:true
+      var requiredSlots = (slots || [])
+        .filter(function(s){ return !!s.required; })
+        .map(function(s){ return s.id; });
+  
+      return {
+        meta: meta,
+        // compat: blijf DATA.stops gebruiken als "locaties"
+        stops: locaties,
+        // nieuw: expliciet
+        slots: slots,
+        locaties: locaties,
+        startSlot: startSlot,
+        endSlot: endSlot,
+        slotOrder: slotOrder,
+        requiredSlots: requiredSlots,
+        personages: personages
+      };
     });
   }
+  
 
   // ---------- UI renders ----------
   function ensureCharacter(){
@@ -214,64 +283,182 @@
   }
   function renderStops(){
     var cont=qs('stopsList'); if(!cont) return;
-    var st=store.get(); var unlocked={}; (st.unlocked||[]).forEach(function(id){ unlocked[id]=true; });
+    var st=store.get();
+  
+    var unlockedSlots = st.unlockedSlots || [];
+    var unlockedMap = {};
+    unlockedSlots.forEach(function(sid){ unlockedMap[sid]=true; });
+  
+    var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
+    var slotOrder = DATA.slotOrder || (DATA.slots||[]).map(function(s){ return s.id; });
+  
+    // helper: slot label
+    function slotLabel(sid){
+      for (var i=0;i<(DATA.slots||[]).length;i++){
+        if (DATA.slots[i].id===sid) return DATA.slots[i].label || sid;
+      }
+      return sid;
+    }
+  
     var html='';
-    (DATA.stops||[]).forEach(function(s){
-      var ok = !!unlocked[s.id]; var isEnd = s.id===(DATA.meta?DATA.meta.endStopId:null);
-      var icon = ok ? '✅' : (isEnd ? '🔒' : '⏳');
-      html += '<span class="pill">'+icon+' '+s.naam+'</span>';
+    (slotOrder||[]).forEach(function(sid){
+      var ok = !!unlockedMap[sid];
+  
+      // End-slot icon: locked zolang end zelf niet unlocked (tryUnlock blokkeert end indien required ontbreekt)
+      var icon = ok ? '✅' : (sid===endSlot ? '🔒' : '⏳');
+  
+      html += '<span class="pill">'+icon+' '+slotLabel(sid)+'</span>';
     });
+  
     cont.innerHTML = html || '<span class="muted">(Geen stops geladen)</span>';
   }
+  
   function renderUnlocked(){
-    var st=store.get(); var pc=currentPc(); var cont=qs('unlockList'); if(!cont) return;
-    if(!st.unlocked || !st.unlocked.length){ cont.innerHTML='<div class="muted">Nog niets ontgrendeld.</div>'; return; }
-    var html='';
-    st.unlocked.forEach(function(id){
-      var stop=null; for (var i=0;i<(DATA.stops||[]).length;i++){ if (DATA.stops[i].id===id){ stop=DATA.stops[i]; break; } }
-      var txt = pc && pc.verhalen ? pc.verhalen[id] : null;
-
-      var qsArr = stop && stop.vragen ? stop.vragen : [];
+    var st = store.get();
+    var pc = currentPc();
+    var cont = qs('unlockList'); if(!cont) return;
+  
+    var unlockedSlots = st.unlockedSlots || [];
+    if(!unlockedSlots.length){
+      cont.innerHTML = '<div class="muted">Nog niets ontgrendeld.</div>';
+      return;
+    }
+  
+    var html = '';
+    for(var u=0; u<unlockedSlots.length; u++){
+      var slotId = unlockedSlots[u];
+  
+      // locatie die dit slot effectief ontgrendelde (bij split)
+      var locId = pickVariantLocationIdForSlot(slotId);
+      var loc = null;
+  
+      var arr = DATA.locaties || DATA.stops || [];
+      for(var i=0;i<arr.length;i++){
+        if(arr[i] && arr[i].id === locId){ loc = arr[i]; break; }
+      }
+      if(!loc) loc = firstLocationForSlot(slotId);
+  
+      // safety
+      if(!locId && loc) locId = loc.id;
+  
+      var title = (loc && loc.naam) ? loc.naam : slotId;
+  
+      // ✅ tekst per locatie-id
+      var txt = (pc && pc.verhalen && locId) ? pc.verhalen[locId] : null;
+  
+      var qsArr = (loc && loc.vragen) ? loc.vragen : [];
       var qaHtml = '';
-      if (qsArr.length){
+      if(qsArr.length && locId){
         qaHtml = qsArr.map(function(q,qi){
-          var val = getAns(stop.id, qi);
+          // ✅ antwoorden per locatie-id
+          var val = getAns(locId, qi);
+  
           return '<div class="qa">'
-            + '<div class="q"><b>Vraag '+(qi+1)+':</b> '+q+'</div>'
+            + '<div class="q"><b>Vraag '+(qi+1)+':</b> '+escapeHtml(q)+'</div>'
             + '<div class="controls">'
-            + '  <textarea class="ans" data-stop="'+stop.id+'" data-q="'+qi+'" placeholder="Jouw antwoord...">'+escapeHtml(val)+'</textarea>'
-            + (MIC_OK ? '  <button class="micBtn" data-stop="'+stop.id+'" data-q="'+qi+'" title="Spreek je antwoord in">🎙️</button>' : '')
-            + '  <button class="clearAns" data-stop="'+stop.id+'" data-q="'+qi+'" title="Wis">✖</button>'
-            + '  <span class="saveBadge small muted" data-stop="'+stop.id+'" data-q="'+qi+'"></span>'
+            // ✅ data-stop = locId (zodat setAns ook locId krijgt)
+            + '  <textarea class="ans" data-stop="'+locId+'" data-q="'+qi+'" placeholder="Jouw antwoord...">'+escapeHtml(val)+'</textarea>'
+            + (MIC_OK ? '  <button class="micBtn" data-stop="'+locId+'" data-q="'+qi+'" title="Spreek je antwoord in">🎙️</button>' : '')
+            + '  <button class="clearAns" data-stop="'+locId+'" data-q="'+qi+'" title="Wis">✖</button>'
+            + '  <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+qi+'"></span>'
             + '</div>'
             + '</div>';
         }).join('');
       }
-
+  
       html += '<details open>'
-        + '<summary>📘 '+((stop&&stop.naam)||id)+' <button class="readBtn" data-read="'+id+'" title="Lees voor">🔊</button></summary>'
+        // ✅ readBtn ook per locId
+        + '<summary>📘 '+escapeHtml(title)+' <button class="readBtn" data-read="'+(locId||slotId)+'" title="Lees voor">🔊</button></summary>'
         + '<div style="margin-top:6px">'+(txt || '<span class="muted">(Geen tekst)</span>')+'</div>'
         + qaHtml
         + '</details>';
-    });
-    cont.innerHTML=html;
-    renderProgress();
-  }
-  function renderProgress(){
-    var st=store.get();
-    var req=(DATA.meta && DATA.meta.requiredStops) ? DATA.meta.requiredStops : [];
-    var unlocked = st.unlocked || [];
-  
-    var done=0;
-    for (var i=0;i<req.length;i++){
-      if (reqIsDone(req[i], unlocked)) done++;
     }
   
-    var total=req.length;
+    cont.innerHTML = html;
+    renderProgress();
+  }
+  
+  
+  function renderProgress(){
+    var st=store.get();
+    var req = DATA.requiredSlots || [];
+    var unlockedSlots = st.unlockedSlots || [];
+  
+    var done = 0;
+    for (var i=0;i<req.length;i++){
+      if (unlockedSlots.indexOf(req[i]) > -1) done++;
+    }
+  
+    // Vaak wil je end niet meetellen in required (kan, hoeft niet). Dit is safe:
+    // als je end in requiredSlots hebt zitten, telt hij pas als je end effectief unlocked.
+    var total = req.length;
+  
     var deg= total ? (done/total)*360 : 0;
     var ring=qs('progressRing'), txt=qs('progressText');
     if(ring) ring.style.background = 'conic-gradient(var(--accent) '+deg+'deg, rgba(255,255,255,.15) 0 360deg)';
     if(txt) txt.textContent = done+'/'+total;
+  }
+  
+  function firstLocationForSlot(slotId){
+    // zoekt de eerste locatie in DATA.stops/locaties met dit slot (volgorde van JSON!)
+    var arr = DATA.locaties || DATA.stops || [];
+    for(var i=0;i<arr.length;i++){
+      if(arr[i] && arr[i].slot === slotId) return arr[i];
+    }
+    return null;
+  }
+  
+  function allLocationsForSlot(slotId){
+    var arr = DATA.locaties || DATA.stops || [];
+    var out = [];
+    for(var i=0;i<arr.length;i++){
+      if(arr[i] && arr[i].slot === slotId) out.push(arr[i]);
+    }
+    return out;
+  }
+  
+  function pickVariantLocationIdForSlot(slotId){
+    var st = store.get();
+  
+    // ✅ NIEUW: primair = de locatie die dit slot effectief ontgrendelde
+    if(st.unlockedBySlot && st.unlockedBySlot[slotId]) {
+      return st.unlockedBySlot[slotId];
+    }
+  
+    // ♻️ BACKWARD COMPAT: oude key (als er nog data in localStorage zit)
+    if(st.lastUnlockedLocationBySlot && st.lastUnlockedLocationBySlot[slotId]) {
+      return st.lastUnlockedLocationBySlot[slotId];
+    }
+  
+    // ♻️ BACKWARD COMPAT: als je nog per-locatie unlocked IDs had
+    if(st.unlocked && st.unlocked.length){
+      var locs = allLocationsForSlot(slotId);
+      for(var i=0;i<locs.length;i++){
+        if(st.unlocked.indexOf(locs[i].id) !== -1) return locs[i].id;
+      }
+    }
+  
+    // ultieme fallback: eerste locatie in JSON
+    var first = firstLocationForSlot(slotId);
+    return first ? first.id : null;
+  }
+  
+  
+  function storyForSlot(pc, slotId){
+    if(!pc || !pc.verhalen) return null;
+  
+    var v = pc.verhalen[slotId];
+  
+    // normale slot-tekst (string)
+    if(typeof v === 'string') return v;
+  
+    // split-slot (object met locatie-ids)
+    if(v && typeof v === 'object'){
+      var locId = pickVariantLocationIdForSlot(slotId);
+      return locId && v[locId] ? v[locId] : null;
+    }
+  
+    return null;
   }
   
 
@@ -430,71 +617,143 @@
   // ---------- Geoloc ----------
   function tryUnlock(best, acc){
     var effective = Math.max(0, best.d - (acc||0));
-    if(effective <= best.radius){
-      var st=store.get(); st.unlocked=st.unlocked||[];
-      var isEnd = best.id=== (DATA.meta?DATA.meta.endStopId:null);
-      if(isEnd){
-        var req = (DATA.meta && DATA.meta.requiredStops) ? DATA.meta.requiredStops : [];
-var missingReq = [];
-for (var i=0;i<req.length;i++){
-  if (!reqIsDone(req[i], st.unlocked||[])) missingReq.push(req[i]);
-}
-if(missingReq.length){
-  var names = missingReq.map(reqDisplayName).join(', ');
-  toast('🔒 Eindlocatie pas na: '+names);
-  showDiag('Einde niet ontgrendeld; ontbreekt nog: '+names);
-  return;
-}
-
-      }
-      if(st.unlocked.indexOf(best.id)===-1){
-        st.unlocked.push(best.id); store.set(st);
-        renderUnlocked(); renderStops(); toast('✅ Ontgrendeld: '+best.name);
-        playDing();
+    if(effective > best.radius) return;
+  
+    var st = store.get();
+    st.unlockedSlots = st.unlockedSlots || [];
+    st.unlockedBySlot = st.unlockedBySlot || {}; // ✅ nodig als je hieronder toewijst
+  
+    var startSlot = DATA.startSlot || (DATA.meta && DATA.meta.startSlot) || 'start';
+    var endSlot   = DATA.endSlot   || (DATA.meta && DATA.meta.endSlot)   || 'end';
+  
+    // best-effort: slot bepalen
+    var bestSlot = best.slot;
+    if(!bestSlot){
+      for (var i=0;i<(DATA.stops||[]).length;i++){
+        if (DATA.stops[i] && DATA.stops[i].id === best.id){
+          bestSlot = DATA.stops[i].slot;
+          break;
+        }
       }
     }
+    if(!bestSlot){
+      showDiag('tryUnlock: geen slot gevonden voor '+best.id);
+      return;
+    }
+  
+    // eind-check verplichte slots
+    var isEnd = (bestSlot === endSlot);
+    if(isEnd){
+      var reqSlots = DATA.requiredSlots || [];
+      var missing = [];
+      for (var r=0; r<reqSlots.length; r++){
+        var sid = reqSlots[r];
+        if(sid === endSlot) continue;
+        if(st.unlockedSlots.indexOf(sid) === -1) missing.push(sid);
+      }
+      if(missing.length){
+        var names = missing.map(function(sid){
+          var slotObj = null;
+          for (var j=0;j<(DATA.slots||[]).length;j++){
+            if(DATA.slots[j].id===sid){ slotObj=DATA.slots[j]; break; }
+          }
+          return (slotObj && slotObj.label) ? slotObj.label : sid;
+        }).join(', ');
+        toast('🔒 Eindlocatie pas na: ' + names);
+        showDiag('Einde niet ontgrendeld; ontbreekt nog: ' + names);
+        return;
+      }
+    }
+  
+    // slot unlocken
+    if(st.unlockedSlots.indexOf(bestSlot) === -1){
+      st.unlockedSlots.push(bestSlot);
+  
+      // ✅ onthoud welke locatie dit slot ontgrendelde (split stops)
+      st.unlockedBySlot[bestSlot] = best.id;
+  
+      store.set(st);
+  
+      renderUnlocked();
+      renderStops();
+      toast('✅ Ontgrendeld: ' + (best.name || bestSlot));
+      playDing();
+    }
   }
+  
+  
+  
   function startWatch(){
     followMe = true; // bij start weer volgen
     var gs=qs('geoState'); if(gs) gs.textContent='Actief';
     if(!('geolocation' in navigator)){ var pn=qs('permNote'); if(pn) pn.textContent=(pn.textContent||'')+' • Geen geolocatie'; return; }
+  
+    // start/end slots uit DATA (komen nu uit loadScenario)
+    var startSlot = DATA.startSlot || (DATA.meta && DATA.meta.startSlot) || 'start';
+  
     watchId = navigator.geolocation.watchPosition(function(pos){
       var c=pos.coords, latitude=c.latitude, longitude=c.longitude, accuracy=c.accuracy;
       var cc=qs('coords'); if(cc) cc.textContent = latitude.toFixed(5)+', '+longitude.toFixed(5);
       var ac=qs('acc'); if(ac) ac.textContent = Math.round(accuracy);
-
+  
       var here={lat:latitude,lng:longitude};
       var best=null; var insideStart=false;
+  
       (DATA.stops||[]).forEach(function(s){
         var d = Math.round(distanceMeters(here,{lat:s.lat,lng:s.lng}));
-        if(!best||d<best.d) best={id:s.id,name:s.naam,d:d,radius:(s.radius||(DATA.meta?DATA.meta.radiusDefaultMeters:200))};
-        if(s.id=== (DATA.meta?DATA.meta.startStopId:null)){ insideStart = d <= (s.radius||(DATA.meta?DATA.meta.radiusDefaultMeters:200)); }
+  
+        // ✅ best bevat nu ook slot
+        if(!best || d < best.d){
+          best = {
+            id: s.id,
+            slot: s.slot,            // <— nieuw
+            name: s.naam,
+            d: d,
+            radius: (s.radius || (DATA.meta ? DATA.meta.radiusDefaultMeters : 200))
+          };
+        }
+  
+        // ✅ insideStart op basis van slot, niet meer op id/meta
+        if(s.slot === startSlot){
+          if (d <= (s.radius || (DATA.meta ? DATA.meta.radiusDefaultMeters : 200))) insideStart = true;
+        }
       });
+  
       window.__insideStart = insideStart;
+  
       // Render enkel wanneer status wijzigt én de gebruiker niet net de picker open heeft
       if (Date.now() >= pcSelectBusyUntil && insideStart !== lastInsideStart) {
         lastInsideStart = insideStart;
         renderCharacterChooser();
       }
-
-
+  
       var st=store.get(); st.flags=st.flags||{};
       if(insideStart){ st.flags.seenStart = true; store.set(st); }
-      if(!insideStart && st.flags.seenStart && !st.lockedPc){ st.lockedPc=true; store.set(st); renderCharacterChooser(); toast('🔒 Personage vergrendeld'); }
-
+      if(!insideStart && st.flags.seenStart && !st.lockedPc){
+        st.lockedPc=true; store.set(st); renderCharacterChooser(); toast('🔒 Personage vergrendeld');
+      }
+  
       if(best){
         var cl=qs('closest'); if(cl) cl.textContent=best.name;
         var di=qs('dist'); if(di) di.textContent=String(best.d);
         var ra=qs('radius'); if(ra) ra.textContent=String(best.radius);
-        tryUnlock(best, accuracy); renderProgress(); renderStops();
+  
+        tryUnlock(best, accuracy);
+  
+        // renderProgress/renderStops gaan we straks slot-native maken
+        renderProgress();
+        renderStops();
+  
         updateLeafletLive(latitude, longitude, accuracy);
       }
+  
       if(!LMAP && window.L && navigator.onLine) initLeafletMap(); // kaart laadt lui
     }, function(err){
       var pn=qs('permNote'); if(pn) pn.innerHTML='<span class="warn">Locatie geweigerd</span>';
       var gs=qs('geoState'); if(gs) gs.textContent='Uit';
     }, {enableHighAccuracy:true,maximumAge:10000,timeout:15000});
   }
+  
   function stopWatch(){ if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; var gs=qs('geoState'); if(gs) gs.textContent='Inactief'; } }
 
   // ---------- Boot ----------
@@ -570,7 +829,16 @@ if(missingReq.length){
             var readBtn = e.target && (e.target.closest ? e.target.closest('button.readBtn') : null);
             if(readBtn){
               var id = readBtn.getAttribute('data-read');
-              var pc=currentPc(); var txt = pc && pc.verhalen ? pc.verhalen[id] : '';
+              var pc = currentPc();
+              
+              // id kan locId zijn (best) of slotId (fallback)
+              var locId = id;
+              if (locId && locId.indexOf('stop') === 0) { // heel simpele heuristic
+                locId = pickVariantLocationIdForSlot(locId) || locId;
+              }
+              
+              var txt = (pc && pc.verhalen && locId) ? pc.verhalen[locId] : '';
+              
               if(txt){ if('speechSynthesis' in window && speechSynthesis.speaking){ speechSynthesis.cancel(); } else { speakText(txt); } }
               return;
             }

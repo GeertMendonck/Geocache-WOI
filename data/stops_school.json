@@ -1,68 +1,84 @@
-[
-  {
-    "id": "start_menenpoort",
-    "naam": "Start: Bodega",
-    "lat": 51.21671024664737,
-    "lng": 4.402756084143288,
-    "radius": 70,
-    "vragen": [
-      "Wat verwacht je vandaag te testen?",
-      "Welke functie wil je zeker uitproberen?"
-    ]
-  },
-  {
-    "id": "new_irish_farm",
-    "naam": "Stop 1: Sint-Lodewijk - Secretariaat",
-    "lat": 51.21742931212193,
-    "lng": 4.402670253459137,
-    "radius": 70,
-    "vragen": [
-      "Wat valt je hier op (UI/UX, snelheid, nauwkeurigheid)?",
-      "Werkt het ontgrendelen zoals bedoeld?"
-    ]
-  },
-  {
-    "id": "langemark",
-    "naam": "Stop 2: Groenplaats",
-    "lat": 51.21911767055425,
-    "lng": 4.402170523629709,
-    "radius": 100,
-    "vragen": [
-      "Hoe nauwkeurig lijkt de afstandsmeting hier?",
-      "Welke verbetering zou je willen zien?"
-    ]
-  },
-  {
-    "id": "tyne_cot",
-    "naam": "Stop 3: Melkmarkt",
-    "lat": 51.220737979616395,
-    "lng": 4.402663358876329,
-    "radius": 70,
-    "vragen": [
-      "Werkt de kaart met je live positie correct?",
-      "Blijft je personage correct vergrendeld?"
-    ]
-  },
-  {
-    "id": "passchendaele_museum",
-    "naam": "Stop 4: Carolus Borromeuskerk",
-    "lat": 51.22103700541193,
-    "lng": 4.4043799725602755,
-    "radius": 70,
-    "vragen": [
-      "Werken de reflectievelden en de voorleesknop goed?",
-      "Wat zou je nog willen aanpassen?"
-    ]
-  },
-  {
-    "id": "end_menenpoort",
-    "naam": "Einde: Bodega",
-    "lat": 51.21671024664737,
-    "lng": 4.402756084143288,
-    "radius": 70,
-    "vragen": [
-      "Is alles ontgrendeld zoals verwacht?",
-      "Wat zijn je volgende stappen?"
-    ]
-  }
-]
+{
+  "slots": [
+    { "id": "start",  "label": "Start",  "required": true },
+    { "id": "stop01", "label": "Stop 1", "required": true },
+    { "id": "stop02", "label": "Stop 2", "required": true },
+    { "id": "stop03", "label": "Stop 3", "required": true },
+    { "id": "stop04", "label": "Stop 4", "required": true },
+    { "id": "end",    "label": "Einde",  "required": true }
+  ],
+  "locaties": [
+    {
+      "id": "bodega_start",
+      "slot": "start",
+      "naam": "Start: Bodega",
+      "lat": 51.21671024664737,
+      "lng": 4.402756084143288,
+      "radius": 70,
+      "vragen": [
+        "Wat verwacht je vandaag te testen?",
+        "Welke functie wil je zeker uitproberen?"
+      ]
+    },
+    {
+      "id": "sint_lodewijk_secretariaat",
+      "slot": "stop01",
+      "naam": "Stop 1: Sint-Lodewijk - Secretariaat",
+      "lat": 51.21742931212193,
+      "lng": 4.402670253459137,
+      "radius": 70,
+      "vragen": [
+        "Wat valt je hier op (UI/UX, snelheid, nauwkeurigheid)?",
+        "Werkt het ontgrendelen zoals bedoeld?"
+      ]
+    },
+    {
+      "id": "groenplaats",
+      "slot": "stop02",
+      "naam": "Stop 2: Groenplaats",
+      "lat": 51.21911767055425,
+      "lng": 4.402170523629709,
+      "radius": 100,
+      "vragen": [
+        "Hoe nauwkeurig lijkt de afstandsmeting hier?",
+        "Welke verbetering zou je willen zien?"
+      ]
+    },
+    {
+      "id": "melkmarkt",
+      "slot": "stop03",
+      "naam": "Stop 3: Melkmarkt",
+      "lat": 51.220737979616395,
+      "lng": 4.402663358876329,
+      "radius": 70,
+      "vragen": [
+        "Werkt de kaart met je live positie correct?",
+        "Blijft je personage correct vergrendeld?"
+      ]
+    },
+    {
+      "id": "carolus_borromeuskerk",
+      "slot": "stop04",
+      "naam": "Stop 4: Carolus Borromeuskerk",
+      "lat": 51.22103700541193,
+      "lng": 4.4043799725602755,
+      "radius": 70,
+      "vragen": [
+        "Werken de reflectievelden en de voorleesknop goed?",
+        "Wat zou je nog willen aanpassen?"
+      ]
+    },
+    {
+      "id": "bodega_einde",
+      "slot": "end",
+      "naam": "Einde: Bodega",
+      "lat": 51.21671024664737,
+      "lng": 4.402756084143288,
+      "radius": 70,
+      "vragen": [
+        "Is alles ontgrendeld zoals verwacht?",
+        "Wat zijn je volgende stappen?"
+      ]
+    }
+  ]
+}
