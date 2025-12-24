@@ -289,7 +289,7 @@
     var unlockedMap = {};
     unlockedSlots.forEach(function(sid){ unlockedMap[sid]=true; });
   
-    var endSlot  = DATA.endSlot  || (DATA.meta && DATA.meta.endSlot)  || 'end';
+    var endSlot   = DATA.endSlot  || (DATA.meta && DATA.meta.endSlot)  || 'end';
     var slotOrder = DATA.slotOrder || (DATA.slots||[]).map(function(s){ return s.id; });
   
     function findSlotObj(sid){
@@ -305,6 +305,11 @@
       return label;
     }
   
+    function stripPrefix(name){
+      if(!name) return '';
+      return name.replace(/^(Stop\s*\d+\s*:\s*|Start\s*:\s*|Einde\s*:\s*)/i, '').trim();
+    }
+  
     function allLocsForSlot(sid){
       return (typeof allLocationsForSlot === 'function') ? (allLocationsForSlot(sid) || []) : [];
     }
@@ -317,29 +322,26 @@
       return null;
     }
   
-    function stripPrefix(name){
-      if(!name) return '';
-      return name.replace(/^(Stop\s*\d+\s*:\s*|Start\s*:\s*|Einde\s*:\s*)/i, '').trim();
-    }
-  
-    // Bepaalt welke concrete locatie bij dit slot hoort om te tonen
-    function displayLocationNameForSlot(sid){
+    function displayPlaceForSlot(sid){
       var locs = allLocsForSlot(sid);
       if(!locs.length) return '';
-       
-      var chosenId = (typeof pickVariantLocationIdForSlot === 'function')
-        ? pickVariantLocationIdForSlot(sid)
-        : null;
   
-      // Als er meerdere opties zijn en we hebben nog geen keuze: toon "(2 opties)"
-      if(locs.length > 1 && !chosenId && !unlockedMap[sid]){
-        return '('+locs.length+' opties)';
+      // ✅ Belangrijk: split-slot zichtbaar houden vóór unlock
+      if(locs.length > 1 && !unlockedMap[sid]){
+        return '(' + locs.length + ' opties)';
       }
   
-      // Anders: toon gekozen of eerste
-      if(!chosenId){
+      // Als unlocked: toon de effectief gekozen locatie (via lastUnlockedLocationBySlot)
+      var chosenId = null;
+      if(st.lastUnlockedLocationBySlot && st.lastUnlockedLocationBySlot[sid]){
+        chosenId = st.lastUnlockedLocationBySlot[sid];
+      } else if(locs.length === 1){
+        chosenId = locs[0].id;
+      } else {
+        // unlocked maar geen gekozen id? (edge case) -> eerste tonen
         chosenId = locs[0].id;
       }
+  
       var loc = findLocById(chosenId);
       return loc && loc.naam ? stripPrefix(loc.naam) : '';
     }
@@ -350,17 +352,18 @@
       var icon = ok ? '✅' : (sid===endSlot ? '🔒' : '⏳');
   
       var label = slotLabel(sid);
-      var place = displayLocationNameForSlot(sid);
+      var place = displayPlaceForSlot(sid);
   
       html += '<span class="pill">'
-        + icon + ' '
-        + '<span class="pillMain">' + escapeHtml(label) + '</span>'
-        + (place ? ' <span class="pillSub">· '+escapeHtml(place)+'</span>' : '')
-        + '</span>';
+            + icon + ' '
+            + '<span class="pillMain">' + escapeHtml(label) + '</span>'
+            + (place ? ' <span class="pillSub">· ' + escapeHtml(place) + '</span>' : '')
+            + '</span>';
     });
   
     cont.innerHTML = html || '<span class="muted">(Geen stops geladen)</span>';
   }
+  
   
   
   function renderUnlocked(){

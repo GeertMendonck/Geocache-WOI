@@ -68,6 +68,14 @@ h2 { font-size:1.1rem; }
   margin:.15rem .25rem 0 0;
   white-space:nowrap;
 }
+.pill .pillSub{
+  font-size: 0.85em;
+  opacity: 0.75;
+}
+
+.pill .pillMain{
+  font-weight: 600; /* optioneel */
+}
 button {
   background:#173743;
   color:#dff7fb;
@@ -209,12 +217,7 @@ summary { cursor:pointer; }
   .pc-head{ grid-template-columns: 1fr; }
   .pc-img{ width: 100%; height: auto; aspect-ratio: 1/1; }
 }
-.pillSub{
-  opacity:.75;
-  font-size:.9em;
-  margin-left:.25rem;
-  white-space:nowrap;
-}
+
 
 
 
