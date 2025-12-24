@@ -7,6 +7,36 @@
 
   // ---------- Mini helpers ----------
   function qs(id){ return document.getElementById(id); }
+  (function bindPcChooserOnce(){
+    var el = qs('pcChooser');
+    if(!el) return;
+    if(el.__boundPcChooser) return;
+    el.__boundPcChooser = true;
+  
+    el.addEventListener('change', function(e){
+      var t = e.target;
+      if(!t || t.id !== 'pcSelect') return;
+  
+      var st = store.get();
+      if(st.lockedPc){
+        toast('🔒 Personage is vergrendeld');
+        t.value = st.pcId || t.value; // spring terug
+        return;
+      }
+      if(window.__insideStart !== true){
+        toast('🔐 Kies je personage aan de start');
+        t.value = st.pcId || t.value;
+        return;
+      }
+  
+      st.pcId = t.value;
+      store.set(st);
+  
+      toast('✅ Personage gekozen');
+      renderUnlocked();
+    });
+  })();
+  
   function showDiag(msg){
     var d=qs('diag'); if(!d) return;
     d.style.display='block';
@@ -95,6 +125,7 @@
   })();
 
   // ---------- Core listeners: ALTIJD binden ----------
+  
   function bindCoreListeners(){
     var b;
 
@@ -271,16 +302,33 @@
   
   
   function renderCharacterChooser(){
-    var st=store.get(); var el=qs('pcChooser'); if(!el) return;
+    var st=store.get(); 
+    var el=qs('pcChooser'); 
+    if(!el) return;
+  
+    var inside = window.__insideStart===true; 
+    var locked = !!st.lockedPc;
+    var disabled = locked || !inside;
+  
     var opts='';
     (DATA.personages||[]).forEach(function(p){
-      opts += '<option value="'+p.id+'" '+(p.id===st.pcId?'selected':'')+'>'+p.naam+' ('+p.leeftijd+') — '+p.rol+'</option>';
+      opts += '<option value="'+p.id+'" '+(p.id===st.pcId?'selected':'')+'>'
+        + p.naam+' ('+p.leeftijd+') — '+p.rol
+        + '</option>';
     });
-    if(!opts) opts = '<option>Demo</option>';
-    var inside = window.__insideStart===true; var locked = !!st.lockedPc;
-    el.innerHTML = '<select id="pcSelect" '+(locked?'disabled':'')+' '+((!inside && !locked)?'disabled':'')+'>'+opts+'</select>'
-      + '<span class="pill '+(locked?'ok':'')+'">'+(locked?'🔒 Keuze vergrendeld': (inside? '🟢 Je kan hier je personage kiezen' : '🔐 Kiesbaar enkel aan de start'))+'</span>';
+    if(!opts) opts = '<option value="">Demo</option>';
+  
+    el.innerHTML =
+        '<select id="pcSelect" '+(disabled?'disabled':'')+'>'+opts+'</select>'
+      + '<span class="pill '+(locked?'ok':'')+'">'
+      + (locked ? '🔒 Keuze vergrendeld' : (inside ? '🟢 Je kan hier je personage kiezen' : '🔐 Kiesbaar enkel aan de start'))
+      + '</span>';
+  
+    // extra zekerheid: zet value na render
+    var sel = qs('pcSelect');
+    if(sel && st.pcId) sel.value = st.pcId;
   }
+  
   function renderStops(){
     var cont = qs('stopsList'); if(!cont) return;
     var st = store.get();
