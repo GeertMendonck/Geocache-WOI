@@ -289,7 +289,7 @@
     var unlockedMap = {};
     unlockedSlots.forEach(function(sid){ unlockedMap[sid]=true; });
   
-    var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
+    var endSlot  = DATA.endSlot  || (DATA.meta && DATA.meta.endSlot)  || 'end';
     var slotOrder = DATA.slotOrder || (DATA.slots||[]).map(function(s){ return s.id; });
   
     function findSlotObj(sid){
@@ -298,13 +298,15 @@
       }
       return null;
     }
-  
     function slotLabel(sid){
       var o = findSlotObj(sid);
       var label = (o && o.label) ? o.label : sid;
-      // optioneel badge (alleen als je required expliciet zet)
       if(o && o.required === false) label += ' (opt.)';
       return label;
+    }
+  
+    function allLocsForSlot(sid){
+      return (typeof allLocationsForSlot === 'function') ? (allLocationsForSlot(sid) || []) : [];
     }
   
     function findLocById(locId){
@@ -315,47 +317,46 @@
       return null;
     }
   
-    // Maakt "Stop 1: X" -> "X" (maar laat "Start:" / "Einde:" ook proper)
-    function stripStopPrefix(name){
+    function stripPrefix(name){
       if(!name) return '';
-      // verwijder "Stop 1:" / "Stop 01:" / "Start:" / "Einde:" met spaties erna
       return name.replace(/^(Stop\s*\d+\s*:\s*|Start\s*:\s*|Einde\s*:\s*)/i, '').trim();
+    }
+  
+    // Bepaalt welke concrete locatie bij dit slot hoort om te tonen
+    function displayLocationNameForSlot(sid){
+      var locs = allLocsForSlot(sid);
+      if(!locs.length) return '';
+  
+      var chosenId = (typeof pickVariantLocationIdForSlot === 'function')
+        ? pickVariantLocationIdForSlot(sid)
+        : null;
+  
+      // Als er meerdere opties zijn en we hebben nog geen keuze: toon "(2 opties)"
+      if(locs.length > 1 && !chosenId && !unlockedMap[sid]){
+        return '('+locs.length+' opties)';
+      }
+  
+      // Anders: toon gekozen of eerste
+      if(!chosenId){
+        chosenId = locs[0].id;
+      }
+      var loc = findLocById(chosenId);
+      return loc && loc.naam ? stripPrefix(loc.naam) : '';
     }
   
     var html = '';
     (slotOrder||[]).forEach(function(sid){
       var ok = !!unlockedMap[sid];
-  
-      // End-slot icon: locked zolang end zelf niet unlocked
       var icon = ok ? '✅' : (sid===endSlot ? '🔒' : '⏳');
   
-      // Variants?
-      var locs = (typeof allLocationsForSlot === 'function') ? allLocationsForSlot(sid) : [];
-      var hasVariants = locs && locs.length > 1;
-  
       var label = slotLabel(sid);
+      var place = displayLocationNameForSlot(sid);
   
-      // Toon 🔀 als er meerdere locaties voor dit slot bestaan
-      if(hasVariants) label += ' 🔀';
-  
-      // Als dit slot unlocked is: toon gekozen locatie (compact)
-      if(ok){
-        var chosenId = (typeof pickVariantLocationIdForSlot === 'function')
-          ? pickVariantLocationIdForSlot(sid)
-          : null;
-  
-        if(!chosenId){
-          var first = (typeof firstLocationForSlot === 'function') ? firstLocationForSlot(sid) : null;
-          chosenId = first ? first.id : null;
-        }
-  
-        var loc = chosenId ? findLocById(chosenId) : null;
-        if(loc && loc.naam){
-          label += ' · ' + stripStopPrefix(loc.naam);
-        }
-      }
-  
-      html += '<span class="pill">'+icon+' '+escapeHtml(label)+'</span>';
+      html += '<span class="pill">'
+        + icon + ' '
+        + '<span class="pillMain">' + escapeHtml(label) + '</span>'
+        + (place ? ' <span class="pillSub">· '+escapeHtml(place)+'</span>' : '')
+        + '</span>';
     });
   
     cont.innerHTML = html || '<span class="muted">(Geen stops geladen)</span>';
