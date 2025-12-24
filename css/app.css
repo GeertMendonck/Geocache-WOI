@@ -217,6 +217,23 @@ summary { cursor:pointer; }
   .pc-head{ grid-template-columns: 1fr; }
   .pc-img{ width: 100%; height: auto; aspect-ratio: 1/1; }
 }
+.slotMarker { background: transparent; border: none; }
+.slotMarker .bubble{
+  width: 22px; height: 22px;
+  border-radius: 999px;
+  display:flex; align-items:center; justify-content:center;
+  font-weight: 700;
+  font-size: 12px;
+  color: #0b1220;
+  background: #ffffff;
+  border: 2px solid rgba(255,255,255,.35);
+  box-shadow: 0 2px 10px rgba(0,0,0,.35);
+}
+
+/* Start / End / Optional varianten */
+.slotMarker.start .bubble{ background:#7dd3fc; }   /* lichtblauw */
+.slotMarker.end   .bubble{ background:#fca5a5; }   /* lichtrood */
+.slotMarker.opt   .bubble{ background:#fde68a; }   /* geel */
 
 
 

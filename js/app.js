@@ -304,6 +304,17 @@
       if(o && o.required === false) label += ' (opt.)';
       return label;
     }
+    function slotObj(sid){
+      for (var i=0;i<(DATA.slots||[]).length;i++){
+        if (DATA.slots[i].id===sid) return DATA.slots[i];
+      }
+      return null;
+    }
+    function isOptionalSlot(sid){
+      var o = slotObj(sid);
+      return o ? (o.required === false) : false;
+    }
+    
   
     function stripPrefix(name){
       if(!name) return '';
@@ -349,8 +360,16 @@
     var html = '';
     (slotOrder||[]).forEach(function(sid){
       var ok = !!unlockedMap[sid];
-      var icon = ok ? '✅' : (sid===endSlot ? '🔒' : '⏳');
-  
+      var optional = isOptionalSlot(sid);
+        // iconen:
+        // ✅ unlocked
+        // 🔒 end locked
+        // ⏳ required nog niet
+        // 🟦 optional nog niet (kies gerust een andere: 🧩 / ⭐ / ➕ / 🟡)
+        var icon = ok ? '✅'
+        : (sid===endSlot ? '🔒'
+        : (optional ? '🧩' : '⏳'));
+        
       var label = slotLabel(sid);
       var place = displayPlaceForSlot(sid);
   
@@ -548,38 +567,73 @@
     try { LMAP.fitBounds(layer.getBounds(), { padding:[20,20] }); } catch(_e){}
     showDiag((note||'Route') + ' → ' + (hasLine ? 'lijn getekend ✓' : 'GEEN lijn (alleen punten)'));
   }
-
+  function slotShortLabel(slotId){
+    if(slotId === 'start') return 'S';
+    if(slotId === 'end') return 'E';
+    var m = /^stop(\d+)$/.exec(slotId||'');
+    if(m) return m[1]; // "01", "02", ...
+    return '?';
+  }
+  function makeSlotIcon(slotId, required){
+    var lab = slotShortLabel(slotId);
+    var cls = 'slotMarker'
+            + (slotId==='start' ? ' start' : '')
+            + (slotId==='end' ? ' end' : '')
+            + (required===false ? ' opt' : '');
+    return L.divIcon({
+      className: cls,
+      html: '<div class="bubble">'+lab+'</div>',
+      iconSize: [26, 26],
+      iconAnchor: [13, 13]
+    });
+  }
+  function addStopMarkers(){
+    if(!LMAP || !window.L) return;
+  
+    // (optioneel) oude markers opruimen
+    if(window.__stopMarkerLayer){
+      try { LMAP.removeLayer(window.__stopMarkerLayer); } catch(e){}
+    }
+    window.__stopMarkerLayer = L.layerGroup().addTo(LMAP);
+  
+    var locs = DATA.locaties || DATA.stops || [];
+    for(var i=0;i<locs.length;i++){
+      var s = locs[i];
+      if(!s || s.lat==null || s.lng==null) continue;
+  
+      // required van slot halen
+      var so = null;
+      for (var j=0;j<(DATA.slots||[]).length;j++){
+        if(DATA.slots[j].id === s.slot){ so = DATA.slots[j]; break; }
+      }
+      var req = so ? so.required : true;
+  
+      var icon = makeSlotIcon(s.slot, req);
+  
+      L.marker([s.lat, s.lng], { icon: icon })
+        .bindPopup('<b>'+escapeHtml(s.naam||s.id)+'</b>')
+        .addTo(window.__stopMarkerLayer);
+    }
+  }
+  
   function initLeafletMap(){
     try{
       var div = qs('oneMap'); if(!div || !window.L) return;
-      var icon = function(cls){ return L.divIcon({ className:'pin '+cls, iconSize:[16,16], iconAnchor:[8,8] }); };
-      var iconStart = icon('start'), iconStop = icon('stop'), iconEnd = icon('end');
-      var iconUser  = L.divIcon({ className:'user-dot', iconSize:[14,14], iconAnchor:[7,7] });
+        // --- bounds op basis van alle locaties (ook split-stops) ---
+        var locs = DATA.locaties || DATA.stops || [];
+        var bounds = [];
+        for (var i=0;i<locs.length;i++){
+          if(!locs[i] || locs[i].lat==null || locs[i].lng==null) continue;
+          bounds.push([locs[i].lat, locs[i].lng]);
+        }
+        if(bounds.length) LMAP.fitBounds(bounds,{padding:[20,20]});
 
-      var start = (DATA.stops&&DATA.stops[0]) ? DATA.stops[0] : {lat:50.85,lng:2.89};
-      LMAP = L.map(div, { zoomControl:true }).setView([start.lat, start.lng], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap'}).addTo(LMAP);
+        // --- markers met S/E/01/02 + optional styling ---
+        addStopMarkers();
 
-      // Pauzeer follow-me bij user-interactie, hervat na 15s
-      function pauseFollowThenResume(){
-        followMe = false;
-        if (followResumeTimer) clearTimeout(followResumeTimer);
-        followResumeTimer = setTimeout(function(){ followMe = true; }, 15000);
-      }
-      LMAP.on('movestart', pauseFollowThenResume);
-      LMAP.on('zoomstart',  pauseFollowThenResume);
-      LMAP.on('dragstart',  pauseFollowThenResume);
+        // --- cirkels (mag samen met markers in dezelfde layerGroup) ---
+        addStopCircles();
 
-      var bounds=[];
-      (DATA.stops||[]).forEach(function(s){
-        var p=[s.lat,s.lng]; bounds.push(p);
-        var ic = iconStop;
-        if (s.id=== (DATA.meta?DATA.meta.startStopId:null)) ic = iconStart;
-        if (s.id=== (DATA.meta?DATA.meta.endStopId:null))   ic = iconEnd;
-        L.marker(p, {icon:ic}).addTo(LMAP).bindPopup(s.naam);
-        L.circle(p,{radius:s.radius||(DATA.meta?DATA.meta.radiusDefaultMeters:200),color:'#3dd1c0',weight:1,fillOpacity:.05}).addTo(LMAP);
-      });
-      if(bounds.length) LMAP.fitBounds(bounds,{padding:[20,20]});
 
       // ==== ROUTE-LOADER unified (met handmatige fallback) ====
       (function(){
@@ -657,7 +711,33 @@
       liveMarker = L.marker([0,0], { icon:iconUser, opacity:0 }).addTo(LMAP);
       accCircle  = L.circle([0,0], { radius:0, color:'#3dd1c0', fillOpacity:.1 }).addTo(LMAP);
     }catch(e){ if (window.console) console.error(e); showDiag('Kaart error: '+e.message); }
+  
+  
   }
+  function addStopCircles(){
+    if(!LMAP || !window.L) return;
+  
+    // cirkels samen met markers groeperen
+    if(!window.__stopMarkerLayer){
+      window.__stopMarkerLayer = L.layerGroup().addTo(LMAP);
+    }
+  
+    var locs = DATA.locaties || DATA.stops || [];
+    for(var i=0;i<locs.length;i++){
+      var s = locs[i];
+      if(!s || s.lat==null || s.lng==null) continue;
+  
+      var rad = s.radius || (DATA.meta ? DATA.meta.radiusDefaultMeters : 200);
+  
+      L.circle([s.lat, s.lng], {
+        radius: rad,
+        color: '#3dd1c0',
+        weight: 1,
+        fillOpacity: .05
+      }).addTo(window.__stopMarkerLayer);
+    }
+  }
+  
   function updateLeafletLive(lat,lng,acc){
     try{
       if(!LMAP || !liveMarker || !accCircle) return;
