@@ -13,8 +13,8 @@
       "id": "thuis",
       "slot": "start",
       "naam": "Start: Thuis",
-      "lat": 51.2204,
-      "lng": 4.4408,
+      "lat": 51.220418,
+      "lng": 4.440854,
       "radius": 120,
       "vragen": [
         "Wat wil je vandaag testen?",
@@ -98,8 +98,8 @@
       "id": "thuis_einde",
       "slot": "end",
       "naam": "Einde: Thuis",
-      "lat": 51.22045,
-      "lng": 4.44085,
+      "lat": 51.220418,
+      "lng": 4.440854,
       "radius": 120,
       "vragen": [
         "Is alles ontgrendeld zoals verwacht?",
