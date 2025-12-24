@@ -623,50 +623,79 @@
   
   function initLeafletMap(){
     try{
-      var div = qs('oneMap'); if(!div || !window.L) return;
-        // --- bounds op basis van alle locaties (ook split-stops) ---
-        var locs = DATA.locaties || DATA.stops || [];
-        var bounds = [];
-        for (var i=0;i<locs.length;i++){
-          if(!locs[i] || locs[i].lat==null || locs[i].lng==null) continue;
-          bounds.push([locs[i].lat, locs[i].lng]);
-        }
-        if (LMAP && bounds.length) {
-          LMAP.fitBounds(bounds, { padding:[20,20] });
-        }
-        
-
-        // --- markers met S/E/01/02 + optional styling ---
-        addStopMarkers();
-
-        // --- cirkels (mag samen met markers in dezelfde layerGroup) ---
-        addStopCircles();
-
-
+      var div = qs('oneMap'); 
+      if(!div || !window.L) return;
+  
+      // --- Icons (BESTAAND MAKEN) ---
+      function icon(cls){
+        return L.divIcon({ className:'pin '+cls, iconSize:[16,16], iconAnchor:[8,8] });
+      }
+      var iconUser  = L.divIcon({ className:'user-dot', iconSize:[14,14], iconAnchor:[7,7] });
+  
+      // --- Map initialiseren (DIT ONTBRAK) ---
+      var locs = DATA.locaties || DATA.stops || [];
+      var first = locs && locs.length ? locs[0] : { lat:50.85, lng:2.89 };
+  
+      LMAP = L.map(div, { zoomControl:true }).setView([first.lat, first.lng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom:19,
+        attribution:'&copy; OpenStreetMap'
+      }).addTo(LMAP);
+  
+      // Pauzeer follow-me bij user-interactie, hervat na 15s
+      function pauseFollowThenResume(){
+        followMe = false;
+        if (followResumeTimer) clearTimeout(followResumeTimer);
+        followResumeTimer = setTimeout(function(){ followMe = true; }, 15000);
+      }
+      LMAP.on('movestart', pauseFollowThenResume);
+      LMAP.on('zoomstart',  pauseFollowThenResume);
+      LMAP.on('dragstart',  pauseFollowThenResume);
+  
+      // --- markers + cirkels (jouw functies) ---
+      addStopMarkers();
+      addStopCircles();
+  
+      // --- bounds pas NA map init ---
+      var bounds = [];
+      for (var i=0;i<locs.length;i++){
+        if(!locs[i] || locs[i].lat==null || locs[i].lng==null) continue;
+        bounds.push([locs[i].lat, locs[i].lng]);
+      }
+      if (bounds.length) {
+        try { LMAP.fitBounds(bounds, { padding:[20,20] }); } catch(_e){}
+      }
+  
       // ==== ROUTE-LOADER unified (met handmatige fallback) ====
       (function(){
-        var routePath = (DATA.meta && (DATA.meta.routePath || DATA.meta.kmlPath)) ? (DATA.meta.routePath || DATA.meta.kmlPath) : null;
+        var routePath = (DATA.meta && (DATA.meta.routePath || DATA.meta.kmlPath)) 
+          ? (DATA.meta.routePath || DATA.meta.kmlPath) 
+          : null;
         if(!routePath){ showDiag('Route: geen routePath/kmlPath in meta.json'); return; }
         loadRouteUnified(routePath);
       })();
+  
       function loadRouteUnified(routePath){
-        var ext = routePath.toLowerCase().endsWith('.gpx') ? 'gpx'
-                : routePath.toLowerCase().endsWith('.kml') ? 'kml' : 'unknown';
+        var low = routePath.toLowerCase();
+        var ext = low.endsWith('.gpx') ? 'gpx' : (low.endsWith('.kml') ? 'kml' : 'unknown');
         if (ext==='unknown'){ showDiag('Route: onbekende extensie voor '+routePath); return; }
-
+  
         fetch(routePath, { cache:'no-store' })
           .then(function(r){ if(!r.ok) throw new Error(routePath+' → HTTP '+r.status); return r.text(); })
           .then(function(txt){
-            // 1) Probeer toGeoJSON (als beschikbaar)
+            // 1) toGeoJSON indien aanwezig
             try{
               if (window.toGeoJSON){
                 var xml1 = new DOMParser().parseFromString(txt, 'text/xml');
                 var gj1  = (ext==='gpx') ? toGeoJSON.gpx(xml1) : toGeoJSON.kml(xml1);
-                if (gj1 && gj1.features && gj1.features.length){ drawGeoJSONOnMap(gj1, 'Route '+ext.toUpperCase()+' (toGeoJSON)'); return; }
+                if (gj1 && gj1.features && gj1.features.length){
+                  drawGeoJSONOnMap(gj1, 'Route '+ext.toUpperCase()+' (toGeoJSON)');
+                  return;
+                }
               }
-            }catch(e){ /* ga door naar fallback */ }
-
-            // 2) Handmatige fallback — GPX: <trkpt lat=… lon=…>
+            }catch(e){}
+  
+            // 2) Manual GPX
             if (ext==='gpx'){
               try{
                 var xml2 = new DOMParser().parseFromString(txt, 'text/xml');
@@ -674,12 +703,10 @@
                 var latlngs = pts.map(function(n){
                   return [parseFloat(n.getAttribute('lat')), parseFloat(n.getAttribute('lon'))];
                 }).filter(function(p){ return isFinite(p[0]) && isFinite(p[1]); });
+  
                 if (latlngs.length>1){
                   var poly = L.polyline(latlngs, { weight:4, opacity:.95 }).addTo(LMAP);
-                  try { 
-                    (poly.getBounds(), { padding:[20,20] }); 
-                  } 
-                    catch(_e){}
+                  try { LMAP.fitBounds(poly.getBounds(), { padding:[20,20] }); } catch(_e){}
                   showDiag('Route GPX: '+latlngs.length+' punten getekend ✓ (manual)');
                   return;
                 }
@@ -687,8 +714,8 @@
               showDiag('Route GPX: geen <trkpt>-punten gevonden.');
               return;
             }
-
-            // 3) Handmatige fallback — KML: <LineString><coordinates>lon,lat[,ele] ...</coordinates>
+  
+            // 3) Manual KML
             if (ext==='kml'){
               try{
                 var xml3 = new DOMParser().parseFromString(txt, 'text/xml');
@@ -717,15 +744,22 @@
             showDiag('Route laden faalde: '+(err && err.message ? err.message : err));
           });
       }
-
-      // Live positie
+  
+      // Live positie (NU werkt iconUser)
       liveMarker = L.marker([0,0], { icon:iconUser, opacity:0 }).addTo(LMAP);
       accCircle  = L.circle([0,0], { radius:0, color:'#3dd1c0', fillOpacity:.1 }).addTo(LMAP);
-    }catch(e){ 
-      if (window.console) console.error(e); showDiag('Kaart error: '+e.message); }
   
+      // Leaflet heeft soms een schopje nodig na layout changes
+      setTimeout(function(){
+        if (LMAP) { try { LMAP.invalidateSize(true); } catch(_e){} }
+      }, 120);
   
+    }catch(e){
+      if (window.console) console.error(e);
+      showDiag('Kaart error: '+e.message);
+    }
   }
+  
   function addStopCircles(){
     if(!LMAP || !window.L) return;
   
