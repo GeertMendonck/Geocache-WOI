@@ -282,8 +282,8 @@
       + '<span class="pill '+(locked?'ok':'')+'">'+(locked?'🔒 Keuze vergrendeld': (inside? '🟢 Je kan hier je personage kiezen' : '🔐 Kiesbaar enkel aan de start'))+'</span>';
   }
   function renderStops(){
-    var cont=qs('stopsList'); if(!cont) return;
-    var st=store.get();
+    var cont = qs('stopsList'); if(!cont) return;
+    var st = store.get();
   
     var unlockedSlots = st.unlockedSlots || [];
     var unlockedMap = {};
@@ -292,26 +292,75 @@
     var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
     var slotOrder = DATA.slotOrder || (DATA.slots||[]).map(function(s){ return s.id; });
   
-    // helper: slot label
-    function slotLabel(sid){
+    function findSlotObj(sid){
       for (var i=0;i<(DATA.slots||[]).length;i++){
-        if (DATA.slots[i].id===sid) return DATA.slots[i].label || sid;
+        if (DATA.slots[i].id===sid) return DATA.slots[i];
       }
-      return sid;
+      return null;
     }
   
-    var html='';
+    function slotLabel(sid){
+      var o = findSlotObj(sid);
+      var label = (o && o.label) ? o.label : sid;
+      // optioneel badge (alleen als je required expliciet zet)
+      if(o && o.required === false) label += ' (opt.)';
+      return label;
+    }
+  
+    function findLocById(locId){
+      var arr = DATA.locaties || DATA.stops || [];
+      for (var i=0;i<arr.length;i++){
+        if(arr[i] && arr[i].id === locId) return arr[i];
+      }
+      return null;
+    }
+  
+    // Maakt "Stop 1: X" -> "X" (maar laat "Start:" / "Einde:" ook proper)
+    function stripStopPrefix(name){
+      if(!name) return '';
+      // verwijder "Stop 1:" / "Stop 01:" / "Start:" / "Einde:" met spaties erna
+      return name.replace(/^(Stop\s*\d+\s*:\s*|Start\s*:\s*|Einde\s*:\s*)/i, '').trim();
+    }
+  
+    var html = '';
     (slotOrder||[]).forEach(function(sid){
       var ok = !!unlockedMap[sid];
   
-      // End-slot icon: locked zolang end zelf niet unlocked (tryUnlock blokkeert end indien required ontbreekt)
+      // End-slot icon: locked zolang end zelf niet unlocked
       var icon = ok ? '✅' : (sid===endSlot ? '🔒' : '⏳');
   
-      html += '<span class="pill">'+icon+' '+slotLabel(sid)+'</span>';
+      // Variants?
+      var locs = (typeof allLocationsForSlot === 'function') ? allLocationsForSlot(sid) : [];
+      var hasVariants = locs && locs.length > 1;
+  
+      var label = slotLabel(sid);
+  
+      // Toon 🔀 als er meerdere locaties voor dit slot bestaan
+      if(hasVariants) label += ' 🔀';
+  
+      // Als dit slot unlocked is: toon gekozen locatie (compact)
+      if(ok){
+        var chosenId = (typeof pickVariantLocationIdForSlot === 'function')
+          ? pickVariantLocationIdForSlot(sid)
+          : null;
+  
+        if(!chosenId){
+          var first = (typeof firstLocationForSlot === 'function') ? firstLocationForSlot(sid) : null;
+          chosenId = first ? first.id : null;
+        }
+  
+        var loc = chosenId ? findLocById(chosenId) : null;
+        if(loc && loc.naam){
+          label += ' · ' + stripStopPrefix(loc.naam);
+        }
+      }
+  
+      html += '<span class="pill">'+icon+' '+escapeHtml(label)+'</span>';
     });
   
     cont.innerHTML = html || '<span class="muted">(Geen stops geladen)</span>';
   }
+  
   
   function renderUnlocked(){
     var st = store.get();
