@@ -256,7 +256,8 @@ summary { cursor:pointer; }
      =============================== */
   
   .slotMarker.opt .bubble{
-    opacity: .85; /* subtiel verschil */
+    background: #ffe066;            /* warm geel */
+    border-color: rgba(0,0,0,.15);
   }
   
   /* ===============================
@@ -274,6 +275,12 @@ summary { cursor:pointer; }
   .slotMarker .badge.opt{
     top: -6px;
     left: -6px;
+    color: #5c4b00;                 /* donker oker/bruin */
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 2px 3px;
+  font-size: 11px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.35);
   }
   
   /* 🔀 gesplitste stop → rechtsboven */
