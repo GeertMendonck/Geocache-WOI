@@ -34,18 +34,6 @@
         "Gedraagt de app zich hier correct?"
       ]
     },
-    
-    {
-      "id": "vincotteplein",
-      "slot": "stop01",
-      "naam": "Stop 1: Vinçotteplein",
-      "lat": 51.2160,
-      "lng": 4.4376,
-      "radius": 100,
-      "vragen": [
-        "We zouden nu op het Vinçotteplein zijn? Klopt dit?"
-      ]
-    },
     {
       "id": "krugerpark",
       "slot": "stop01",
@@ -57,7 +45,19 @@
         "Werkt de ontgrendeling hier zoals bedoeld?",
         "Is de afstandsindicatie logisch en stabiel?"
       ]
+    },    
+    {
+      "id": "vincotteplein",
+      "slot": "stop01",
+      "naam": "Stop 1: Vinçotteplein",
+      "lat": 51.2160,
+      "lng": 4.4376,
+      "radius": 100,
+      "vragen": [
+        "We zouden nu op het Vinçotteplein zijn? Klopt dit?"
+      ]
     },
+
     {
       "id": "olv_ter_sneeuwkerk",
       "slot": "stop02",
