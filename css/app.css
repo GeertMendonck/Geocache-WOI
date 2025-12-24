@@ -290,18 +290,7 @@ summary { cursor:pointer; }
     font-size: 9px;
   }
   
-  /* ===============================
-     (OPTIONEEL) STATES
-     =============================== */
   
-  /* start / einde kan je later uitbreiden */
-  .slotMarker.start .bubble{
-    /* bv. andere randkleur */
-  }
-  
-  .slotMarker.end .bubble{
-    /* bv. andere randkleur */
-  }
   
 
 

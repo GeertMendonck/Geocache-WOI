@@ -1,7 +1,7 @@
 {
   "slots": [
     { "id": "start",  "label": "Start",  "required": true },
-    { "id": "stop05", "label": "Optionele stop", "required": false },
+    { "id": "stop05", "label": "Keuze", "required": false },
     { "id": "stop01", "label": "Stop 1", "required": true },
     { "id": "stop02", "label": "Stop 2", "required": true },
     { "id": "stop03", "label": "Stop 3", "required": true },
@@ -25,7 +25,7 @@
     {
       "id": "ceresstraat-florastraat",
       "slot": "stop05",
-      "naam": "Optioneel: Ceres en FLorastraat",
+      "naam": "Optioneel: Ceres en Florastraat",
       "lat": 51.219117,
       "lng": 4.441710,
       "radius": 80,
