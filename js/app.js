@@ -326,7 +326,7 @@
     function displayLocationNameForSlot(sid){
       var locs = allLocsForSlot(sid);
       if(!locs.length) return '';
-  
+       
       var chosenId = (typeof pickVariantLocationIdForSlot === 'function')
         ? pickVariantLocationIdForSlot(sid)
         : null;
