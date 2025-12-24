@@ -579,19 +579,58 @@
     if(m) return m[1]; // "01", "02", ...
     return '?';
   }
-  function makeSlotIcon(slotId, required){
-    var lab = slotShortLabel(slotId);
+  function makeSlotIcon(slotId, required, variants){
+    var lab = slotBadgeLabel(slotId);
+  
     var cls = 'slotMarker'
             + (slotId==='start' ? ' start' : '')
             + (slotId==='end' ? ' end' : '')
-            + (required===false ? ' opt' : '');
+            + (required===false ? ' opt' : '')
+            + (variants && variants>1 ? ' split' : '');
+  
+    // klein “split” hoekje (alleen als variants>1)
+    var splitHtml = (variants && variants>1) ? '<span class="splitBadge">⧉</span>' : '';
+  
     return L.divIcon({
       className: cls,
-      html: '<div class="bubble">'+lab+'</div>',
-      iconSize: [26, 26],
-      iconAnchor: [13, 13]
+      html: '<div class="bubble">'+lab+splitHtml+'</div>',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
     });
   }
+  
+  function slotIsRequired(slotId){
+    for (var i=0;i<(DATA.slots||[]).length;i++){
+      if (DATA.slots[i].id === slotId) return !!DATA.slots[i].required;
+    }
+    return true; // default
+  }
+  
+  function slotOrderArray(){
+    return DATA.slotOrder || (DATA.slots||[]).map(function(s){ return s.id; });
+  }
+  
+  // geeft label terug voor in het bolletje
+  function slotBadgeLabel(slotId){
+    if (slotId === 'start') return 'S';
+    if (slotId === 'end')   return 'E';
+  
+    var req = slotIsRequired(slotId);
+    if (!req) return '★';   // optioneel symbool (kies gerust iets anders)
+  
+    // required: volgnummer op basis van slotOrder, enkel tellen voor required stops (excl start/end)
+    var order = slotOrderArray();
+    var n = 0;
+    for (var i=0;i<order.length;i++){
+      var sid = order[i];
+      if (sid === 'start' || sid === 'end') continue;
+      if (!slotIsRequired(sid)) continue; // optionele tellen niet mee
+      n++;
+      if (sid === slotId) return String(n);
+    }
+    return '?';
+  }
+  
   function addStopMarkers(){
     if(!LMAP || !window.L) return;
   
