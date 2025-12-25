@@ -283,12 +283,9 @@ summary { cursor:pointer; }
   box-shadow: 0 1px 4px rgba(0,0,0,.35);
   }
   
-  /* 🔀 gesplitste stop → rechtsboven */
+  /* 🔀 gesplitste stop  */
   .slotMarker .badge.split{
-    top: -6px;
-    right: -6px;
-    font-size: 8px;
-    transform: scale(.8)
+    background:#157bf0; /* blauw */
   }
   
   
@@ -296,7 +293,7 @@ summary { cursor:pointer; }
 
 
 /* Start / End / Optional varianten */
-.slotMarker.start .bubble{ background:#7dd3fc; }   /* lichtblauw */
+.slotMarker.start .bubble{ background:#1cd40c; }   /* lichtgroen */
 .slotMarker.end   .bubble{ background:#fca5a5; }   /* lichtrood */
 /*.slotMarker.opt   .bubble{ background:#fde68a; }   /* geel */
 

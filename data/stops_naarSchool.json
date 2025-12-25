@@ -38,7 +38,7 @@
         "naam": "Centraal-Station",
         "lat": 51.217525,
         "lng": 4.421154,
-        "radius": 100,
+        "radius": 50,
         "vragen": [
           "Werken de reflectievelden en de voorleesknop goed?",
           "Voelt de UI vlot aan op jouw toestel?"

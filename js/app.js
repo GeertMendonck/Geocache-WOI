@@ -671,7 +671,7 @@
             + (variants && variants>1 ? ' split' : '');
   
     // klein “split” hoekje (alleen als variants>1)
-    var splitHtml = (variants && variants>1) ? '<span class="splitBadge">🔀</span>' : '';
+    var splitHtml = '';//(variants && variants>1) ? '<span class="splitBadge">🔀</span>' : '';
   
     return L.divIcon({
       className: cls,
