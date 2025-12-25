@@ -671,12 +671,12 @@
             + (variants && variants>1 ? ' split' : '');
   
     // klein “split” hoekje (alleen als variants>1)
-    var splitHtml = '';//(variants && variants>1) ? '<span class="splitBadge">🔀</span>' : '';
+    var splitHtml = (variants && variants>1) ? '<span class="splitBadge">🔀</span>' : '';
   
     return L.divIcon({
       className: cls,
       html: '<div class="bubble">'+lab+splitHtml+'</div>',
-      iconSize: [28, 28],
+      iconSize: [20, 20],
       iconAnchor: [14, 14]
     });
   }
