@@ -1,0 +1,99 @@
+{
+    "slots": [
+      { "id": "start",  "label": "Start",  "required": true },
+      { "id": "stop01", "label": "Stop 1", "required": true },
+      { "id": "stop02", "label": "Stop 2", "required": true },
+      { "id": "stop03", "label": "Stop 3", "required": true },
+      { "id": "stop04", "label": "Stop 4", "required": true },
+      { "id": "end",    "label": "Einde",  "required": true }
+    ],
+    "locaties": [
+      {
+        "id": "thuis",
+        "slot": "start",
+        "naam": "Start: Thuis",
+        "lat": 51.220418,
+        "lng": 4.440854,
+        "radius": 100,
+        "vragen": [
+          "Wat wil je vandaag testen?",
+          "Welke functies wil je zeker uitproberen?"
+        ]
+      },
+      {
+        "id": "sint_willibrorduskerk",
+        "slot": "stop01",
+        "naam": "Sint-Willibrorduskerk",
+        "lat": 51.2193360072171,
+        "lng": 4.431886670037614,
+        "radius": 100,
+        "vragen": [
+          "Werken de reflectievelden en de voorleesknop goed?",
+          "Voelt de UI vlot aan op jouw toestel?"
+        ]
+      },
+      {
+        "id": "centraal_station",
+        "slot": "stop02",
+        "naam": "Centraal-Station",
+        "lat": 51.217525,
+        "lng": 4.421154,
+        "radius": 100,
+        "vragen": [
+          "Werken de reflectievelden en de voorleesknop goed?",
+          "Voelt de UI vlot aan op jouw toestel?"
+        ]
+      },
+      {
+        "id": "chinese_poort",
+        "slot": "stop02",
+        "naam": "Chinese Poort",
+        "lat": 51.219200,
+        "lng": 4.420779,
+        "radius": 50,
+        "vragen": [
+          "Werken de reflectievelden en de voorleesknop goed?",
+          "Voelt de UI vlot aan op jouw toestel?"
+        ]
+      },
+      {
+        "id": "metro_opera",
+        "slot": "stop03",
+        "naam": "Metro Operak",
+        "lat": 51.218083,
+        "lng": 4.415521,
+        "radius": 100,
+        "vragen": [
+          "Werken de reflectievelden en de voorleesknop goed?",
+          "Voelt de UI vlot aan op jouw toestel?"
+        ]
+      },
+      {
+        "id": "wapper",
+        "slot": "stop04",
+        "naam": "De Wapper",
+        "lat": 51.218013,
+        "lng": 4.408981,
+        "radius": 100,
+        "vragen": [
+          "Werken de reflectievelden en de voorleesknop goed?",
+          "Voelt de UI vlot aan op jouw toestel?"
+        ]
+      },
+      {
+        "id": "sint_lodewijk_secretariaat",
+        "slot": "end",
+        "naam": "Sint-Lodewijk",
+        "lat": 51.21742931212193,
+        "lng": 4.402670253459137,
+        "radius": 70,
+        "vragen": [
+          "Wat valt je hier op (UI/UX, snelheid, nauwkeurigheid)?",
+          "Werkt het ontgrendelen zoals bedoeld?"
+        ]
+      }
+    ]
+}
+
+    
+    
