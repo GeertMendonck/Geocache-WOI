@@ -676,8 +676,8 @@
     return L.divIcon({
       className: cls,
       html: '<div class="bubble">'+lab+splitHtml+'</div>',
-      iconSize: [28, 28],
-      iconAnchor: [14, 14]
+      iconSize: [22, 22],
+      iconAnchor: [11, 11]
     });
   }
   
