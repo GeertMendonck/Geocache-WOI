@@ -80,6 +80,34 @@
     }
     return null;
   }
+  function getStoryFor(pc, slotId, locId){
+    if(!pc || !pc.verhalen) return null;
+  
+    // 1) backward compat: soms stond het verhaal rechtstreeks op locId
+    if(locId && typeof pc.verhalen[locId] === 'string') return pc.verhalen[locId];
+  
+    // 2) normaal: verhalen per slot
+    var s = pc.verhalen[slotId];
+    if(!s) return null;
+  
+    // s is een string: gewoon tonen
+    if(typeof s === 'string') return s;
+  
+    // s is een object: variant per locatie-id (bv stop01)
+    if(locId && typeof s === 'object' && typeof s[locId] === 'string') return s[locId];
+  
+    // 3) fallback: als er varianten zijn maar we kennen locId niet (of mismatch),
+    // pak de eerste string die je vindt zodat je nooit leeg eindigt
+    if(typeof s === 'object'){
+      for(var k in s){
+        if(Object.prototype.hasOwnProperty.call(s,k) && typeof s[k] === 'string'){
+          return s[k];
+        }
+      }
+    }
+  
+    return null;
+  }
   
 
   // MIC detectie (aan/uit bij online/offline)
@@ -518,7 +546,9 @@
       var title = (loc && loc.naam) ? loc.naam : slotId;
   
       // ✅ tekst per locatie-id
-      var txt = (pc && pc.verhalen && locId) ? pc.verhalen[locId] : null;
+      //var txt = (pc && pc.verhalen && locId) ? pc.verhalen[locId] : null; //oude versie
+      // ✅ tekst: eerst per slot, en bij split per locId
+            var txt = getStoryFor(pc, slotId, locId);
               // ✅ UITLEG per locatie (kort + uitgebreid)
             var uitleg = (loc && loc.uitleg) ? loc.uitleg : null;
             var uitlegKort = '';
