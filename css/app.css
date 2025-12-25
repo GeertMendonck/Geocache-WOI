@@ -1,317 +1,317 @@
-:root { --bg:#0b1a22; --card:#0f2430; --text:#e8f4f7; --muted:#9fb6bd; --accent:#3dd1c0; }
-
-* { box-sizing:border-box; }
-html,body { margin: 0; max-width: 100%; overflow-x: hidden; }
-body {
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
-}
-
-/* Layout & typografie */
-.wrap { max-width:980px; margin:0 auto; padding:14px; }
-h1,h2 { margin:.2rem 0 .6rem; }
-h1 { font-size:1.35rem; }
-h2 { font-size:1.1rem; }
-.small { font-size:.9rem; }
-.muted { color:var(--muted); }
-.warn  { color:#ffdf80; }
-
-.grid { display:grid; gap:12px; }
-.two { grid-template-columns:1fr; }
-@media (min-width:840px){ .two{ grid-template-columns:1fr 1fr; } }
-/* Grid stackt op mobiel naar 1 kolom */
-@media (max-width: 720px) {
-  .grid.two { display: grid; grid-template-columns: 1fr; gap: 16px; }
-}
-
-/* Rijen mogen aflopen naar de volgende lijn */
-.row { display: flex; flex-wrap: wrap; gap: 8px; }
-.row > * { min-width: 0; } 
-/* 4) Het select-veld in 'Jouw personage' mag nooit breder zijn */
-#pcChooser select { display: block; width: 100%; max-width: 100%; }
-/* Debug/toast mogen breken i.p.v. het scherm op te rekken */
-#diag, #toast { overflow-wrap: anywhere; word-break: break-word; }
-/* 5) KPI-regels in 'Locatiestatus' netjes op 1 lijn zonder overflow */
-.row.kpi { align-items: center; }
-.row.kpi > div:first-child { flex: 1 1 auto; min-width: 0; }
-.row.kpi > div:last-child  { flex: 0 0 auto; text-align: right; min-width: 0; }
-
-/* 6) Kaart en kaarten passen zich aan */
-.card { width: 100%; max-width: 100%; }
-/* Kaart vult netjes de breedte, zonder over te lopen */
-#oneMap { width: 100%; height: 340px; }
-#diag, #toast { overflow-wrap: anywhere; word-break: break-word; } /* breek lange tekstjes */
-.card {
-  background:var(--card);
-  border-radius:14px;
-  padding:14px;
-  box-shadow:0 6px 18px rgba(0,0,0,.22);
-}
-
-.row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-.right { justify-content:flex-end; }
-.kpi { justify-content:space-between; }
-
-/* Spacing utils */
-.mt-6  { margin-top:6px; }
-.mt-8  { margin-top:8px; }
-.mt-12 { margin-top:12px; }
-
-/* Pills, buttons, selects */
-.pill {
-  display:inline-block;
-  border:1px solid rgba(255,255,255,.15);
-  padding:.25rem .6rem;
-  border-radius:999px;
-  margin:.15rem .25rem 0 0;
-  white-space:nowrap;
-}
-.pill .pillSub{
-  font-size: 0.85em;
-  opacity: 0.75;
-}
-
-.pill .pillMain{
-  font-weight: 600; /* optioneel */
-}
-button {
-  background:#173743;
-  color:#dff7fb;
-  border:none;
-  padding:8px 12px;
-  border-radius:10px;
-  cursor:pointer;
-}
-button.primary { background:#2db9a8; color:#062b33; }
-button:disabled { opacity:.5; cursor:not-allowed; }
-select {
-  background:#0f2a35;
-  color:#eaf7fa;
-  border:1px solid rgba(255,255,255,.15);
-  padding:8px;
-  border-radius:10px;
-}
-
-/* Voortgangsring */
-.ring {
-  width:54px; height:54px; border-radius:999px;
-  display:grid; place-items:center;
-  background:conic-gradient(var(--accent) 0deg, rgba(255,255,255,.15) 0 360deg);
-  box-shadow:0 2px 8px rgba(0,0,0,.25);
-}
-.ring span { font-size:.75rem; color:#062b33; font-weight:700; }
-
-/* Kaart */
-#oneMap { height:420px; border-radius:12px; }
-#oneMap.leaflet-container { height:420px; border-radius:12px; }
-
-/* Details/summary (ontgrendelde verhalen) */
-details {
-  background:#0a1e27;
-  border:1px solid rgba(255,255,255,.08);
-  padding:8px 10px;
-  border-radius:10px;
-}
-summary { cursor:pointer; }
-.qs { margin:.4rem 0 0 .2rem; padding-left:1rem; }
-.qs li { margin:.2rem 0; }
-
-/* Overlay & toast */
-#diag {
-  position:fixed; right:10px; bottom:10px;
-  background:#06151b; color:#bde8ef;
-  border:1px solid rgba(255,255,255,.15);
-  padding:8px 10px; border-radius:10px;
-  font-size:.8rem; opacity:.9; z-index:9999; display:none;
-}
-#toast {
-  position:fixed; left:50%; bottom:76px; transform:translateX(-50%);
-  background:rgba(0,0,0,.8); color:#fff; padding:10px 14px;
-  border-radius:12px; z-index:9999; display:none;
-}
-
-/* Kaart-icoontjes */
-.pin {
-  width:16px; height:16px; border-radius:50%;
-  border:2px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.35);
-}
-.pin.stop  { background:#4aa3ff; }
-.pin.start { background:#20c997; }
-.pin.end   { background:#e74c3c; }
-
-/* Live-positie (pulserend) */
-.user-dot {
-  width:14px; height:14px; border-radius:50%;
-  background:#3dd1c0; border:2px solid #fff;
-  box-shadow:0 0 0 rgba(61,209,192,.7);
-  animation:pulse 2s infinite;
-}
-@keyframes pulse {
-  0%   { box-shadow:0 0 0 0 rgba(61,209,192,.7) }
-  70%  { box-shadow:0 0 0 16px rgba(61,209,192,0) }
-  100% { box-shadow:0 0 0 0 rgba(61,209,192,0) }
-}
-.qa{ margin: 10px 0 16px; }
-.qa .q{ margin-bottom: 6px; }
-.qa .controls{ display:flex; gap:8px; align-items:flex-start; }
-.qa textarea.ans{
-  flex:1 1 auto; width:100%; min-height:80px;
-  padding:8px 10px; border-radius:10px;
-  border:1px solid rgba(255,255,255,0.15);
-  background:rgba(255,255,255,0.06); color:inherit;
-}
-.qa button{ height:36px; }
-.saveBadge{ min-width:96px; }
-.pc-img{
-  width: 140px;
-  height: 140px;
-  object-fit: cover;
-  border-radius: 14px;
-  display: none;           /* pas tonen als er een image is */
-  border: 1px solid rgba(0,0,0,.15);
-  margin-top: 10px;
-}
-.pc-head{
-  display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 12px;
-  align-items: start;
-  margin-top: 10px;
-}
-
-.pc-img{
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.18);
-  background: rgba(255,255,255,.06);
-}
-
-.pc-head-meta{ min-width: 0; }
-
-.pc-title{
-  font-weight: 800;
-  font-size: 16px;
-  line-height: 1.2;
-  margin-bottom: 8px;
-}
-
-.pc-pills{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.pc-bio{
-  color: rgba(255,255,255,.75);
-  font-size: 13px;
-  line-height: 1.35;
-}
-
-/* mobiel: portret bovenaan */
-@media (max-width: 420px){
-  .pc-head{ grid-template-columns: 1fr; }
-  .pc-img{ width: 100%; height: auto; aspect-ratio: 1/1; }
-}
-/* ===============================
-   BASIS SLOT MARKER
-   =============================== */
-
-   .slotMarker{
-    background: transparent;
-    border: none;
+:root{
+    --bg:#0b1a22;
+    --card:#0f2430;
+    --text:#e8f4f7;
+    --muted:#9fb6bd;
+    --accent:#3dd1c0;
+  
+    --radius:14px;
+    --shadow:0 6px 18px rgba(0,0,0,.22);
   }
   
+  /* ===============================
+     RESET / BASIS
+     =============================== */
+  *{ box-sizing:border-box; }
+  
+  html,body{
+    margin:0;
+    max-width:100%;
+    overflow-x:hidden;
+  }
+  
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+  }
+  
+  /* ===============================
+     LAYOUT & TYPO
+     =============================== */
+  .wrap{ max-width:980px; margin:0 auto; padding:14px; }
+  
+  h1,h2{ margin:.2rem 0 .6rem; }
+  h1{ font-size:1.35rem; }
+  h2{ font-size:1.1rem; }
+  
+  .small{ font-size:.9rem; }
+  .muted{ color:var(--muted); }
+  .warn{ color:#ffdf80; }
+  
+  /* ===============================
+     GRID / ROWS
+     =============================== */
+  .grid{ display:grid; gap:12px; }
+  
+  .grid.two{ grid-template-columns:1fr; }
+  @media (min-width:840px){
+    .grid.two{ grid-template-columns:1fr 1fr; }
+  }
+  
+  .row{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .row > *{ min-width:0; }
+  
+  .right{ justify-content:flex-end; }
+  
+  /* KPI rij: links flexibel, rechts compact */
+  .row.kpi{ align-items:center; }
+  .row.kpi > div:first-child{ flex:1 1 auto; min-width:0; }
+  .row.kpi > div:last-child { flex:0 0 auto; text-align:right; min-width:0; }
+  
+  /* ===============================
+     CARDS
+     =============================== */
+  .card{
+    width:100%;
+    max-width:100%;
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:14px;
+    box-shadow:var(--shadow);
+  }
+  
+  /* ===============================
+     SPACING UTILS
+     =============================== */
+  .mt-6{ margin-top:6px; }
+  .mt-8{ margin-top:8px; }
+  .mt-12{ margin-top:12px; }
+  
+  /* ===============================
+     FORM CONTROLS
+     =============================== */
+  button{
+    background:#173743;
+    color:#dff7fb;
+    border:none;
+    padding:8px 12px;
+    border-radius:10px;
+    cursor:pointer;
+  }
+  button.primary{ background:#2db9a8; color:#062b33; }
+  button:disabled{ opacity:.5; cursor:not-allowed; }
+  
+  select{
+    background:#0f2a35;
+    color:#eaf7fa;
+    border:1px solid rgba(255,255,255,.15);
+    padding:8px;
+    border-radius:10px;
+  }
+  
+  /* select in pcChooser mag nooit overflowen */
+  #pcChooser select{ display:block; width:100%; max-width:100%; }
+  
+  /* ===============================
+     PILLS
+     =============================== */
+  .pill{
+    display:inline-block;
+    border:1px solid rgba(255,255,255,.15);
+    padding:.25rem .6rem;
+    border-radius:999px;
+    margin:.15rem .25rem 0 0;
+    white-space:nowrap;
+  }
+  .pill .pillSub{ font-size:.85em; opacity:.75; }
+  .pill .pillMain{ font-weight:600; }
+  
+  /* ===============================
+     PROGRESS RING
+     =============================== */
+  .ring{
+    width:54px; height:54px; border-radius:999px;
+    display:grid; place-items:center;
+    background:conic-gradient(var(--accent) 0deg, rgba(255,255,255,.15) 0 360deg);
+    box-shadow:0 2px 8px rgba(0,0,0,.25);
+  }
+  .ring span{ font-size:.75rem; color:#062b33; font-weight:700; }
+  
+  /* ===============================
+     MAP
+     =============================== */
+  #oneMap{
+    width:100%;
+    height:420px;
+    border-radius:12px;
+    overflow:hidden; /* zodat de radius ook effectief afsnijdt */
+  }
+  #oneMap.leaflet-container{
+    height:420px;
+    border-radius:12px;
+  }
+  
+  /* ===============================
+     DETAILS / SUMMARY
+     =============================== */
+  details{
+    background:#0a1e27;
+    border:1px solid rgba(255,255,255,.08);
+    padding:8px 10px;
+    border-radius:10px;
+  }
+  summary{ cursor:pointer; }
+  
+  .qs{ margin:.4rem 0 0 .2rem; padding-left:1rem; }
+  .qs li{ margin:.2rem 0; }
+  
+  /* ===============================
+     OVERLAY / TOAST
+     =============================== */
+  #diag{
+    position:fixed; right:10px; bottom:10px;
+    background:#06151b; color:#bde8ef;
+    border:1px solid rgba(255,255,255,.15);
+    padding:8px 10px; border-radius:10px;
+    font-size:.8rem; opacity:.9; z-index:9999;
+    display:none;
+  }
+  #toast{
+    position:fixed; left:50%; bottom:76px; transform:translateX(-50%);
+    background:rgba(0,0,0,.8); color:#fff;
+    padding:10px 14px;
+    border-radius:12px; z-index:9999;
+    display:none;
+  }
+  
+  /* lange tekstjes mogen breken */
+  #diag, #toast{ overflow-wrap:anywhere; word-break:break-word; }
+  
+  /* ===============================
+     QA BLOK
+     =============================== */
+  .qa{ margin:10px 0 16px; }
+  .qa .q{ margin-bottom:6px; }
+  .qa .controls{ display:flex; gap:8px; align-items:flex-start; }
+  .qa textarea.ans{
+    flex:1 1 auto;
+    width:100%;
+    min-height:80px;
+    padding:8px 10px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,.15);
+    background:rgba(255,255,255,.06);
+    color:inherit;
+  }
+  .qa button{ height:36px; }
+  .saveBadge{ min-width:96px; }
+  
+  /* ===============================
+     PC HEADER (Jouw personage)
+     =============================== */
+  .pc-head{
+    display:grid;
+    grid-template-columns:120px 1fr;
+    gap:12px;
+    align-items:start;
+    margin-top:10px;
+  }
+  .pc-img{
+    width:120px;
+    height:120px;
+    object-fit:cover;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.06);
+    display:none; /* enkel tonen als er een image is */
+  }
+  .pc-head-meta{ min-width:0; }
+  
+  .pc-title{
+    font-weight:800;
+    font-size:16px;
+    line-height:1.2;
+    margin-bottom:8px;
+  }
+  .pc-pills{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:8px;
+  }
+  .pc-bio{
+    color:rgba(255,255,255,.75);
+    font-size:13px;
+    line-height:1.35;
+  }
+  
+  /* ===============================
+     SLOT MARKERS (Leaflet divIcon)
+     =============================== */
+  
+  /* container: centreer bubble binnen iconSize (superbelangrijk!) */
+  .slotMarker{
+    background:transparent;
+    border:none;
+  
+    /* dit maakt iconSize/anker veel minder fragiel */
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  
+  /* bubble: het bolletje zelf */
   .slotMarker .bubble{
-    position: relative;
+    width:22px;
+    height:22px;
+    border-radius:999px;
   
-    width: 22px;
-    height: 22px;
-    border-radius: 999px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
   
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-weight:700;
+    font-size:12px;
+    line-height:1;
   
-    font-weight: 700;
-    font-size: 12px;
-    line-height: 1;
-  
-    color: #0b1220;
-    background: #ffffff;
-    border: 2px solid rgba(255,255,255,.35);
-    box-shadow: 0 2px 10px rgba(0,0,0,.35);
+    color:#0b1220;
+    background:#ffffff;
+    border:2px solid rgba(255,255,255,.35);
+    box-shadow:0 2px 10px rgba(0,0,0,.35);
   }
   
-  .slotMarker .label{
-    font-weight: 700;
+  /* varianten */
+  .slotMarker.start .bubble{ background:#1cd40c; } /* groen */
+  .slotMarker.end   .bubble{ background:#fca5a5; } /* lichtrood */
+  .slotMarker.opt   .bubble{ background:#ebe9e4; border-color:rgba(0,0,0,.15); } /* grijs */
+  .slotMarker.split .bubble{ background:#93c5fd; } /* lichtblauw */
+  
+  /* ===============================
+     PINS / USER DOT
+     =============================== */
+  .pin{
+    width:16px; height:16px; border-radius:50%;
+    border:2px solid #fff;
+    box-shadow:0 1px 6px rgba(0,0,0,.35);
+  }
+  .pin.stop{ background:#4aa3ff; }
+  .pin.start{ background:#20c997; }
+  .pin.end{ background:#e74c3c; }
+  
+  .user-dot{
+    width:14px; height:14px; border-radius:50%;
+    background:#3dd1c0;
+    border:2px solid #fff;
+    box-shadow:0 0 0 rgba(61,209,192,.7);
+    animation:pulse 2s infinite;
+  }
+  @keyframes pulse{
+    0%{ box-shadow:0 0 0 0 rgba(61,209,192,.7) }
+    70%{ box-shadow:0 0 0 16px rgba(61,209,192,0) }
+    100%{ box-shadow:0 0 0 0 rgba(61,209,192,0) }
   }
   
   /* ===============================
-     OPTIONEEL: OPTIONELE STOP (🧩)
+     MOBILE
      =============================== */
-  
-  .slotMarker.opt .bubble{
-    background: #ebe9e4;                     
-    border-color: rgba(0,0,0,.15);
+  @media (max-width:420px){
+    .pc-head{ grid-template-columns:1fr; }
+    .pc-img{ width:100%; height:auto; aspect-ratio:1/1; }
   }
   
-  /* ===============================
-     OPTIONEEL: BADGES (🧩 / 🔀)
-     =============================== */
-  
-  .slotMarker .badge{
-    position: absolute;
-    font-size: 11px;
-    line-height: 1;
-    pointer-events: none; /* voorkomt rare clicks */
-  }
-  
-  /* 🧩 optionele stop → linksboven */
-  .slotMarker .badge.opt{
-    top: -6px;
-    left: -6px;
-    color: #5c4b00;                 /* donker oker/bruin */
-  background: #ffffff;
-  border-radius: 999px;
-  padding: 2px 3px;
-  font-size: 11px;
-  box-shadow: 0 1px 4px rgba(0,0,0,.35);
-  }
-  
-  /* gesplitste stop  */
-  .slotMarker .badge.split{
-    top: -6px;
-    left: -6px;
-    background:#157bf0; /* blauw */
-  }
-
-/* ===============================
-   SLOT MARKER VARIANTEN
-   =============================== */
-
-/* default = wit (staat al in .slotMarker .bubble) */
-
-.slotMarker.start .bubble{
-  background:#1cd40c;            /* groen */
-}
-
-.slotMarker.end .bubble{
-  background:#fca5a5;            /* lichtrood */
-}
-
-.slotMarker.opt .bubble{
-  background:#ebe9e4;            /* grijs */
-}
-
-.slotMarker.split .bubble{
-  background:#3085e6;            /* lichtblauw */
-  font-size: 8px;
-}
-
-
-
