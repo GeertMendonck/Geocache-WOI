@@ -307,7 +307,8 @@ summary { cursor:pointer; }
 }
 
 .slotMarker.split .bubble{
-  background:#93c5fd;            /* lichtblauw */
+  background:#3085e6;            /* lichtblauw */
+  font-size: 8px;
 }
 
 
