@@ -285,6 +285,8 @@ summary { cursor:pointer; }
   
   /* gesplitste stop  */
   .slotMarker .badge.split{
+    top: -6px;
+    left: -6px;
     background:#157bf0; /* blauw */
   }
 
