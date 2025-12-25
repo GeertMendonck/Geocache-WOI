@@ -569,11 +569,12 @@
               uitlegHtml =
                 '<div class="uitlegBox">'
                 + '  <div class="uitlegTitle">'
-                + '    ℹ️ Uitleg'
+                + '    <span class="uitlegTitleText">ℹ️ Uitleg</span>'
                 + (uitlegLang
                     ? ' <button class="uitlegToggleIcon" type="button" data-toggle="'+moreId+'" title="Meer uitleg">+</button>'
                     : '')
                 + '  </div>'
+                
                 + (uitlegKort ? ('  <div class="uitlegKort">'+escapeHtml(uitlegKort)+'</div>') : '')
                 + (uitlegLang
                     ? ('  <div id="'+moreId+'" class="uitlegLang hidden">'+escapeHtml(uitlegLang)+'</div>')

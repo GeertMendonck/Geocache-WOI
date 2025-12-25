@@ -357,29 +357,42 @@
 /* ===============================
      uitleg +/-
      =============================== */
-  .uitlegTitle{
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 700;
-  }
-  
-  .uitlegToggleIcon{
-    margin-left: auto;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 1px solid rgba(255,255,255,0.25);
-    background: rgba(255,255,255,0.08);
-    color: inherit;
-    font-weight: 700;
-    cursor: pointer;
-    line-height: 1;
-  }
-  
-  .uitlegToggleIcon:hover{
-    background: rgba(255,255,255,0.18);
-  }
+     .uitlegTitle{
+        display: flex;
+        align-items: center;
+        justify-content: space-between; /* tekst links, knop rechts */
+        gap: 10px;
+        font-weight: 700;
+      }
+      
+      .uitlegTitleText{
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      /* reset + netjes rond */
+      .uitlegToggleIcon{
+        all: unset;                  /* reset rare button-styles */
+        width: 24px;
+        height: 24px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      
+        border: 1px solid rgba(255,255,255,0.25);
+        background: rgba(255,255,255,0.08);
+        cursor: pointer;
+      
+        font-weight: 800;
+        font-size: 16px;
+        line-height: 1;
+      }
+      .uitlegToggleIcon:hover{
+        background: rgba(255,255,255,0.18);
+      }
+      
   
 
   /* ===============================
