@@ -354,6 +354,33 @@
   }
   .hidden{ display:none; }
   
+/* ===============================
+     uitleg +/-
+     =============================== */
+  .uitlegTitle{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+  }
+  
+  .uitlegToggleIcon{
+    margin-left: auto;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.08);
+    color: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    line-height: 1;
+  }
+  
+  .uitlegToggleIcon:hover{
+    background: rgba(255,255,255,0.18);
+  }
+  
 
   /* ===============================
      MOBILE
@@ -362,6 +389,8 @@
     .pc-head{ grid-template-columns:1fr; }
     .pc-img{ width:100%; height:auto; aspect-ratio:1/1; }
   }
+
+  
 
 
   

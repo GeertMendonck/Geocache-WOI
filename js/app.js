@@ -186,7 +186,7 @@
     });
     //Uitleg
     document.addEventListener('click', function(e){
-      var btn = e.target.closest('.uitlegToggle');
+      var btn = e.target.closest('.uitlegToggleIcon');
       if(!btn) return;
     
       var id = btn.getAttribute('data-toggle');
@@ -196,10 +196,10 @@
       var isHidden = el.classList.contains('hidden');
       if(isHidden){
         el.classList.remove('hidden');
-        btn.textContent = 'Minder tonen';
+        btn.textContent = '-';
       } else {
         el.classList.add('hidden');
-        btn.textContent = 'Meer lezen';
+        btn.textContent = '+';
       }
     });
     
@@ -568,14 +568,19 @@
               var moreId = 'more_' + (locId || slotId); // unieke id
               uitlegHtml =
                 '<div class="uitlegBox">'
-                + '  <div class="uitlegTitle">ℹ️ Uitleg</div>'
+                + '  <div class="uitlegTitle">'
+                + '    ℹ️ Uitleg'
+                + (uitlegLang
+                    ? ' <button class="uitlegToggleIcon" type="button" data-toggle="'+moreId+'" title="Meer uitleg">+</button>'
+                    : '')
+                + '  </div>'
                 + (uitlegKort ? ('  <div class="uitlegKort">'+escapeHtml(uitlegKort)+'</div>') : '')
                 + (uitlegLang
-                    ? ('  <button class="uitlegToggle" type="button" data-toggle="'+moreId+'">Meer lezen</button>'
-                      + '  <div id="'+moreId+'" class="uitlegLang hidden">'+escapeHtml(uitlegLang)+'</div>')
+                    ? ('  <div id="'+moreId+'" class="uitlegLang hidden">'+escapeHtml(uitlegLang)+'</div>')
                     : '')
                 + '</div>';
             }
+            
 
       var qsArr = (loc && loc.vragen) ? loc.vragen : [];
       var qaHtml = '';
