@@ -156,6 +156,25 @@
       var t=qs('toast'); if(t){ t.style.display='block'; t.textContent='CLICK → '+id; setTimeout(function(){ t.style.display='none'; }, 800); }
       if (window.console) console.log('CLICK', id);
     });
+    //Uitleg
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest('.uitlegToggle');
+      if(!btn) return;
+    
+      var id = btn.getAttribute('data-toggle');
+      var el = document.getElementById(id);
+      if(!el) return;
+    
+      var isHidden = el.classList.contains('hidden');
+      if(isHidden){
+        el.classList.remove('hidden');
+        btn.textContent = 'Minder tonen';
+      } else {
+        el.classList.add('hidden');
+        btn.textContent = 'Meer lezen';
+      }
+    });
+    
   }
 
   // ---------- Data-lader ----------
@@ -500,7 +519,34 @@
   
       // ✅ tekst per locatie-id
       var txt = (pc && pc.verhalen && locId) ? pc.verhalen[locId] : null;
-  
+              // ✅ UITLEG per locatie (kort + uitgebreid)
+            var uitleg = (loc && loc.uitleg) ? loc.uitleg : null;
+            var uitlegKort = '';
+            var uitlegLang = '';
+            if(uitleg){
+              if(typeof uitleg === 'string'){
+                // backward compat: als je ooit nog een plain string hebt
+                uitlegKort = uitleg;
+              } else {
+                uitlegKort = uitleg.kort || '';
+                uitlegLang = uitleg.uitgebreid || '';
+              }
+            }
+
+            var uitlegHtml = '';
+            if(uitlegKort || uitlegLang){
+              var moreId = 'more_' + (locId || slotId); // unieke id
+              uitlegHtml =
+                '<div class="uitlegBox">'
+                + '  <div class="uitlegTitle">ℹ️ Uitleg</div>'
+                + (uitlegKort ? ('  <div class="uitlegKort">'+escapeHtml(uitlegKort)+'</div>') : '')
+                + (uitlegLang
+                    ? ('  <button class="uitlegToggle" type="button" data-toggle="'+moreId+'">Meer lezen</button>'
+                      + '  <div id="'+moreId+'" class="uitlegLang hidden">'+escapeHtml(uitlegLang)+'</div>')
+                    : '')
+                + '</div>';
+            }
+
       var qsArr = (loc && loc.vragen) ? loc.vragen : [];
       var qaHtml = '';
       if(qsArr.length && locId){
@@ -525,6 +571,7 @@
         // ✅ readBtn ook per locId
         + '<summary>📘 '+escapeHtml(title)+' <button class="readBtn" data-read="'+(locId||slotId)+'" title="Lees voor">🔊</button></summary>'
         + '<div style="margin-top:6px">'+(txt || '<span class="muted">(Geen tekst)</span>')+'</div>'
+        + uitlegHtml
         + qaHtml
         + '</details>';
     }

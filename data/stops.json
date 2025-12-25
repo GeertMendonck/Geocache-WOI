@@ -15,6 +15,10 @@
       "lat": 50.85206,
       "lng": 2.89116,
       "radius": 140,
+      "uitleg": {
+        "kort": "De Menenpoort herdenkt soldaten die sneuvelden zonder gekend graf.",
+        "uitgebreid": "De Menenpoort is een herdenkingsmonument voor meer dan 54.000 Britse en Gemenebest-soldaten die tijdens de Eerste Wereldoorlog sneuvelden in de regio rond Ieper en nooit geïdentificeerd of teruggevonden werden. Elke avond sinds 1928 wordt hier de Last Post geblazen. Deze plek maakt duidelijk dat achter elk naamloos slachtoffer een persoonlijk verhaal schuilgaat."
+      },
       "vragen": [
         "Welke naam of inscriptie raakte je en waarom?",
         "Wat verwacht je vandaag te leren?"
@@ -27,6 +31,10 @@
       "lat": 50.8511,
       "lng": 2.8856,
       "radius": 120,
+      "uitleg": {
+        "kort": "Dit museum vertelt het verhaal van de oorlog door mensen en objecten.",
+        "uitgebreid": "Het In Flanders Fields Museum focust niet alleen op militaire feiten, maar vooral op de menselijke ervaring van de oorlog. Via persoonlijke verhalen, brieven, foto’s en objecten krijg je inzicht in hoe soldaten en burgers de oorlog beleefden. Het museum benadrukt dat oorlog geen abstract begrip is, maar iets wat levens ingrijpend verandert."
+      },
       "vragen": [
         "Welke zaal of object raakte je het meest en waarom?",
         "Wat leer je hier dat je buiten op de begraafplaatsen minder voelt?"
@@ -39,6 +47,10 @@
       "lat": 50.87289,
       "lng": 2.89736,
       "radius": 180,
+      "uitleg": {
+        "kort": "Een Ierse begraafplaats midden in het voormalige frontgebied.",
+        "uitgebreid": "New Irish Farm Cemetery ligt in een landschap dat tijdens de oorlog volledig verwoest werd. Hier rusten vooral Ierse soldaten die sneuvelden tijdens zware gevechten rond Ieper. De symbolen en inscripties op de grafstenen tonen hoe identiteit, afkomst en geloof ook in de dood een rol bleven spelen."
+      },
       "vragen": [
         "Wat viel je op aan de namen of symbolen op de graven?",
         "Welke link hoor jij tussen dit landschap en het verhaal van jouw personage?"
@@ -51,6 +63,10 @@
       "lat": 50.9153,
       "lng": 2.9163,
       "radius": 200,
+      "uitleg": {
+        "kort": "Hier liggen vooral jonge Duitse soldaten begraven.",
+        "uitgebreid": "Het Duitse militaire kerkhof van Langemark staat bekend als het ‘Studentenfriedhof’, omdat hier veel jonge vrijwilligers begraven liggen, vaak nog studenten. De sobere grafstructuur en massagraven tonen een andere manier van herdenken en confronteren je met het feit dat ook de zogenaamde ‘vijand’ vaak nauwelijks ouder was dan jij."
+      },
       "vragen": [
         "Wat betekent het voor jou dat hier vooral jonge studenten liggen?",
         "Hoe verandert dit jouw kijk op ‘de vijand’?"
@@ -63,6 +79,10 @@
       "lat": 50.887,
       "lng": 2.9993,
       "radius": 220,
+      "uitleg": {
+        "kort": "De grootste Britse militaire begraafplaats ter wereld.",
+        "uitgebreid": "Tyne Cot Cemetery bevat bijna 12.000 graven en herdenkingspanelen met duizenden namen van vermiste soldaten. De eindeloze rijen witte grafstenen maken de schaal van het geweld tastbaar. Deze plek confronteert bezoekers met de massaliteit van de dood en de industriële aard van de oorlog."
+      },
       "vragen": [
         "Wat zegt de schaal van deze plek over de slag hier?",
         "Welke zin uit het verhaal bleef hangen en waarom?"
@@ -75,6 +95,10 @@
       "lat": 50.87073,
       "lng": 2.9886,
       "radius": 180,
+      "uitleg": {
+        "kort": "Dit museum toont het dagelijkse leven aan het front.",
+        "uitgebreid": "Het Memorial Museum Passchendaele focust sterk op het leven in en rond de loopgraven. Je ziet hoe soldaten woonden, aten en probeerden te overleven in extreme omstandigheden. Door originele objecten en gereconstrueerde loopgraven krijg je een concreet beeld van het frontleven."
+      },
       "vragen": [
         "Wat doet het met je om objecten uit de oorlog achter glas te zien?",
         "Welke vraag zou jij willen stellen aan iemand uit die tijd?"
@@ -87,6 +111,10 @@
       "lat": 50.85206,
       "lng": 2.89116,
       "radius": 140,
+      "uitleg": {
+        "kort": "We keren terug naar de plek waar herinneren centraal staat.",
+        "uitgebreid": "Aan het einde van de tocht keer je terug naar de Menenpoort. De verhalen, beelden en plekken die je vandaag zag, krijgen hier een nieuwe betekenis. Deze plaats nodigt uit om stil te staan bij herinnering, verantwoordelijkheid en de vraag hoe wij vandaag omgaan met het verleden."
+      },
       "vragen": [
         "Wat neem je mee uit de verhalen?",
         "Voor wie wil jij hier even stilstaan?"
