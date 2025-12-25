@@ -283,20 +283,32 @@ summary { cursor:pointer; }
   box-shadow: 0 1px 4px rgba(0,0,0,.35);
   }
   
-  /* 🔀 gesplitste stop  */
+  /* gesplitste stop  */
   .slotMarker .badge.split{
     background:#157bf0; /* blauw */
   }
-  
-  
-  
 
+/* ===============================
+   SLOT MARKER VARIANTEN
+   =============================== */
 
-/* Start / End / Optional varianten */
-.slotMarker.start .bubble{ background:#1cd40c; }   /* lichtgroen */
-.slotMarker.end   .bubble{ background:#fca5a5; }   /* lichtrood */
-/*.slotMarker.opt   .bubble{ background:#fde68a; }   /* geel */
+/* default = wit (staat al in .slotMarker .bubble) */
 
+.slotMarker.start .bubble{
+  background:#1cd40c;            /* groen */
+}
+
+.slotMarker.end .bubble{
+  background:#fca5a5;            /* lichtrood */
+}
+
+.slotMarker.opt .bubble{
+  background:#ebe9e4;            /* grijs */
+}
+
+.slotMarker.split .bubble{
+  background:#93c5fd;            /* lichtblauw */
+}
 
 
 
