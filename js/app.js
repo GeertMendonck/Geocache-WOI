@@ -36,7 +36,29 @@
       renderUnlocked();
     });
   })();
-   
+  function ensureArr(a){ return Array.isArray(a) ? a : []; }
+
+  function addUnique(arr, val){
+    if(arr.indexOf(val) === -1) arr.push(val);
+    return arr;
+  }
+  
+  function markLocationUnlocked(loc){
+    var st = store.get();
+  
+    st.unlockedLocs = ensureArr(st.unlockedLocs);
+    st.unlockedSlots = ensureArr(st.unlockedSlots);
+  
+    addUnique(st.unlockedLocs, loc.id);
+    addUnique(st.unlockedSlots, loc.slot);
+  
+    // optioneel: timestamp
+    st.visitedAt = st.visitedAt || {};
+    if(!st.visitedAt[loc.id]) st.visitedAt[loc.id] = new Date().toISOString();
+  
+    store.set(st);
+  }
+  
   function getStoryFor(pc, slotId, locId){
     if(!pc || !pc.verhalen) return null;
   
@@ -1038,9 +1060,11 @@
     if(effective > best.radius) return;
   
     var st = store.get();
+
     st.unlockedSlots = st.unlockedSlots || [];
     st.unlockedBySlot = st.unlockedBySlot || {}; // ✅ nodig als je hieronder toewijst
-  
+    st.unlockedLocs = st.unlockedLocs || [];
+
     var startSlot = DATA.startSlot || (DATA.meta && DATA.meta.startSlot) || 'start';
     var endSlot   = DATA.endSlot   || (DATA.meta && DATA.meta.endSlot)   || 'end';
   
@@ -1082,21 +1106,30 @@
         return;
       }
     }
-  
-    // slot unlocken
-    if(st.unlockedSlots.indexOf(bestSlot) === -1){
-      st.unlockedSlots.push(bestSlot);
-  
-      // ✅ onthoud welke locatie dit slot ontgrendelde (split stops)
-      st.unlockedBySlot[bestSlot] = best.id;
-  
-      store.set(st);
-  
-      renderUnlocked();
-      renderStops();
-      toast('✅ Ontgrendeld: ' + (best.name || bestSlot));
-      playDing();
+     // 🔓 locatie onthouden (ook bij split-slots)
+    if(st.unlockedLocs.indexOf(best.id) === -1){
+     st.unlockedLocs.push(best.id);
     }
+
+      // slot unlocken (slechts één keer)
+      if(st.unlockedSlots.indexOf(bestSlot) === -1){
+        st.unlockedSlots.push(bestSlot);
+
+        // eerste locatie die dit slot ontgrendelde (UI-hulp)
+        st.unlockedBySlot[bestSlot] = best.id;
+
+        store.set(st);
+
+        renderUnlocked();
+        renderStops();
+        toast('✅ Ontgrendeld: ' + (best.name || bestSlot));
+        playDing();
+      } else {
+        // 🔁 slot was al unlocked, maar nieuwe locatie binnen hetzelfde slot
+        store.set(st);
+        renderUnlocked();
+      }
+
   }
   
   
