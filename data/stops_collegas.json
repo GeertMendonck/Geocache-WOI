@@ -1,0 +1,57 @@
+{
+    "slots": [
+      { "id": "start",  "label": "Start",  "required": true },
+      { "id": "stop01", "label": "Stop 1", "required": false },
+      { "id": "end",    "label": "Einde",  "required": true }
+    ],
+    "locaties": [
+      {
+        "id": "entrepot",
+        "slot": "start",
+        "naam": "L'Entrepôt du Congo",
+        "lat": 51.209523,
+        "lng": 4.390496,
+        "radius": 50,
+        "uitleg": {
+            "kort": "Ooit was dit statige pakhuis het bruisende middelpunt van de koloniale handel tussen Antwerpen en Congo.",
+            "uitgebreid": "Gebouwd in 1899 door de architecten Jean-Baptiste en Emile Vereecken, weerspiegelt het pand de trotse neorenaissancestijl van de late 19de eeuw. Met zijn elegante bak- en zandsteen, grote rondboogvensters en imposante gevel vertelt het verhaal van een tijd waarin Antwerpen zich ontpopte tot wereldhaven."
+          },
+        "vragen": [
+          "Wat ga je eten?",
+          "Hoe valt het gezelschap mee?"
+        ]
+      },
+      {
+        "id": "waterpoort",
+        "slot": "stop01",
+        "naam": "De Waterpoort",
+        "lat": 51.208178,
+        "lng": 4.388815,
+        "radius": 50,
+        "uitleg": {
+            "kort": "Porta Regia of Coninckxpoort",
+            "uitgebreid": "De Waterpoort was een stadspoort aan de Schelde te Antwerpen. In 1624 werd ze opgericht als ereboog voor koning Filips IV."
+          },
+        "vragen": [
+          "Zijn er zaken die je anders in deze app zou doen?"
+        ]
+      },
+
+
+      {
+        "id": "nieuwe_linde",
+        "slot": "end",
+        "naam": "De Nieuwe Linde",
+        "lat": 51.206254,
+        "lng": 4.389782,
+        "radius": 50,
+        "uitleg": {
+            "kort": "Sfeer en gezelligheid in hartje Antwerpen sinds de jaren ’80."         
+          },
+        "vragen": [
+          "Wat moet zeker behouden worden?"
+        ]
+      }
+    ]
+  }
+  

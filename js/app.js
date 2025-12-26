@@ -36,6 +36,29 @@
       renderUnlocked();
     });
   })();
+   
+  function getStoryFor(pc, slotId, locId){
+    if(!pc || !pc.verhalen) return null;
+  
+    // backward compat: ooit verhaal per locId
+    if(locId && typeof pc.verhalen[locId] === 'string') return pc.verhalen[locId];
+  
+    var s = pc.verhalen[slotId];
+    if(!s) return null;
+  
+    if(typeof s === 'string') return s;
+  
+    // variant map per locatie-id (bv stop01)
+    if(locId && typeof s === 'object' && typeof s[locId] === 'string') return s[locId];
+  
+    // fallback: eerste string
+    if(typeof s === 'object'){
+      for(var k in s){
+        if(Object.prototype.hasOwnProperty.call(s,k) && typeof s[k] === 'string') return s[k];
+      }
+    }
+    return null;
+  }
   
   function showDiag(msg){
     var d=qs('diag'); if(!d) return;
@@ -1207,32 +1230,120 @@
         }
         
         b=qs('savePcBtn'); if(b) b.addEventListener('click', function(){ var st=store.get(); if(st.lockedPc && !window.__insideStart){ toast('🔒 Wijzigen kan enkel aan de start.'); return; } if(!window.__insideStart){ toast('🔐 Ga naar de startlocatie om te kiezen.'); return; } var sel=qs('pcSelect'); if(sel){ st.pcId=sel.value; store.set(st); renderProfile(); toast('✅ Personage bevestigd'); }});
-        b=qs('exportBtn'); if(b) b.addEventListener('click', function(){
-          var st=store.get(); var pc=currentPc()||{}; var lines=[];
-          lines.push('# '+((DATA.meta&&DATA.meta.title)||'WOI – Mijn Personage'));
-          lines.push('Personage: '+(pc.naam||'—')+' ('+(pc.herkomst||'—')+') – '+(pc.rol||'—'));
+
+
+        b = qs('exportBtn');
+        if(b) b.addEventListener('click', function(){
+          var st = store.get();
+          var pc = currentPc() || {};
+          var lines = [];
+        
+          var title = (DATA.meta && DATA.meta.title) ? DATA.meta.title : 'WOI – Mijn Personage';
+          lines.push('# ' + title);
+          lines.push('Personage: ' + (pc.naam||'—') + ' (' + (pc.herkomst||'—') + ') – ' + (pc.rol||'—'));
           lines.push('');
-          (st.unlocked||[]).forEach(function(id){
-            var stop=null; for (var i=0;i<(DATA.stops||[]).length;i++){ if (DATA.stops[i].id===id){ stop=DATA.stops[i]; break; } }
-            lines.push('## '+((stop&&stop.naam)||id));
-            lines.push(((pc.verhalen||{})[id])||'(geen tekst)');
-            if (stop && stop.vragen && stop.vragen.length){
-              lines.push('');
-              lines.push('**Reflectie**');
-              stop.vragen.forEach(function(q, qi){
-                var ans = getAns(stop.id, qi);
-                lines.push('- _'+q+'_');
-                lines.push('  - Antwoord: ' + (ans && ans.trim() ? ans.replace(/\r?\n/g,' ') : '(—)'));
-              });
+        
+          // Pak locaties-array (nieuwe structuur) of fallback
+          var arr = DATA.locaties || DATA.stops || [];
+        
+          function findLocById(id){
+            for(var i=0;i<arr.length;i++){
+              if(arr[i] && arr[i].id === id) return arr[i];
             }
+            return null;
+          }
+        
+          // ✅ Helper die één locatie exporteert (jouw grote blok, netjes ingepakt)
+          function exportOneLocation(loc){
+            var locId = loc.id;
+            var slotId = loc.slot;
+        
+            var header = loc.naam || (locId || slotId);
+            lines.push('## ' + header);
+        
+            // Verhaal (slotId + variant locId)
+            var verhaal = getStoryFor(pc, slotId, locId);
+            lines.push(verhaal || '(geen tekst)');
             lines.push('');
-          });
+        
+            // Uitleg (kort/uitgebreid)
+            if(loc.uitleg){
+              var uk = '';
+              var ul = '';
+        
+              if(typeof loc.uitleg === 'string'){
+                uk = loc.uitleg;
+              } else {
+                uk = loc.uitleg.kort || '';
+                ul = loc.uitleg.uitgebreid || '';
+              }
+        
+              if(uk || ul){
+                lines.push('**Uitleg**');
+                if(uk) lines.push('- Kort: ' + uk.replace(/\r?\n/g,' '));
+                if(ul) lines.push('- Uitgebreid: ' + ul.replace(/\r?\n/g,' '));
+                lines.push('');
+              }
+            }
+        
+            // Vragen + antwoorden (key = locId!)
+            var qsArr = loc.vragen || [];
+            if(qsArr.length){
+              lines.push('**Reflectie**');
+              for(var qi=0; qi<qsArr.length; qi++){
+                var q = qsArr[qi];
+                var ans = getAns(locId, qi);
+                lines.push('- _' + q + '_');
+                lines.push('  - Antwoord: ' + (ans && ans.trim && ans.trim() ? ans.replace(/\r?\n/g,' ') : '(—)'));
+              }
+              lines.push('');
+            }
+          }
+        
+          // Wat exporteren we?
+          // 1) als je later unlockedLocs hebt: gebruik die (beste)
+          // 2) anders: val terug op unlockedSlots/unlocked (slotIds)
+          var ids = st.unlockedLocs || st.unlockedSlots || st.unlocked || [];
+        
+          for(var u=0; u<ids.length; u++){
+            var id = ids[u];
+            var loc = findLocById(id);
+        
+            if(loc){
+              // ids zijn locIds
+              exportOneLocation(loc);
+            } else {
+              // ids zijn slotIds -> exporteer alle locaties die bij dit slot horen
+              var slot = id;
+              var any = false;
+        
+              for(var j=0;j<arr.length;j++){
+                if(arr[j] && arr[j].slot === slot){
+                  exportOneLocation(arr[j]);
+                  any = true;
+                }
+              }
+        
+              // fallback als er geen locaties gevonden worden voor dat slot
+              if(!any){
+                lines.push('## ' + slot);
+                lines.push(getStoryFor(pc, slot, null) || '(geen tekst)');
+                lines.push('');
+              }
+            }
+          }
+        
           // UTF-8 + BOM (fix voor oudere Notepad)
           var content = '\ufeff' + lines.join('\n');
-          var blob=new Blob([content],{type:'text/markdown;charset=utf-8'});
-          var url=URL.createObjectURL(blob); var a=document.createElement('a');
-          a.href=url; a.download='woi-voortgang.md'; a.click(); URL.revokeObjectURL(url);
+          var blob = new Blob([content], {type:'text/markdown;charset=utf-8'});
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = 'woi-voortgang.md';
+          a.click();
+          URL.revokeObjectURL(url);
         });
+        
 
         // Voorlezen + antwoorden (delegation op unlockList)
         var ul=qs('unlockList');
