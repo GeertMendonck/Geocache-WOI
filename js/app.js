@@ -507,8 +507,10 @@ function scheduleStopsRender(reason){
   
     // ---------- UI: Stops ----------
     function renderStops(){
-      var cont = qs('stopsList');
-      if(!cont) return;
+     // ✅ render altijd naar de host in het kaartpaneel als die er is
+        var cont = document.getElementById('stopsListHost') || document.getElementById('stopsList');
+        if(!cont) return;
+
   
       var st = store.get();
       var unlockedSlots = st.unlockedSlots || [];
@@ -992,9 +994,9 @@ function scheduleStopsRender(reason){
       cont.innerHTML = html;
   
       // Stops lijst naar host
-      var host = document.getElementById('stopsListHost');
-      var stopsList = document.getElementById('stopsList');
-      if(host && stopsList && stopsList.parentElement !== host) host.appendChild(stopsList);
+    //   var host = document.getElementById('stopsListHost');
+    //   var stopsList = document.getElementById('stopsList');
+    //   if(host && stopsList && stopsList.parentElement !== host) host.appendChild(stopsList);
       scheduleStopsRender('after renderUnlocked move');
       // oneMap terug naar wrap
       var wrap = document.getElementById('mapPanelWrap');
