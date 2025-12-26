@@ -888,7 +888,15 @@
         + '</div>';
   
       var focus = (st.focus || 'story');
-  
+      if(!st.focus){
+        var routeMode = (st.geoOn === true) || (st.lockedPc === true) ||
+                        ((st.unlockedSlots||[]).length > 0) || (st.currentLocId);
+        if(routeMode){
+          focus = 'map';
+          st.focus = 'map';
+          store.set(st);
+        }
+      }
       var storyBody = ''
         + pcCard
         + '<div style="margin-top:10px">'
@@ -937,8 +945,10 @@
       var host = document.getElementById('stopsListHost');
       var stopsList = document.getElementById('stopsList');
       if(host && stopsList && stopsList.parentElement !== host) host.appendChild(stopsList);
-      renderStops();
-  
+      // ✅ Belangrijk: renderStops pas NA DOM-move én in volgende frame (layout klaar)
+        requestAnimationFrame(function(){
+            try { renderStops(); } catch(e){ console.warn(e); }
+         });
       // oneMap terug naar wrap
       var wrap = document.getElementById('mapPanelWrap');
       oneMap = document.getElementById('oneMap');
@@ -960,14 +970,15 @@
       // Leaflet init + invalidate als map focus
       if(focus === 'map'){
         ensureLeafletMap();
-        requestAnimationFrame(function(){
-          requestAnimationFrame(function(){
-            if(window.LMAP) window.LMAP.invalidateSize(true);
-          });
-        });
-        if(dataReadyForStops()) refreshStopsUI();
-        else setTimeout(function(){ if(dataReadyForStops()) refreshStopsUI(); }, 250);
+      
+        setTimeout(function(){
+          if(window.LMAP) window.LMAP.invalidateSize(true);
+      
+          // 🔑 cruciaal: stops tekenen wanneer DOM + layout stabiel zijn
+          try { renderStops(); } catch(e){}
+        }, 200);
       }
+      
   
       renderProgress();
     }
