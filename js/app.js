@@ -13,6 +13,55 @@
     var DEBUG = false;
   
     // ---------- Mini helpers ----------
+    function slotIsRequired(slotId){
+        for (var i=0;i<(DATA.slots||[]).length;i++){
+          if (DATA.slots[i].id === slotId) return !!DATA.slots[i].required;
+        }
+        return true;
+      }
+      
+      function slotOrderArray(){
+        return DATA.slotOrder || (DATA.slots||[]).map(function(s){ return s.id; });
+      }
+      
+      // label in bolletje: S / E / 1..n (en 🧩 voor optioneel)
+      function slotBadgeLabel(slotId){
+        if (slotId === 'start') return 'S';
+        if (slotId === 'end')   return 'E';
+      
+        if (!slotIsRequired(slotId)) return '🧩';
+      
+        var order = slotOrderArray();
+        var n = 0;
+        for (var i=0;i<order.length;i++){
+          var sid = order[i];
+          if (sid === 'start' || sid === 'end') continue;
+          if (!slotIsRequired(sid)) continue;
+          n++;
+          if (sid === slotId) return String(n);
+        }
+        return '?';
+      }
+      
+      function makeSlotIcon(slotId, required, variants){
+        var lab = slotBadgeLabel(slotId);
+      
+        var cls = 'slotMarker'
+                + (slotId==='start' ? ' start' : '')
+                + (slotId==='end' ? ' end' : '')
+                + (required===false ? ' opt' : '')
+                + (variants && variants>1 ? ' split' : '');
+      
+        var splitHtml = (variants && variants>1) ? '<span class="splitBadge">🔀</span>' : '';
+      
+        return L.divIcon({
+          className: cls,
+          html: '<div class="bubble"><span class="n">'+lab+'</span>'+splitHtml+'</div>',
+          iconSize: [22, 22],
+          iconAnchor: [11, 11]
+        });
+      }
+      
     function qs(id){ return document.getElementById(id); }
     function ensureArr(a){ return Array.isArray(a) ? a : []; }
     function addUnique(arr, val){
@@ -546,41 +595,43 @@
     }
   
     function addStopMarkers(){
-      if(!window.LMAP || !window.L) return;
-  
-      if(window.__stopMarkerLayer){
-        try { window.LMAP.removeLayer(window.__stopMarkerLayer); } catch(e){}
+        if(!window.LMAP || !window.L) return;
+      
+        if(window.__stopMarkerLayer){
+          try { window.LMAP.removeLayer(window.__stopMarkerLayer); } catch(e){}
+        }
+        window.__stopMarkerLayer = L.layerGroup().addTo(window.LMAP);
+      
+        var locs = DATA.locaties || DATA.stops || [];
+      
+        // tel hoeveel locaties per slot (split-stops)
+        var perSlotCount = {};
+        for (var k=0; k<locs.length; k++){
+          var a = locs[k];
+          if(!a || !a.slot) continue;
+          perSlotCount[a.slot] = (perSlotCount[a.slot]||0) + 1;
+        }
+      
+        for(var i=0;i<locs.length;i++){
+          var s = locs[i];
+          if(!s || s.lat==null || s.lng==null) continue;
+      
+          // required uit DATA.slots halen
+          var so = null;
+          for (var j=0;j<(DATA.slots||[]).length;j++){
+            if(DATA.slots[j].id === s.slot){ so = DATA.slots[j]; break; }
+          }
+          var req = so ? !!so.required : true;
+      
+          var variants = perSlotCount[s.slot] || 1;
+          var icon = makeSlotIcon(s.slot, req, variants);
+      
+          L.marker([s.lat, s.lng], { icon: icon })
+            .bindPopup('<b>'+escapeHtml(s.naam||s.id)+'</b>')
+            .addTo(window.__stopMarkerLayer);
+        }
       }
-      window.__stopMarkerLayer = L.layerGroup().addTo(window.LMAP);
-  
-      var locs = DATA.locaties || DATA.stops || [];
-  
-      // perSlotCount (split)
-      var perSlotCount = {};
-      for (var k=0; k<locs.length; k++){
-        var a = locs[k];
-        if(!a || !a.slot) continue;
-        perSlotCount[a.slot] = (perSlotCount[a.slot]||0) + 1;
-      }
-  
-      for(var i=0;i<locs.length;i++){
-        var s = locs[i];
-        if(!s || s.lat==null || s.lng==null) continue;
-  
-        var variants = perSlotCount[s.slot] || 1;
-  
-        var icon = L.divIcon({
-          className: 'slotMarker' + (variants>1 ? ' split' : ''),
-          html: '<div class="bubble"><span class="n">'+escapeHtml(s.slot||'?')+'</span>'+(variants>1?'<span class="splitBadge">🔀</span>':'')+'</div>',
-          iconSize:[22,22],
-          iconAnchor:[11,11]
-        });
-  
-        L.marker([s.lat, s.lng], { icon: icon })
-          .bindPopup('<b>'+escapeHtml(s.naam||s.id)+'</b>')
-          .addTo(window.__stopMarkerLayer);
-      }
-    }
+      
   
     function addStopCircles(){
       if(!window.LMAP || !window.L) return;
