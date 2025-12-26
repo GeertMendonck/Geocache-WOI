@@ -16,6 +16,22 @@
       + '  <div class="panelBody">'+body+'</div>'
       + '</section>';
   }
+  function dataReadyForStops(){
+    var locs = DATA.locaties || DATA.stops || [];
+    return (locs.length > 0) && (DATA.slots && DATA.slots.length > 0);
+  }
+  
+  function refreshStopsUI(){
+    // lijst
+    try { renderStops(); } catch(e){}
+  
+    // kaart overlays
+    if(window.LMAP && window.L){
+      try { addStopMarkers(); } catch(e){}
+      try { addStopCircles(); } catch(e){}
+    }
+  }
+  
   
   function qs(id){ return document.getElementById(id); }
   (function bindPcChooserOnce(){
@@ -567,7 +583,7 @@ if(st.unlockedBySlot && st.unlockedBySlot[sid]){
     });
   
     cont.innerHTML = html || '<span class="muted">(Geen stops geladen)</span>';
-    showDiag('renderStops: htmlLen=' + (html ? html.length : 0) + ' cont=' + (!!cont));
+   //showDiag('renderStops: htmlLen=' + (html ? html.length : 0) + ' cont=' + (!!cont));
 
   }
  
@@ -809,12 +825,22 @@ if(st.unlockedBySlot && st.unlockedBySlot[sid]){
       if(focus === 'map'){
         ensureLeafletMap();
       
-        // redraw na layout (2 frames is super stabiel)
+        // redraw map size
         requestAnimationFrame(function(){
           requestAnimationFrame(function(){
             if(window.LMAP) window.LMAP.invalidateSize(true);
           });
         });
+      
+        // ✅ stops proberen tekenen (ook als DATA net geladen is)
+        if(dataReadyForStops()){
+          refreshStopsUI();
+        } else {
+          // DATA nog niet klaar? kort nadien opnieuw proberen
+          setTimeout(function(){
+            if(dataReadyForStops()) refreshStopsUI();
+          }, 250);
+        }
       }
     
       
