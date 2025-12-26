@@ -662,13 +662,23 @@
   
     // Personage kaart
     var pcCard =
-      '<div class="card">'
-      + ' <div class="cardHead">🧑 Personage</div>'
-      + ' <div class="cardBody">'
-      +   '<div><b>'+escapeHtml(pc && pc.naam ? pc.naam : '—')+'</b></div>'
-      +   '<div class="muted">'+escapeHtml(pc && pc.herkomst ? pc.herkomst : '—')+' — '+escapeHtml(pc && pc.rol ? pc.rol : '—')+'</div>'
-      + ' </div>'
-      + '</div>';
+        '<div class="pcMini">'
+        + ' <img class="pcMiniImg" src="'+escapeHtml((pc && pc.img) ? pc.img : (qs("pcImg") ? qs("pcImg").src : ""))+'" alt=""/>'
+        + ' <div class="pcMiniMeta">'
+        + '   <div class="pcMiniName">'+escapeHtml(pc && pc.naam ? pc.naam : '—')+'</div>'
+        + '   <div class="pcMiniSub muted">'+escapeHtml(pc && pc.herkomst ? pc.herkomst : '—')+' — '+escapeHtml(pc && pc.rol ? pc.rol : '—')+'</div>'
+        + (pc && pc.bio ? ('<div class="pcMiniBio">'+escapeHtml(pc.bio)+'</div>') : '')
+        + ' </div>'
+        + '</div>';
+
+    // var pcCard =
+    //   '<div class="card">'
+    //   + ' <div class="cardHead">🧑 Personage</div>'
+    //   + ' <div class="cardBody">'
+    //   +   '<div><b>'+escapeHtml(pc && pc.naam ? pc.naam : '—')+'</b></div>'
+    //   +   '<div class="muted">'+escapeHtml(pc && pc.herkomst ? pc.herkomst : '—')+' — '+escapeHtml(pc && pc.rol ? pc.rol : '—')+'</div>'
+    //   + ' </div>'
+    //   + '</div>';
   
     // // Accordion cards (slechts één open)
     // var currentHtml =
@@ -744,17 +754,20 @@
       +   '<div style="margin-top:6px">' + (verhaal ? escapeHtml(verhaal) : '<span class="muted">(Geen tekst)</span>') + '</div>'
       + '</div>';
     
-    var qaBody = ''
+      var qaBody =
+      '<div id="statusWrapQa"></div>'
       + (uitlegHtml || '<div class="muted">(Geen uitleg)</div>')
       + '<div style="margin-top:10px">' + qaHtml + '</div>';
-    
+      // var mapBody =
+      // '<div id="mapPanelWrap" style="height:55vh; min-height:260px; border-radius:12px; overflow:hidden;"></div>'
+      // + '<div class="row small mt-8">'
+      // + '  <button id="recenterBtn">🎯 Centreer op mij</button>'
+      // + '  <a id="openInMaps" href="#" target="_blank" rel="noopener">📍 Open je positie in Google Maps</a>'
+      // + '</div>';
       var mapBody =
-      '<div id="mapPanelWrap" style="height:55vh; min-height:260px; border-radius:12px; overflow:hidden;"></div>'
-      + '<div class="row small mt-8">'
-      + '  <button id="recenterBtn">🎯 Centreer op mij</button>'
-      + '  <a id="openInMaps" href="#" target="_blank" rel="noopener">📍 Open je positie in Google Maps</a>'
-      + '</div>';
-    
+  '<div id="statusWrapMap"></div>'
+  + '<div id="mapPanelWrap" style="height:70vh; min-height:320px; border-radius:12px; overflow:hidden;"></div>'
+  + '<div id="mapControlsWrap" class="row small mt-8"></div>';
     
     var html = ''
       + '<div class="stack">'
@@ -764,17 +777,43 @@
       + '</div>';
     
     cont.innerHTML = html;
-            // --- verplaats bestaande kaartdiv (#oneMap) naar het kaart-paneel ---
-        var wrap = document.getElementById('mapPanelWrap');
-        var mapEl = document.getElementById('oneMap');
-        if(wrap && mapEl && mapEl.parentElement !== wrap){
-          wrap.appendChild(mapEl);
-        }
+    
+      var statusCard = document.getElementById('statusCard');
+      var wQa = document.getElementById('statusWrapQa');
+      var wMap = document.getElementById('statusWrapMap');
 
-        // Leaflet: opnieuw meten/tekenen wanneer kaart-paneel open is
-        if(focus === 'map' && window._map){
-          setTimeout(function(){ window._map.invalidateSize(); }, 50);
-        }
+      // We willen de status *maar op 1 plek tegelijk* (afhankelijk van focus)
+      if(statusCard){
+        if(focus === 'qa' && wQa) wQa.appendChild(statusCard);
+        else if(focus === 'map' && wMap) wMap.appendChild(statusCard);
+        // bij story kan hij weg (of naar qa als default)
+      }
+   // --- bestaande kaartcontainer (#oneMap) naar het kaartpaneel verhuizen ---
+      var wrap = document.getElementById('mapPanelWrap');
+      var oneMap = document.getElementById('oneMap');
+      if(wrap && oneMap && oneMap.parentElement !== wrap){
+        wrap.appendChild(oneMap);
+      }
+
+      // Geef de kaartcontainer hoogte (Leaflet heeft hoogte nodig)
+      if(oneMap){
+        oneMap.style.height = '100%';
+        oneMap.style.minHeight = '260px';
+      }
+      // --- verplaats kaart-controls (bestaande knoppen) naar het kaartpaneel ---
+      var ctrl = document.getElementById('mapControlsWrap');
+      if(ctrl){
+        var btn = document.getElementById('recenterBtn');
+        var link = document.getElementById('openInMaps');
+        if(btn) ctrl.appendChild(btn);
+        if(link) ctrl.appendChild(link);
+}
+
+      // Leaflet: opnieuw tekenen als kaartpaneel actief is
+      if(focus === 'map' && window._map){
+        setTimeout(function(){ window._map.invalidateSize(); }, 80);
+      }
+
 
     renderProgress();
     
