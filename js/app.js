@@ -807,7 +807,19 @@
 
       // Leaflet: opnieuw tekenen als kaartpaneel actief is
       if(focus === 'map' && window._map){
-        setTimeout(function(){ window._map.invalidateSize(); }, 80);
+        setTimeout(function(){
+          var el = document.getElementById('oneMap');
+          var h = el ? el.getBoundingClientRect().height : 0;
+      
+          // als hoogte nog 0 is, nog een keer proberen
+          window._map.invalidateSize(true);
+      
+          if(h === 0){
+            setTimeout(function(){
+              window._map.invalidateSize(true);
+            }, 200);
+          }
+        }, 120);
       }
 
       // --- verplaats Stops-lijst naar het kaartpaneel ---
@@ -1399,12 +1411,16 @@
     store.set(st);
   
     renderUnlocked(); // of renderCurrentStop() als je die apart maakt
-      // extra: als net naar map geswitcht, redraw map na render
-        if(focus === 'map'){
-          setTimeout(function(){
-            if(window._map) window._map.invalidateSize();
-          }, 120);
-        }
+    // ✅ Cruciaal: na render + layout, Leaflet opnieuw laten meten
+  if(focus === 'map'){
+    setTimeout(function(){
+      if(window._map){
+        window._map.invalidateSize(true);
+        // optioneel: force re-center op huidige view
+        try { window._map.panBy([0,0]); } catch(ex) {}
+      }
+    }, 200);
+  }
   });
   
 
