@@ -570,8 +570,8 @@
  
   
   
-  
   function renderUnlocked(){
+    applyRouteModeUI();
     // verbergen van de oude kaart
     var oldMapSec = document.getElementById('mapSection');
     if(oldMapSec) oldMapSec.style.display = 'none';
@@ -758,16 +758,12 @@
       '<div id="statusWrapQa"></div>'
       + (uitlegHtml || '<div class="muted">(Geen uitleg)</div>')
       + '<div style="margin-top:10px">' + qaHtml + '</div>';
-      // var mapBody =
-      // '<div id="mapPanelWrap" style="height:55vh; min-height:260px; border-radius:12px; overflow:hidden;"></div>'
-      // + '<div class="row small mt-8">'
-      // + '  <button id="recenterBtn">🎯 Centreer op mij</button>'
-      // + '  <a id="openInMaps" href="#" target="_blank" rel="noopener">📍 Open je positie in Google Maps</a>'
-      // + '</div>';
       var mapBody =
-  '<div id="statusWrapMap"></div>'
-  + '<div id="mapPanelWrap" style="height:70vh; min-height:320px; border-radius:12px; overflow:hidden;"></div>'
-  + '<div id="mapControlsWrap" class="row small mt-8"></div>';
+      '<div id="statusWrapMap"></div>'
+      + '<div id="mapPanelWrap" style="height:68vh; min-height:320px; border-radius:12px; overflow:hidden;"></div>'
+      + '<div id="mapControlsWrap" class="row small mt-8"></div>'
+      + '<div id="stopsWrapMap" style="margin-top:10px"></div>';
+    
     
     var html = ''
       + '<div class="stack">'
@@ -814,6 +810,12 @@
         setTimeout(function(){ window._map.invalidateSize(); }, 80);
       }
 
+      // --- verplaats Stops-lijst naar het kaartpaneel ---
+      var stopsWrap = document.getElementById('stopsWrapMap');
+      var stopsList = document.getElementById('stopsList');
+      if(stopsWrap && stopsList){
+        stopsWrap.appendChild(stopsList);
+      }
 
     renderProgress();
     
@@ -1212,7 +1214,22 @@
       var a=qs('openInMaps'); if(a) a.href='https://maps.google.com/?q='+lat+','+lng;
     }catch(e){ if (window.console) console.error(e); }
   }
-
+  function applyRouteModeUI(){
+    var stops = document.getElementById('stopsSection');
+    if(stops) stops.style.display = routeMode ? 'none' : '';
+    var st = store.get();
+  
+    // Route-modus als: geo draait OF personage is gelocked OF er is al iets unlocked
+    var routeMode = (st.geoOn === true) || (st.lockedPc === true) ||
+                    ((st.unlockedSlots||[]).length > 0) || (st.currentLocId);
+  
+    var setup = document.getElementById('setupGrid');
+    if(setup) setup.style.display = routeMode ? 'none' : '';
+  
+    var stops = document.getElementById('stopsSection');
+    if(stops) stops.style.display = routeMode ? 'none' : '';
+  }
+  
   // ---------- Geoloc ----------
   function tryUnlock(best, acc){
     var effective = Math.max(0, best.d - (acc||0));
@@ -1279,7 +1296,6 @@
         st.currentLocId = best.id;
         st.currentSlotId = bestSlot;
         store.set(st);
-
         renderUnlocked();
         renderStops();
         toast('✅ Ontgrendeld: ' + (best.name || bestSlot));
@@ -1383,6 +1399,12 @@
     store.set(st);
   
     renderUnlocked(); // of renderCurrentStop() als je die apart maakt
+      // extra: als net naar map geswitcht, redraw map na render
+        if(focus === 'map'){
+          setTimeout(function(){
+            if(window._map) window._map.invalidateSize();
+          }, 120);
+        }
   });
   
 
