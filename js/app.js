@@ -13,6 +13,56 @@
     var DEBUG = false;
   
     // ---------- Mini helpers ----------
+    var __stopsRenderTimer = null;
+
+function scheduleStopsRender(reason){
+  if(__stopsRenderTimer) clearTimeout(__stopsRenderTimer);
+
+  // we plannen render op een moment dat layout/panel/DOM al bestaat
+  __stopsRenderTimer = setTimeout(function(){
+    var tries = 0;
+
+    function attempt(){
+      tries++;
+
+      var st = store.get();
+      var focus = st.focus || 'story';
+
+      var cont = document.getElementById('stopsList');
+      var host = document.getElementById('stopsListHost');
+
+      // cont moet bestaan
+      if(!cont){
+        if(tries < 10) return requestAnimationFrame(attempt);
+        return;
+      }
+
+      // Als focus=map verwachten we dat host bestaat, en dat cont in host zit (of kan zitten)
+      if(focus === 'map'){
+        if(!host){
+          if(tries < 10) return requestAnimationFrame(attempt);
+          return;
+        }
+        if(cont.parentElement !== host){
+          host.appendChild(cont);
+        }
+
+        // belangrijk: host/panel moet zichtbaar zijn, anders render je in "display:none"
+        if(host.offsetParent === null){
+          if(tries < 10) return requestAnimationFrame(attempt);
+          return;
+        }
+      }
+
+      // ✅ Hier is het “veilig”
+      try { renderStops(); } catch(e){}
+
+    }
+
+    requestAnimationFrame(attempt);
+  }, 0);
+}
+
     function slotIsRequired(slotId){
         for (var i=0;i<(DATA.slots||[]).length;i++){
           if (DATA.slots[i].id === slotId) return !!DATA.slots[i].required;
@@ -722,7 +772,7 @@
         store.set(st);
   
         renderUnlocked();
-        renderStops();
+        scheduleStopsRender('unlock');
         toast('✅ Ontgrendeld: ' + (best.name || bestSlot));
         playDing();
       } else {
@@ -784,7 +834,7 @@
   
           tryUnlock(best, accuracy);
           renderProgress();
-          renderStops();
+          scheduleStopsRender('unlock');
   
           ensureLeafletMap();
           updateLeafletLive(latitude, longitude, accuracy);
@@ -945,10 +995,7 @@
       var host = document.getElementById('stopsListHost');
       var stopsList = document.getElementById('stopsList');
       if(host && stopsList && stopsList.parentElement !== host) host.appendChild(stopsList);
-      // ✅ Belangrijk: renderStops pas NA DOM-move én in volgende frame (layout klaar)
-        requestAnimationFrame(function(){
-            try { renderStops(); } catch(e){ console.warn(e); }
-         });
+      scheduleStopsRender('after renderUnlocked move');
       // oneMap terug naar wrap
       var wrap = document.getElementById('mapPanelWrap');
       oneMap = document.getElementById('oneMap');
@@ -973,9 +1020,7 @@
       
         setTimeout(function(){
           if(window.LMAP) window.LMAP.invalidateSize(true);
-      
-          // 🔑 cruciaal: stops tekenen wanneer DOM + layout stabiel zijn
-          try { renderStops(); } catch(e){}
+          scheduleStopsRender('panel map opened');
         }, 200);
       }
       
@@ -1020,10 +1065,10 @@
         detectMic();
   
         renderProfile();
-        renderStops();
         renderUnlocked();
         renderProgress();
-  
+        // renderStops pas plannen na renderUnlocked (want die maakt stopsListHost aan)
+        scheduleStopsRender('after initial renderUnlocked');
         refreshStopsUI();
   
         // pcSelect “busy” (picker open)
