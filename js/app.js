@@ -711,11 +711,19 @@
       '<div id="statusWrapQa"></div>'
       + (uitlegHtml || '<div class="muted">(Geen uitleg)</div>')
       + '<div style="margin-top:10px">' + qaHtml + '</div>';
+      // var mapBody =
+      // '<div id="statusWrapMap"></div>'
+      // + '<div id="mapPanelWrap" style="height:68vh; min-height:320px; border-radius:12px; overflow:hidden;"></div>'
+      // + '<div id="mapControlsWrap" class="row small mt-8"></div>'
+      // + '<div id="stopsWrapMap" style="margin-top:10px"></div>';
       var mapBody =
       '<div id="statusWrapMap"></div>'
       + '<div id="mapPanelWrap" style="height:68vh; min-height:320px; border-radius:12px; overflow:hidden;"></div>'
       + '<div id="mapControlsWrap" class="row small mt-8"></div>'
-      + '<div id="stopsWrapMap" style="margin-top:10px"></div>';
+      + '<div class="mt-10">'
+      + '  <div class="muted small" style="margin-bottom:6px">Stops</div>'
+      + '  <div id="stopsListHost"></div>'
+      + '</div>';
     
     
     var html = ''
@@ -742,6 +750,13 @@
 
 
     cont.innerHTML = html;
+    // --- stops overzicht verhuizen naar kaart-paneel ---
+    var host = document.getElementById('stopsListHost');
+    var stopsList = document.getElementById('stopsList');
+    if(host && stopsList && stopsList.parentElement !== host){
+      host.appendChild(stopsList);
+    }
+    
     // --- Stap B — verplaats #oneMap terug naar het kaartpaneel
         var wrap = document.getElementById('mapPanelWrap');
     oneMap = document.getElementById('oneMap');
