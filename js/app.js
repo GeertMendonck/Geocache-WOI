@@ -6,6 +6,17 @@
   try { if (typeof window !== 'undefined' && typeof window.__APP_BOUND__ === 'undefined') window.__APP_BOUND__ = false; } catch(e){}
 
   // ---------- Mini helpers ----------
+  function panelHtml(id, title, body, isOpen){
+    return ''
+      + '<section class="panel '+(isOpen ? 'is-open' : 'is-collapsed')+'" data-panel="'+id+'">'
+      + '  <div class="panelHead">'
+      + '    <span>'+title+'</span>'
+      + '    <span class="hint">'+(isOpen ? '—' : 'tik om te openen')+'</span>'
+      + '  </div>'
+      + '  <div class="panelBody">'+body+'</div>'
+      + '</section>';
+  }
+  
   function qs(id){ return document.getElementById(id); }
   (function bindPcChooserOnce(){
     var el = qs('pcChooser');
@@ -561,6 +572,10 @@
   
   
   function renderUnlocked(){
+    // verbergen van de oude kaart
+    var oldMapSec = document.getElementById('mapSection');
+    if(oldMapSec) oldMapSec.style.display = 'none';
+
     var st = store.get();
     var pc = currentPc();
     var cont = qs('unlockList'); if(!cont) return;
@@ -655,70 +670,114 @@
       + ' </div>'
       + '</div>';
   
-    // Accordion cards (slechts één open)
-    var currentHtml =
-      '<div class="currentWrap">'
-      + '<div class="currentTitle">📍 Huidige stop</div>'
-      + '<div class="currentName">'+escapeHtml(title)+'</div>'
+    // // Accordion cards (slechts één open)
+    // var currentHtml =
+    //   '<div class="currentWrap">'
+    //   + '<div class="currentTitle">📍 Huidige stop</div>'
+    //   + '<div class="currentName">'+escapeHtml(title)+'</div>'
   
-      + '<div class="acc" data-acc="current">'
-        + '<details class="accItem" open>'
-          + '<summary class="accSum">📘 Verhaal <button class="readBtn" data-slot="'+slotId+'" data-loc="'+locId+'" title="Lees voor">🔊</button></summary>'
-          + '<div class="accBody">'+(verhaal ? escapeHtml(verhaal) : '<span class="muted">(Geen tekst)</span>')+'</div>'
-        + '</details>'
+    //   + '<div class="acc" data-acc="current">'
+    //     + '<details class="accItem" open>'
+    //       + '<summary class="accSum">📘 Verhaal <button class="readBtn" data-slot="'+slotId+'" data-loc="'+locId+'" title="Lees voor">🔊</button></summary>'
+    //       + '<div class="accBody">'+(verhaal ? escapeHtml(verhaal) : '<span class="muted">(Geen tekst)</span>')+'</div>'
+    //     + '</details>'
   
-        + '<details class="accItem">'
-          + '<summary class="accSum">ℹ️ Uitleg</summary>'
-          + '<div class="accBody">'+(uitlegHtml || '<span class="muted">(Geen uitleg)</span>')+'</div>'
-        + '</details>'
+    //     + '<details class="accItem">'
+    //       + '<summary class="accSum">ℹ️ Uitleg</summary>'
+    //       + '<div class="accBody">'+(uitlegHtml || '<span class="muted">(Geen uitleg)</span>')+'</div>'
+    //     + '</details>'
   
-        + '<details class="accItem">'
-          + '<summary class="accSum">✍️ Vragen</summary>'
-          + '<div class="accBody">'+qaHtml+'</div>'
-        + '</details>'
+    //     + '<details class="accItem">'
+    //       + '<summary class="accSum">✍️ Vragen</summary>'
+    //       + '<div class="accBody">'+qaHtml+'</div>'
+    //     + '</details>'
   
-      + '</div>'
-      + '</div>';
+    //   + '</div>'
+    //   + '</div>';
   
-    // --------- History block ----------
-    var hist = '';
+    // // --------- History block ----------
+    // var hist = '';
   
-    // Geschiedenis: alle bezochte locaties behalve current
-    var visited = unlockedLocs.slice();
-    // fallback als unlockedLocs leeg is: maak pseudo-history op basis van slots
-    if(!visited.length && unlockedSlots.length){
-      // toon dan enkel slots als geschiedenis
-      visited = unlockedSlots.slice();
-    }
+    // // Geschiedenis: alle bezochte locaties behalve current
+    // var visited = unlockedLocs.slice();
+    // // fallback als unlockedLocs leeg is: maak pseudo-history op basis van slots
+    // if(!visited.length && unlockedSlots.length){
+    //   // toon dan enkel slots als geschiedenis
+    //   visited = unlockedSlots.slice();
+    // }
   
-    if(visited.length){
-      hist += '<details class="history">'
-        + '<summary class="historySum">🕘 Geschiedenis ('+visited.length+')</summary>'
-        + '<div class="historyBody">';
+    // if(visited.length){
+    //   hist += '<details class="history">'
+    //     + '<summary class="historySum">🕘 Geschiedenis ('+visited.length+')</summary>'
+    //     + '<div class="historyBody">';
   
-      for(var v=0; v<visited.length; v++){
-        var vid = visited[v];
-        if(vid === locId) continue;
+    //   for(var v=0; v<visited.length; v++){
+    //     var vid = visited[v];
+    //     if(vid === locId) continue;
   
-        var vloc = findLocById(vid);
-        if(vloc){
-          var vTitle = vloc.naam || vloc.id;
-          hist += '<details class="histItem">'
-            + '<summary>'+escapeHtml(vTitle)+'</summary>'
-            + '<div class="muted">Slot: '+escapeHtml(vloc.slot||'—')+'</div>'
-            + '</details>';
-        } else {
-          // slot fallback
-          hist += '<div class="muted">'+escapeHtml(String(vid))+'</div>';
-        }
-      }
+    //     var vloc = findLocById(vid);
+    //     if(vloc){
+    //       var vTitle = vloc.naam || vloc.id;
+    //       hist += '<details class="histItem">'
+    //         + '<summary>'+escapeHtml(vTitle)+'</summary>'
+    //         + '<div class="muted">Slot: '+escapeHtml(vloc.slot||'—')+'</div>'
+    //         + '</details>';
+    //     } else {
+    //       // slot fallback
+    //       hist += '<div class="muted">'+escapeHtml(String(vid))+'</div>';
+    //     }
+    //   }
   
-      hist += '</div></details>';
-    }
+    //   hist += '</div></details>';
+    // }
   
     // Render
-    cont.innerHTML = pcCard + currentHtml + hist;
+    var focus = (st.focus || 'story'); // story | qa | map
+
+    var storyBody = ''
+      + pcCard
+      + '<div style="margin-top:10px">'
+      +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
+      +     '<div style="font-weight:800">📘 Verhaal</div>'
+      +     '<button class="readBtn" data-slot="'+slotId+'" data-loc="'+locId+'" title="Lees voor">🔊</button>'
+      +   '</div>'
+      +   '<div style="margin-top:6px">' + (verhaal ? escapeHtml(verhaal) : '<span class="muted">(Geen tekst)</span>') + '</div>'
+      + '</div>';
+    
+    var qaBody = ''
+      + (uitlegHtml || '<div class="muted">(Geen uitleg)</div>')
+      + '<div style="margin-top:10px">' + qaHtml + '</div>';
+    
+      var mapBody =
+      '<div id="mapPanelWrap" style="height:55vh; min-height:260px; border-radius:12px; overflow:hidden;"></div>'
+      + '<div class="row small mt-8">'
+      + '  <button id="recenterBtn">🎯 Centreer op mij</button>'
+      + '  <a id="openInMaps" href="#" target="_blank" rel="noopener">📍 Open je positie in Google Maps</a>'
+      + '</div>';
+    
+    
+    var html = ''
+      + '<div class="stack">'
+      + panelHtml('story','Personage + Verhaal', storyBody, focus==='story')
+      + panelHtml('qa','Uitleg en vragen', qaBody, focus==='qa')
+      + panelHtml('map','Kaart', mapBody, focus==='map')
+      + '</div>';
+    
+    cont.innerHTML = html;
+            // --- verplaats bestaande kaartdiv (#oneMap) naar het kaart-paneel ---
+        var wrap = document.getElementById('mapPanelWrap');
+        var mapEl = document.getElementById('oneMap');
+        if(wrap && mapEl && mapEl.parentElement !== wrap){
+          wrap.appendChild(mapEl);
+        }
+
+        // Leaflet: opnieuw meten/tekenen wanneer kaart-paneel open is
+        if(focus === 'map' && window._map){
+          setTimeout(function(){ window._map.invalidateSize(); }, 50);
+        }
+
     renderProgress();
+    
   }
   
   
@@ -1270,6 +1329,24 @@
   function stopWatch(){ if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; var gs=qs('geoState'); if(gs) gs.textContent='Inactief'; } }
 
   // ---------- Boot ----------
+  document.addEventListener('click', function(e){
+    var head = e.target.closest('.panelHead');
+    if(!head) return;
+  
+    var panel = head.closest('.panel');
+    if(!panel) return;
+  
+    var focus = panel.getAttribute('data-panel');
+    if(!focus) return;
+  
+    var st = store.get();
+    st.focus = focus;
+    store.set(st);
+  
+    renderUnlocked(); // of renderCurrentStop() als je die apart maakt
+  });
+  
+
   document.addEventListener('toggle', function(e){
     var d = e.target;
     if(!d || d.tagName !== 'DETAILS') return;
