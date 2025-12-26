@@ -1011,15 +1011,17 @@ document.addEventListener('click', function(e){
         qaHtml = qsArr.map(function(q,qi){
           var val = getAns(locId, qi);
           return '<div class="qa">'
-            + '<div class="q"><b>Vraag '+(qi+1)+':</b> '+escapeHtml(q)+'</div>'
-            + '<div class="controls">'
-            + '  <textarea class="ans" data-stop="'+locId+'" data-q="'+qi+'" placeholder="Jouw antwoord...">'+escapeHtml(val)+'</textarea>'
-            + (MIC_OK ? '  <button class="micBtn" data-stop="'+locId+'" data-q="'+qi+'">🎙️</button>' : '')
-            + '  <button class="clearAns" data-stop="'+locId+'" data-q="'+qi+'">✖</button>'
-            + '  <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+qi+'"></span>'
-            + '</div>'
-            + '</div>';
-        }).join('');
+          + '<div class="q"><b>Vraag '+(qi+1)+':</b> '+escapeHtml(q)+'</div>'
+          + '<div class="controls">'
+          + '  <textarea class="ans" data-stop="'+locId+'" data-q="'+qi+'" placeholder="Jouw antwoord...">'+escapeHtml(val)+'</textarea>'
+          + '  <div class="btnRow">'
+          + (MIC_OK ? '    <button class="micBtn" data-stop="'+locId+'" data-q="'+qi+'">🎙️</button>' : '')
+          + '    <button class="clearAns" data-stop="'+locId+'" data-q="'+qi+'">✖</button>'
+          + '    <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+qi+'"></span>'
+          + '  </div>'
+          + '</div>'
+          + '</div>';
+          }).join('');
       } else {
         qaHtml = '<div class="muted">Geen vragen bij deze stop.</div>';
       }

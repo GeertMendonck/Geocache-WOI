@@ -494,23 +494,47 @@ container die 3 panelen onder elkaar stapelt
     .pc-img{ width:100%; height:auto; aspect-ratio:1/1; }
 
     /* 📱 Mobiel: antwoorden onder elkaar */
-@media (max-width: 640px) {
-    .qa .controls {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-  
-    .qa textarea.ans {
-      width: 100%;
-      min-height: 110px;
-      font-size: 16px; /* voorkomt iOS zoom */
-    }
-  
-    .qa .controls button {
-      align-self: flex-start;
-    }
-  }
+    @media (max-width: 640px) {
+
+        /* de controls worden een kolom: eerst textarea, dan knoprij */
+        .qa .controls{
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+      
+        /* tekstvak = volle breedte + niet te klein */
+        .qa textarea.ans{
+          width: 100%;
+          min-height: 110px;
+          font-size: 16px; /* voorkomt iOS zoom */
+          box-sizing: border-box;
+        }
+      
+        /* knopjes in een rij */
+        .qa .controls .micBtn,
+        .qa .controls .clearAns{
+          /* reset mogelijke absolute/rare positioning van vroeger */
+          position: static !important;
+        }
+      
+        .qa .controls .btnRow{
+          display: flex;
+          gap: 10px;
+          align-items: center;
+        }
+      
+        .qa .controls .btnRow button{
+          flex: 0 0 auto;
+        }
+      
+        /* optioneel: knoppen wat groter voor duimen */
+        .qa .controls .btnRow button{
+          min-width: 44px;
+          min-height: 44px;
+        }
+      }
+      
   
   }
 
