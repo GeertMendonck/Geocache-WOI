@@ -492,6 +492,26 @@ container die 3 panelen onder elkaar stapelt
   @media (max-width:420px){
     .pc-head{ grid-template-columns:1fr; }
     .pc-img{ width:100%; height:auto; aspect-ratio:1/1; }
+
+    /* 📱 Mobiel: antwoorden onder elkaar */
+@media (max-width: 640px) {
+    .qa .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+  
+    .qa textarea.ans {
+      width: 100%;
+      min-height: 110px;
+      font-size: 16px; /* voorkomt iOS zoom */
+    }
+  
+    .qa .controls button {
+      align-self: flex-start;
+    }
+  }
+  
   }
 
   

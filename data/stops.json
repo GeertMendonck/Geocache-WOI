@@ -14,7 +14,7 @@
       "naam": "Start: Menenpoort (Ieper)",
       "lat": 50.85206,
       "lng": 2.89116,
-      "radius": 140,
+      "radius": 100,
       "uitleg": {
         "kort": "De Menenpoort herdenkt soldaten die sneuvelden zonder gekend graf.",
         "uitgebreid": "De Menenpoort is een herdenkingsmonument voor meer dan 54.000 Britse en Gemenebest-soldaten die tijdens de Eerste Wereldoorlog sneuvelden in de regio rond Ieper en nooit geïdentificeerd of teruggevonden werden. Elke avond sinds 1928 wordt hier de Last Post geblazen. Deze plek maakt duidelijk dat achter elk naamloos slachtoffer een persoonlijk verhaal schuilgaat."
@@ -30,7 +30,7 @@
       "naam": "Stop 1: In Flanders Fields Museum",
       "lat": 50.8511,
       "lng": 2.8856,
-      "radius": 120,
+      "radius": 100,
       "uitleg": {
         "kort": "Dit museum vertelt het verhaal van de oorlog door mensen en objecten.",
         "uitgebreid": "Het In Flanders Fields Museum focust niet alleen op militaire feiten, maar vooral op de menselijke ervaring van de oorlog. Via persoonlijke verhalen, brieven, foto’s en objecten krijg je inzicht in hoe soldaten en burgers de oorlog beleefden. Het museum benadrukt dat oorlog geen abstract begrip is, maar iets wat levens ingrijpend verandert."
@@ -46,7 +46,7 @@
       "naam": "Stop 1: New Irish Farm Cemetery",
       "lat": 50.87289,
       "lng": 2.89736,
-      "radius": 180,
+      "radius": 100,
       "uitleg": {
         "kort": "Een Ierse begraafplaats midden in het voormalige frontgebied.",
         "uitgebreid": "New Irish Farm Cemetery ligt in een landschap dat tijdens de oorlog volledig verwoest werd. Hier rusten vooral Ierse soldaten die sneuvelden tijdens zware gevechten rond Ieper. De symbolen en inscripties op de grafstenen tonen hoe identiteit, afkomst en geloof ook in de dood een rol bleven spelen."
@@ -94,7 +94,7 @@
       "naam": "Stop 4: Memorial Museum Passchendaele",
       "lat": 50.87073,
       "lng": 2.9886,
-      "radius": 180,
+      "radius": 100,
       "uitleg": {
         "kort": "Dit museum toont het dagelijkse leven aan het front.",
         "uitgebreid": "Het Memorial Museum Passchendaele focust sterk op het leven in en rond de loopgraven. Je ziet hoe soldaten woonden, aten en probeerden te overleven in extreme omstandigheden. Door originele objecten en gereconstrueerde loopgraven krijg je een concreet beeld van het frontleven."
@@ -110,7 +110,7 @@
       "naam": "Einde: Menenpoort (Ieper)",
       "lat": 50.85206,
       "lng": 2.89116,
-      "radius": 140,
+      "radius": 100,
       "uitleg": {
         "kort": "We keren terug naar de plek waar herinneren centraal staat.",
         "uitgebreid": "Aan het einde van de tocht keer je terug naar de Menenpoort. De verhalen, beelden en plekken die je vandaag zag, krijgen hier een nieuwe betekenis. Deze plaats nodigt uit om stil te staan bij herinnering, verantwoordelijkheid en de vraag hoe wij vandaag omgaan met het verleden."
