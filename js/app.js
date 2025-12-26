@@ -1078,6 +1078,68 @@ function applyRouteModeUI(){
     // ---------- DOM Ready ----------
     document.addEventListener('DOMContentLoaded', function(){
       bindCoreListeners();
+      document.addEventListener('click', function(e){
+        var btn = e.target && (e.target.closest ? e.target.closest('#savePcBtn') : null);
+        if(!btn) return;
+      
+        var st = store.get();
+      
+        if(window.__insideStart !== true){
+          toast('🔐 Ga naar de startlocatie om je personage te bevestigen.');
+          return;
+        }
+      
+        var sel = document.getElementById('pcSelect');
+        if(!sel || !sel.value){
+          toast('⚠️ Kies eerst een personage.');
+          return;
+        }
+      
+        // ✅ bevestigen
+        st.pcId = sel.value;
+        st.geoOn = true;          // “echt starten”
+        store.set(st);
+      
+        toast('✅ Keuze bevestigd. Je kan vertrekken.');
+        renderProfile();
+        renderCharacterChooser();
+        applyRouteModeUI();
+        renderUnlocked();         // ✅ UI omschakelen naar nieuwe indeling
+      
+        // (optioneel) als geo nog niet draait, start hem
+        if(watchId == null){
+          startWatch();
+        }
+      });
+      var regen = e.target && (e.target.closest ? e.target.closest('#regenBtn') : null);
+if(regen){
+  var st = store.get();
+
+  if(window.__insideStart !== true){
+    toast('🔐 Willekeurig kan enkel aan de start.');
+    return;
+  }
+  if(st.lockedPc){
+    toast('🔒 Keuze is vergrendeld.');
+    return;
+  }
+
+  var pc = pick(DATA.personages || []);
+  if(!pc){
+    toast('⚠️ Geen personages geladen.');
+    return;
+  }
+
+  // zet pcId maar hou geoOn nog false tot bevestigd
+  st.pcId = pc.id;
+  store.set(st);
+
+  renderProfile();
+  renderCharacterChooser(); // zodat pcSelect mee springt
+  toast('🎲 Willekeurig gekozen: ' + (pc.naam || pc.id));
+  return;
+}
+
       var saveBtn = qs('savePcBtn');
             if(saveBtn){
             saveBtn.addEventListener('click', function(){
