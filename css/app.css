@@ -482,6 +482,10 @@ container die 3 panelen onder elkaar stapelt
 .pcMiniBio{ margin-top:6px; opacity:.92; }
 
 
+.stopsPills { display:flex; flex-wrap:wrap; gap:8px; }
+.stopsPills .pill { display:inline-flex; align-items:center; }
+
+
   /* ===============================
      MOBILE
      =============================== */

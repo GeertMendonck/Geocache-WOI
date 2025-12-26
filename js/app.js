@@ -527,16 +527,17 @@
         return '🔀 (' + locs.length + ' opties)';
       }
   
-      // Als unlocked: toon de effectief gekozen locatie (via lastUnlockedLocationBySlot)
-      var chosenId = null;
-      if(st.lastUnlockedLocationBySlot && st.lastUnlockedLocationBySlot[sid]){
-        chosenId = st.lastUnlockedLocationBySlot[sid];
-      } else if(locs.length === 1){
-        chosenId = locs[0].id;
-      } else {
-        // unlocked maar geen gekozen id? (edge case) -> eerste tonen
-        chosenId = locs[0].id;
-      }
+// Als unlocked: toon de effectief gekozen locatie
+var chosenId = null;
+if(st.unlockedBySlot && st.unlockedBySlot[sid]){
+  chosenId = st.unlockedBySlot[sid];
+} else if(st.lastUnlockedLocationBySlot && st.lastUnlockedLocationBySlot[sid]){
+  chosenId = st.lastUnlockedLocationBySlot[sid];
+} else if(locs.length === 1){
+  chosenId = locs[0].id;
+} else {
+  chosenId = locs[0].id;
+}
   
       var loc = findLocById(chosenId);
       return loc && loc.naam ? stripPrefix(loc.naam) : '';
@@ -717,12 +718,12 @@
       // + '<div id="mapControlsWrap" class="row small mt-8"></div>'
       // + '<div id="stopsWrapMap" style="margin-top:10px"></div>';
       var mapBody =
-      '<div id="statusWrapMap"></div>'
+        '<div id="statusWrapMap"></div>'
       + '<div id="mapPanelWrap" style="height:68vh; min-height:320px; border-radius:12px; overflow:hidden;"></div>'
       + '<div id="mapControlsWrap" class="row small mt-8"></div>'
       + '<div class="mt-10">'
       + '  <div class="muted small" style="margin-bottom:6px">Stops</div>'
-      + '  <div id="stopsListHost"></div>'
+      + '  <div id="stopsListHost" class="stopsPills"></div>'
       + '</div>';
     
     
@@ -756,6 +757,8 @@
     if(host && stopsList && stopsList.parentElement !== host){
       host.appendChild(stopsList);
     }
+    // en nu pas inhoud opbouwen
+    try { renderStops(); } catch(e){ console.warn(e); }
     
     // --- Stap B — verplaats #oneMap terug naar het kaartpaneel
         var wrap = document.getElementById('mapPanelWrap');
@@ -824,6 +827,12 @@
     renderProgress();
     
   }
+
+
+
+
+
+
   function ensureLeafletMap(){
     if(window.LMAP) return;                 // al geïnitialiseerd
   
