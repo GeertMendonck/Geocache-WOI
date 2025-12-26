@@ -807,28 +807,18 @@
 
       // Leaflet: opnieuw tekenen als kaartpaneel actief is
       if(focus === 'map'){
-        // ✅ init maar 1 keer
-        if(!window._map){
-          window._map = L.map('oneMap').setView([51.219, 4.441], 15);
+        ensureLeafletMap();
       
-          // TODO: zet hier ook je tilelayer/markers als je die normaal bij init zet
-          // L.tileLayer(...).addTo(window._map);
-        }
-      
-        // ✅ altijd hertekenen (mag vaak)
-        setTimeout(function(){
-          var el = document.getElementById('oneMap');
-          var h = el ? el.getBoundingClientRect().height : 0;
-      
-          window._map.invalidateSize(true);
-      
-          if(h === 0){
-            setTimeout(function(){
-              window._map.invalidateSize(true);
-            }, 200);
-          }
-        }, 120);
+        // Leaflet hertekenen NA layout
+        requestAnimationFrame(function(){
+          requestAnimationFrame(function(){
+            if(window.LMAP){
+              window.LMAP.invalidateSize(true);
+            }
+          });
+        });
       }
+    
       
 
       // --- verplaats Stops-lijst naar het kaartpaneel ---
@@ -840,6 +830,26 @@
 
     renderProgress();
     
+  }
+  function ensureLeafletMap(){
+    if(window.LMAP) return;                 // ✅ al gemaakt
+  
+    var oneMap = document.getElementById('oneMap');
+    if(!oneMap) return;
+  
+    // Extra zekerheid: container moet hoogte hebben
+    if(oneMap.getBoundingClientRect().height === 0){
+      // nog niet zichtbaar -> probeer heel even later opnieuw
+      setTimeout(ensureLeafletMap, 120);
+      return;
+    }
+  
+    window.LMAP = L.map(oneMap, { zoomControl:true }).setView([first.lat, first.lng], 13);
+  
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom:19,
+      attribution:'&copy; OpenStreetMap'
+    }).addTo(window.LMAP);
   }
   
   
@@ -1078,11 +1088,11 @@
       var locs = DATA.locaties || DATA.stops || [];
       var first = locs && locs.length ? locs[0] : { lat:50.85, lng:2.89 };
   
-      LMAP = L.map(div, { zoomControl:true }).setView([first.lat, first.lng], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom:19,
-        attribution:'&copy; OpenStreetMap'
-      }).addTo(LMAP);
+      // LMAP = L.map(div, { zoomControl:true }).setView([first.lat, first.lng], 13);
+      // L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      //   maxZoom:19,
+      //   attribution:'&copy; OpenStreetMap'
+      // }).addTo(LMAP);
   
       // Pauzeer follow-me bij user-interactie, hervat na 15s
       function pauseFollowThenResume(){
@@ -1423,10 +1433,10 @@
     // ✅ Cruciaal: na render + layout, Leaflet opnieuw laten meten
   if(focus === 'map'){
     setTimeout(function(){
-      if(window._map){
-        window._map.invalidateSize(true);
+      if(window.LMAP){
+        window.LMAP.invalidateSize(true);
         // optioneel: force re-center op huidige view
-        try { window._map.panBy([0,0]); } catch(ex) {}
+        try { window.LMAP.panBy([0,0]); } catch(ex) {}
       }
     }, 200);
   }
