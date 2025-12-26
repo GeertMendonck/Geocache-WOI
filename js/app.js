@@ -425,8 +425,7 @@ function scheduleStopsRender(reason){
     function renderCharacterChooser(){
       var st=store.get();
       var el=qs('pcChooser'); if(!el) return;
-      var confirmed = !!st.pcConfirmed;
-      var canChoose = inside && !locked && !confirmed; 
+  
       var opts='';
       (DATA.personages||[]).forEach(function(p){
         opts += '<option value="'+p.id+'" '+(p.id===st.pcId?'selected':'')+'>'+p.naam+' ('+p.leeftijd+') — '+p.rol+'</option>';
@@ -612,11 +611,10 @@ function applyRouteModeUI(){
     // - al iets unlocked / currentLoc OF
     // - geo aan én NIET aan de start
     var routeMode =
-    (st.routeStarted === true) ||
-    (st.lockedPc === true) ||
-    ((st.unlockedSlots||[]).length > 0) ||
-    !!st.currentLocId;
- 
+        (st.lockedPc === true) ||
+        ((st.unlockedSlots||[]).length > 0) ||
+        !!st.currentLocId ||
+        (st.geoOn === true && window.__insideStart !== true);
   
     var setup = document.getElementById('setupGrid');
     if(setup) setup.style.display = routeMode ? 'none' : '';
@@ -1084,91 +1082,204 @@ function applyRouteModeUI(){
     });
   
     // ---------- DOM Ready ----------
-   // ================================
-// Personage-keuze & bevestiging
-// ================================
-document.addEventListener('click', function(e){
-
-    /* =========================
-       🎲 Willekeurig personage
-       ========================= */
-    var regen = e.target && e.target.closest && e.target.closest('#regenBtn');
-    if(regen){
-      var st = store.get();
-  
-      if(window.__insideStart !== true){
-        toast('🔐 Willekeurig kan enkel aan de startlocatie.');
-        return;
-      }
-      if(st.pcConfirmed || st.lockedPc){
-        toast('🔒 Keuze is al bevestigd.');
-        return;
-      }
-  
-      var pc = pick(DATA.personages || []);
-      if(!pc){
-        toast('⚠️ Geen personages geladen.');
-        return;
-      }
-  
-      st.pcId = pc.id;
-      store.set(st);
-  
-      renderProfile();
-      renderCharacterChooser();
-      toast('🎲 Willekeurig gekozen: ' + (pc.naam || pc.id));
-      return;
-    }
-  
-    /* =========================
-       ✅ Bevestig keuze
-       ========================= */
-    var save = e.target && e.target.closest && e.target.closest('#savePcBtn');
-    if(save){
-      console.log('[savePcBtn] clicked');
-  
-      var st = store.get();
-  
-      if(window.__insideStart !== true){
-        toast('🔐 Ga naar de startlocatie om te bevestigen.');
-        return;
-      }
-      if(st.lockedPc){
-        toast('🔒 Keuze is al vergrendeld.');
-        return;
-      }
-  
-      var sel = document.getElementById('pcSelect');
-      if(!sel || !sel.value){
-        toast('⚠️ Kies eerst een personage.');
-        return;
-      }
-  
-      // ✅ Definitieve bevestiging
-      st.pcId = sel.value;
-      st.pcConfirmed = true;
-      st.geoOn = true;          // geo mag nu "echt" actief zijn
-      st.routeStarted = true;   // force UI-switch
-      store.set(st);
-  
-      toast('✅ Personage bevestigd. Je kan vertrekken.');
-  
-      // UI onmiddellijk omschakelen
-      renderProfile();
-      renderCharacterChooser();
-      applyRouteModeUI();
-      renderUnlocked();
-  
-      // start geo als hij nog niet loopt
-      if(watchId == null){
-        startWatch();
-      }
-      return;
-    }
-  
-  });
-  
+    document.addEventListener('DOMContentLoaded', function(){
+      bindCoreListeners();
+      document.addEventListener('click', function(e){
+        var btn = e.target && (e.target.closest ? e.target.closest('#savePcBtn') : null);
+        if(!btn) return;
       
+        var st = store.get();
+      
+        if(window.__insideStart !== true){
+          toast('🔐 Ga naar de startlocatie om je personage te bevestigen.');
+          return;
+        }
+      
+        var sel = document.getElementById('pcSelect');
+        if(!sel || !sel.value){
+          toast('⚠️ Kies eerst een personage.');
+          return;
+        }
+      
+        // ✅ bevestigen
+        st.pcId = sel.value;
+        st.geoOn = true;          // “echt starten”
+        store.set(st);
+      
+        toast('✅ Keuze bevestigd. Je kan vertrekken.');
+        renderProfile();
+        renderCharacterChooser();
+        applyRouteModeUI();
+        renderUnlocked();         // ✅ UI omschakelen naar nieuwe indeling
+      
+        // (optioneel) als geo nog niet draait, start hem
+        if(watchId == null){
+          startWatch();
+        }
+      });
+      var regen = e.target && (e.target.closest ? e.target.closest('#regenBtn') : null);
+if(regen){
+  var st = store.get();
+
+  if(window.__insideStart !== true){
+    toast('🔐 Willekeurig kan enkel aan de start.');
+    return;
+  }
+  if(st.lockedPc){
+    toast('🔒 Keuze is vergrendeld.');
+    return;
+  }
+
+  var pc = pick(DATA.personages || []);
+  if(!pc){
+    toast('⚠️ Geen personages geladen.');
+    return;
+  }
+
+  // zet pcId maar hou geoOn nog false tot bevestigd
+  st.pcId = pc.id;
+  store.set(st);
+
+  renderProfile();
+  renderCharacterChooser(); // zodat pcSelect mee springt
+  toast('🎲 Willekeurig gekozen: ' + (pc.naam || pc.id));
+  return;
+}
+
+      var saveBtn = qs('savePcBtn');
+            if(saveBtn){
+            saveBtn.addEventListener('click', function(){
+                var st = store.get();
+
+                // enkel aan de start mag je bevestigen
+                if(!window.__insideStart){
+                toast('🔐 Ga naar de startlocatie om je personage te bevestigen.');
+                return;
+                }
+
+                var sel = qs('pcSelect');
+                if(!sel){
+                toast('⚠️ Geen personage geselecteerd.');
+                return;
+                }
+
+                // personage vastleggen
+                st.pcId = sel.value;
+                st.geoOn = true;              // ✅ geo "echt" aan vanaf nu
+                store.set(st);
+
+                renderProfile();
+                renderCharacterChooser();
+                applyRouteModeUI();
+
+                toast('✅ Personage bevestigd. Je kan vertrekken.');
+
+                // start geolocatie pas NU (indien nog niet gestart)
+                if(watchId == null){
+                startWatch();
+                }
+            });
+           }
+
+  
+      loadScenario().then(function(data){
+        DATA = data;
+  
+        var st=store.get();
+        if(!st.pcId) ensureCharacter();
+  
+        detectMic();
+  
+        renderProfile();
+        renderUnlocked();
+        renderProgress();
+        // renderStops pas plannen na renderUnlocked (want die maakt stopsListHost aan)
+        scheduleStopsRender('after initial renderUnlocked');
+        refreshStopsUI();
+  
+        // pcSelect “busy” (picker open)
+        var chooser = document.getElementById('pcChooser');
+        if (chooser) {
+          chooser.addEventListener('focusin', function(e){
+            if (e.target && e.target.id === 'pcSelect') pcSelectBusyUntil = Date.now() + 4000;
+          });
+          chooser.addEventListener('touchstart', function(e){
+            if (e.target && (e.target.id === 'pcSelect' || (e.target.closest && e.target.closest('#pcSelect')))) {
+              pcSelectBusyUntil = Date.now() + 4000;
+            }
+          }, {passive:true});
+        }
+  
+        window.addEventListener('online',  function(){ detectMic(); renderUnlocked(); ensureLeafletMap(); });
+        window.addEventListener('offline', function(){ detectMic(); renderUnlocked(); });
+  
+        // Answer save delegation op unlockList
+        var ul=qs('unlockList');
+        if(ul){
+          function handleSave(e){
+            var t = e.target;
+            var ta = t && t.matches && t.matches('textarea.ans') ? t : (t && t.closest ? t.closest('textarea.ans') : null);
+            if(!ta) return;
+            var stopId = ta.getAttribute('data-stop');
+            var qi     = parseInt(ta.getAttribute('data-q'), 10);
+            setAns(stopId, qi, ta.value);
+          }
+          ul.addEventListener('input', handleSave);
+          ul.addEventListener('change', handleSave);
+          ul.addEventListener('blur', handleSave, true);
+  
+          ul.addEventListener('click', function(e){
+            var clr = e.target && e.target.closest ? e.target.closest('button.clearAns') : null;
+            if(clr){
+              var sid = clr.getAttribute('data-stop');
+              var qi = parseInt(clr.getAttribute('data-q'),10);
+              setAns(sid, qi, '');
+              var ta = ul.querySelector('textarea.ans[data-stop="'+sid+'"][data-q="'+qi+'"]');
+              if(ta){ ta.value=''; ta.focus(); }
+              return;
+            }
+  
+            var mic = e.target && e.target.closest ? e.target.closest('button.micBtn') : null;
+            if(mic){
+              if(!MIC_OK){ toast('Spraakherkenning niet beschikbaar (probeer online in Chrome).'); return; }
+              var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+              var r = new Recognition(); r.lang='nl-NL'; r.interimResults=false; r.maxAlternatives=1;
+              var sid2 = mic.getAttribute('data-stop'), qi2 = parseInt(mic.getAttribute('data-q'),10);
+              r.onresult = function(ev){
+                var txt2 = ev.results[0][0].transcript || '';
+                var ta2 = ul.querySelector('textarea.ans[data-stop="'+sid2+'"][data-q="'+qi2+'"]');
+                if(ta2){
+                  ta2.value = (ta2.value ? ta2.value+' ' : '') + txt2;
+                  setAns(sid2, qi2, ta2.value);
+                }
+              };
+              r.onerror = function(ev){
+                var msg = (ev && ev.error) ? ev.error : 'mislukt';
+                if (msg==='not-allowed') msg = 'toegang geweigerd (controleer microfoonrechten)';
+                if (msg==='network') msg = 'offline? (internet vereist in Chrome)';
+                toast('🎙️ '+msg);
+              };
+              try { r.start(); toast('🎙️ Spreek maar…'); } catch(_e){ toast('🎙️ kon niet starten'); }
+            }
+          });
+        }
+  
+        window.__APP_BOUND__ = true;
+  
+        // SW
+        if('serviceWorker' in navigator){
+          navigator.serviceWorker.register('./sw.js?v=2025-09-02-v3',{scope:'./'})
+            .catch(function(){});
+        }
+  
+        var d=qs('diag');
+        if(d){ d.style.display='block'; d.textContent='app.js geladen ✓ — clean build klaar.'; }
+  
+      }).catch(function(e){
+        showDiag('Data laden mislukte: ' + (e && e.message ? e.message : e));
+        if (window.console) console.error(e);
+      });
+    });
   
     // Globale errors
     window.addEventListener('error', function(e){ showDiag('JS error: '+e.message); });
