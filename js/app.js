@@ -673,18 +673,15 @@ document.addEventListener('click', function(e){
   
     // ---------- Route/setup UI (FIX) ----------
    // ---------- Route/setup UI (FIX) ----------
-function applyRouteModeUI(){
+   function applyRouteModeUI(){
     var st = store.get();
   
-    // ✅ routeMode alleen als je echt "vertrokken" bent
-    // - lockedPc (start verlaten) OF
-    // - al iets unlocked / currentLoc OF
-    // - geo aan én NIET aan de start
+    // ✅ meteen switchen na bevestigen
     var routeMode =
+        (st.routeStarted === true) ||
         (st.lockedPc === true) ||
         ((st.unlockedSlots||[]).length > 0) ||
-        !!st.currentLocId ||
-        (st.geoOn === true && window.__insideStart !== true);
+        !!st.currentLocId;
   
     var setup = document.getElementById('setupGrid');
     if(setup) setup.style.display = routeMode ? 'none' : '';
@@ -692,6 +689,7 @@ function applyRouteModeUI(){
     var stops = document.getElementById('stopsSection');
     if(stops) stops.style.display = routeMode ? 'none' : '';
   }
+  
   
   
     // ---------- Map (Leaflet) ----------
