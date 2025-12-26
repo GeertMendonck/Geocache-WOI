@@ -1032,13 +1032,13 @@
   }
   
   function addStopMarkers(){
-    if(!LMAP || !window.L) return;
+    if(!window.LMAP || !window.L) return;
   
     // oude markers opruimen
     if(window.__stopMarkerLayer){
-      try { LMAP.removeLayer(window.__stopMarkerLayer); } catch(e){}
+      try { window.LMAP.removeLayer(window.__stopMarkerLayer); } catch(e){}
     }
-    window.__stopMarkerLayer = L.layerGroup().addTo(LMAP);
+    window.__stopMarkerLayer = L.layerGroup().addTo(window.LMAP);
   
     var locs = DATA.locaties || DATA.stops || [];
   
@@ -1205,11 +1205,11 @@
   }
   
   function addStopCircles(){
-    if(!LMAP || !window.L) return;
+    if(!window.LMAP || !window.L) return;
   
     // cirkels samen met markers groeperen
     if(!window.__stopMarkerLayer){
-      window.__stopMarkerLayer = L.layerGroup().addTo(LMAP);
+      window.__stopMarkerLayer = L.layerGroup().addTo(window.LMAP);
     }
   
     var locs = DATA.locaties || DATA.stops || [];
@@ -1230,10 +1230,10 @@
   
   function updateLeafletLive(lat,lng,acc){
     try{
-      if(!LMAP || !liveMarker || !accCircle) return;
+      if(!window.LMAP || !liveMarker || !accCircle) return;
       liveMarker.setLatLng([lat,lng]).setOpacity(1);
       accCircle.setLatLng([lat,lng]).setRadius(acc||0);
-      if (followMe) LMAP.setView([lat,lng]);
+      if (followMe) window.LMAP.setView([lat,lng]);
       var a=qs('openInMaps'); if(a) a.href='https://maps.google.com/?q='+lat+','+lng;
     }catch(e){ if (window.console) console.error(e); }
   }
@@ -1397,7 +1397,7 @@
         updateLeafletLive(latitude, longitude, accuracy);
       }
   
-      if(!LMAP && window.L && navigator.onLine) initLeafletMap(); // kaart laadt lui
+      if(!window.LMAP && window.L && navigator.onLine) initLeafletMap(); // kaart laadt lui
     }, function(err){
       var pn=qs('permNote'); if(pn) pn.innerHTML='<span class="warn">Locatie geweigerd</span>';
       var gs=qs('geoState'); if(gs) gs.textContent='Uit';
@@ -1475,7 +1475,7 @@
 
 
         if (navigator.onLine) initLeafletMap();
-        window.addEventListener('online', function(){ if(!LMAP) initLeafletMap(); });
+        window.addEventListener('online', function(){ if(!window.LMAP) initLeafletMap(); });
 
         if('speechSynthesis' in window){ try{ pickVoice(); speechSynthesis.addEventListener('voiceschanged', pickVoice); }catch(e){} }
 
