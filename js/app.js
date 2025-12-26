@@ -567,6 +567,8 @@ if(st.unlockedBySlot && st.unlockedBySlot[sid]){
     });
   
     cont.innerHTML = html || '<span class="muted">(Geen stops geladen)</span>';
+    showDiag('renderStops: htmlLen=' + (html ? html.length : 0) + ' cont=' + (!!cont));
+
   }
  
   
