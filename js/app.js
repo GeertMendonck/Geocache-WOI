@@ -806,13 +806,20 @@
 }
 
       // Leaflet: opnieuw tekenen als kaartpaneel actief is
-      if(focus === 'map' && window._map){
-        window._map = L.map('oneMap').setView([51.219, 4.441], 15);
+      if(focus === 'map'){
+        // ✅ init maar 1 keer
+        if(!window._map){
+          window._map = L.map('oneMap').setView([51.219, 4.441], 15);
+      
+          // TODO: zet hier ook je tilelayer/markers als je die normaal bij init zet
+          // L.tileLayer(...).addTo(window._map);
+        }
+      
+        // ✅ altijd hertekenen (mag vaak)
         setTimeout(function(){
           var el = document.getElementById('oneMap');
           var h = el ? el.getBoundingClientRect().height : 0;
       
-          // als hoogte nog 0 is, nog een keer proberen
           window._map.invalidateSize(true);
       
           if(h === 0){
@@ -822,6 +829,7 @@
           }
         }, 120);
       }
+      
 
       // --- verplaats Stops-lijst naar het kaartpaneel ---
       var stopsWrap = document.getElementById('stopsWrapMap');
