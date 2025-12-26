@@ -392,7 +392,30 @@
       .uitlegToggleIcon:hover{
         background: rgba(255,255,255,0.18);
       }
-      
+
+      /* ===============================
+    Kaarten accordion
+     =============================== */
+ 
+     .currentWrap{ margin-top:12px; }
+     .currentTitle{ font-weight:800; opacity:.95; }
+     .currentName{ font-size:1.05rem; font-weight:800; margin:4px 0 10px; }
+     
+     .card{ border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.06); border-radius:14px; padding:10px 12px; }
+     .cardHead{ font-weight:800; margin-bottom:6px; }
+     .cardBody{ line-height:1.35; }
+     
+     .accItem{ border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.04); border-radius:14px; margin:8px 0; overflow:hidden; }
+     .accSum{ cursor:pointer; padding:10px 12px; font-weight:800; list-style:none; }
+     .accItem > summary::-webkit-details-marker{ display:none; }
+     .accBody{ padding:0 12px 12px; }
+     
+     .history{ margin-top:12px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.03); border-radius:14px; }
+     .historySum{ cursor:pointer; padding:10px 12px; font-weight:800; list-style:none; }
+     .history > summary::-webkit-details-marker{ display:none; }
+     .historyBody{ padding:0 12px 12px; }
+     .histItem{ margin-top:6px; }
+     
   
 
   /* ===============================

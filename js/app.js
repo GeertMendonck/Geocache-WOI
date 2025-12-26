@@ -565,101 +565,162 @@
     var pc = currentPc();
     var cont = qs('unlockList'); if(!cont) return;
   
+    var arr = DATA.locaties || DATA.stops || [];
+  
+    function findLocById(id){
+      for(var i=0;i<arr.length;i++){
+        if(arr[i] && arr[i].id === id) return arr[i];
+      }
+      return null;
+    }
+  
+    // Bezochte locaties (beste) of fallback slots
+    var unlockedLocs = st.unlockedLocs || [];
     var unlockedSlots = st.unlockedSlots || [];
-    if(!unlockedSlots.length){
-      cont.innerHTML = '<div class="muted">Nog niets ontgrendeld.</div>';
+  
+    // Huidige locatie bepalen
+    var currentLoc = st.currentLocId ? findLocById(st.currentLocId) : null;
+  
+    // Fallback: als currentLocId ontbreekt, pak laatste bezochte locatie
+    if(!currentLoc && unlockedLocs.length){
+      currentLoc = findLocById(unlockedLocs[unlockedLocs.length-1]);
+    }
+  
+    // NOG steeds niks? Dan niks tonen
+    if(!currentLoc){
+      cont.innerHTML = '<div class="muted">Nog geen huidige stop. Wandel eens binnen een cirkel 🙂</div>';
+      renderProgress();
       return;
     }
   
-    var html = '';
-    for(var u=0; u<unlockedSlots.length; u++){
-      var slotId = unlockedSlots[u];
+    // --------- Current stop block ----------
+    var loc = currentLoc;
+    var locId = loc.id;
+    var slotId = loc.slot;
+    var title = loc.naam || locId;
   
-      // locatie die dit slot effectief ontgrendelde (bij split)
-      var locId = pickVariantLocationIdForSlot(slotId);
-      var loc = null;
+    var verhaal = getStoryFor(pc, slotId, locId);
   
-      var arr = DATA.locaties || DATA.stops || [];
-      for(var i=0;i<arr.length;i++){
-        if(arr[i] && arr[i].id === locId){ loc = arr[i]; break; }
-      }
-      if(!loc) loc = firstLocationForSlot(slotId);
-  
-      // safety
-      if(!locId && loc) locId = loc.id;
-  
-      var title = (loc && loc.naam) ? loc.naam : slotId;
-  
-      // ✅ tekst per locatie-id
-      //var txt = (pc && pc.verhalen && locId) ? pc.verhalen[locId] : null; //oude versie
-      // ✅ tekst: eerst per slot, en bij split per locId
-            var txt = getStoryFor(pc, slotId, locId);
-              // ✅ UITLEG per locatie (kort + uitgebreid)
-            var uitleg = (loc && loc.uitleg) ? loc.uitleg : null;
-            var uitlegKort = '';
-            var uitlegLang = '';
-            if(uitleg){
-              if(typeof uitleg === 'string'){
-                // backward compat: als je ooit nog een plain string hebt
-                uitlegKort = uitleg;
-              } else {
-                uitlegKort = uitleg.kort || '';
-                uitlegLang = uitleg.uitgebreid || '';
-              }
-            }
-
-            var uitlegHtml = '';
-            if(uitlegKort || uitlegLang){
-              var moreId = 'more_' + (locId || slotId); // unieke id
-              uitlegHtml =
-                '<div class="uitlegBox">'
-                + '  <div class="uitlegTitle">'
-                + '    <span class="uitlegTitleText">ℹ️ Uitleg</span>'
-                + (uitlegLang
-                    ? ' <button class="uitlegToggleIcon" type="button" data-toggle="'+moreId+'" title="Meer uitleg">+</button>'
-                    : '')
-                + '  </div>'
-                
-                + (uitlegKort ? ('  <div class="uitlegKort">'+escapeHtml(uitlegKort)+'</div>') : '')
-                + (uitlegLang
-                    ? ('  <div id="'+moreId+'" class="uitlegLang hidden">'+escapeHtml(uitlegLang)+'</div>')
-                    : '')
-                + '</div>';
-            }
-            
-
-      var qsArr = (loc && loc.vragen) ? loc.vragen : [];
-      var qaHtml = '';
-      if(qsArr.length && locId){
-        qaHtml = qsArr.map(function(q,qi){
-          // ✅ antwoorden per locatie-id
-          var val = getAns(locId, qi);
-  
-          return '<div class="qa">'
-            + '<div class="q"><b>Vraag '+(qi+1)+':</b> '+escapeHtml(q)+'</div>'
-            + '<div class="controls">'
-            // ✅ data-stop = locId (zodat setAns ook locId krijgt)
-            + '  <textarea class="ans" data-stop="'+locId+'" data-q="'+qi+'" placeholder="Jouw antwoord...">'+escapeHtml(val)+'</textarea>'
-            + (MIC_OK ? '  <button class="micBtn" data-stop="'+locId+'" data-q="'+qi+'" title="Spreek je antwoord in">🎙️</button>' : '')
-            + '  <button class="clearAns" data-stop="'+locId+'" data-q="'+qi+'" title="Wis">✖</button>'
-            + '  <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+qi+'"></span>'
-            + '</div>'
-            + '</div>';
-        }).join('');
-      }
-  
-      html += '<details open>'
-        // ✅ readBtn ook per locId
-        + '<summary>📘 '+escapeHtml(title)+' <button class="readBtn" data-read="'+(locId||slotId)+'" title="Lees voor">🔊</button></summary>'
-        + '<div style="margin-top:6px">'+(txt || '<span class="muted">(Geen tekst)</span>')+'</div>'
-        + uitlegHtml
-        + qaHtml
-        + '</details>';
+    // Uitleg HTML (kort + +/-)
+    var uitleg = loc.uitleg || null;
+    var uitlegKort = '';
+    var uitlegLang = '';
+    if(uitleg){
+      if(typeof uitleg === 'string') uitlegKort = uitleg;
+      else { uitlegKort = uitleg.kort || ''; uitlegLang = uitleg.uitgebreid || ''; }
+    }
+    var uitlegHtml = '';
+    if(uitlegKort || uitlegLang){
+      var moreId = 'more_' + locId;
+      uitlegHtml =
+        '<div class="uitlegBox">'
+        + '  <div class="uitlegTitle">'
+        + '    <span class="uitlegTitleText">ℹ️ Uitleg</span>'
+        + (uitlegLang
+            ? ' <button class="uitlegToggleIcon" type="button" data-toggle="'+moreId+'" title="Meer uitleg">+</button>'
+            : '')
+        + '  </div>'
+        + (uitlegKort ? ('  <div class="uitlegKort">'+escapeHtml(uitlegKort)+'</div>') : '')
+        + (uitlegLang ? ('  <div id="'+moreId+'" class="uitlegLang hidden">'+escapeHtml(uitlegLang)+'</div>') : '')
+        + '</div>';
     }
   
-    cont.innerHTML = html;
+    // Vragen HTML
+    var qsArr = loc.vragen || [];
+    var qaHtml = '';
+    if(qsArr.length){
+      qaHtml = qsArr.map(function(q,qi){
+        var val = getAns(locId, qi);
+        return '<div class="qa">'
+          + '<div class="q"><b>Vraag '+(qi+1)+':</b> '+escapeHtml(q)+'</div>'
+          + '<div class="controls">'
+          + '  <textarea class="ans" data-stop="'+locId+'" data-q="'+qi+'" placeholder="Jouw antwoord...">'+escapeHtml(val)+'</textarea>'
+          + (MIC_OK ? '  <button class="micBtn" data-stop="'+locId+'" data-q="'+qi+'" title="Spreek je antwoord in">🎙️</button>' : '')
+          + '  <button class="clearAns" data-stop="'+locId+'" data-q="'+qi+'" title="Wis">✖</button>'
+          + '  <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+qi+'"></span>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+    } else {
+      qaHtml = '<div class="muted">Geen vragen bij deze stop.</div>';
+    }
+  
+    // Personage kaart
+    var pcCard =
+      '<div class="card">'
+      + ' <div class="cardHead">🧑 Personage</div>'
+      + ' <div class="cardBody">'
+      +   '<div><b>'+escapeHtml(pc && pc.naam ? pc.naam : '—')+'</b></div>'
+      +   '<div class="muted">'+escapeHtml(pc && pc.herkomst ? pc.herkomst : '—')+' — '+escapeHtml(pc && pc.rol ? pc.rol : '—')+'</div>'
+      + ' </div>'
+      + '</div>';
+  
+    // Accordion cards (slechts één open)
+    var currentHtml =
+      '<div class="currentWrap">'
+      + '<div class="currentTitle">📍 Huidige stop</div>'
+      + '<div class="currentName">'+escapeHtml(title)+'</div>'
+  
+      + '<div class="acc" data-acc="current">'
+        + '<details class="accItem" open>'
+          + '<summary class="accSum">📘 Verhaal <button class="readBtn" data-slot="'+slotId+'" data-loc="'+locId+'" title="Lees voor">🔊</button></summary>'
+          + '<div class="accBody">'+(verhaal ? escapeHtml(verhaal) : '<span class="muted">(Geen tekst)</span>')+'</div>'
+        + '</details>'
+  
+        + '<details class="accItem">'
+          + '<summary class="accSum">ℹ️ Uitleg</summary>'
+          + '<div class="accBody">'+(uitlegHtml || '<span class="muted">(Geen uitleg)</span>')+'</div>'
+        + '</details>'
+  
+        + '<details class="accItem">'
+          + '<summary class="accSum">✍️ Vragen</summary>'
+          + '<div class="accBody">'+qaHtml+'</div>'
+        + '</details>'
+  
+      + '</div>'
+      + '</div>';
+  
+    // --------- History block ----------
+    var hist = '';
+  
+    // Geschiedenis: alle bezochte locaties behalve current
+    var visited = unlockedLocs.slice();
+    // fallback als unlockedLocs leeg is: maak pseudo-history op basis van slots
+    if(!visited.length && unlockedSlots.length){
+      // toon dan enkel slots als geschiedenis
+      visited = unlockedSlots.slice();
+    }
+  
+    if(visited.length){
+      hist += '<details class="history">'
+        + '<summary class="historySum">🕘 Geschiedenis ('+visited.length+')</summary>'
+        + '<div class="historyBody">';
+  
+      for(var v=0; v<visited.length; v++){
+        var vid = visited[v];
+        if(vid === locId) continue;
+  
+        var vloc = findLocById(vid);
+        if(vloc){
+          var vTitle = vloc.naam || vloc.id;
+          hist += '<details class="histItem">'
+            + '<summary>'+escapeHtml(vTitle)+'</summary>'
+            + '<div class="muted">Slot: '+escapeHtml(vloc.slot||'—')+'</div>'
+            + '</details>';
+        } else {
+          // slot fallback
+          hist += '<div class="muted">'+escapeHtml(String(vid))+'</div>';
+        }
+      }
+  
+      hist += '</div></details>';
+    }
+  
+    // Render
+    cont.innerHTML = pcCard + currentHtml + hist;
     renderProgress();
   }
+  
   
   
   function renderProgress(){
@@ -1117,7 +1178,8 @@
 
         // eerste locatie die dit slot ontgrendelde (UI-hulp)
         st.unlockedBySlot[bestSlot] = best.id;
-
+        st.currentLocId = best.id;
+        st.currentSlotId = bestSlot;
         store.set(st);
 
         renderUnlocked();
@@ -1208,6 +1270,21 @@
   function stopWatch(){ if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; var gs=qs('geoState'); if(gs) gs.textContent='Inactief'; } }
 
   // ---------- Boot ----------
+  document.addEventListener('toggle', function(e){
+    var d = e.target;
+    if(!d || d.tagName !== 'DETAILS') return;
+    if(!d.open) return;
+  
+    var wrap = d.closest('.acc');
+    if(!wrap) return;
+  
+    var items = wrap.querySelectorAll('details.accItem');
+    for(var i=0;i<items.length;i++){
+      if(items[i] !== d) items[i].open = false;
+    }
+  }, true);
+  
+  
   document.addEventListener('DOMContentLoaded', function(){
     bindCoreListeners(); // knoppen werken sowieso
     try{
