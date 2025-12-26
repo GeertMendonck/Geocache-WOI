@@ -807,6 +807,7 @@
 
       // Leaflet: opnieuw tekenen als kaartpaneel actief is
       if(focus === 'map' && window._map){
+        window._map = L.map('oneMap').setView([51.219, 4.441], 15);
         setTimeout(function(){
           var el = document.getElementById('oneMap');
           var h = el ? el.getBoundingClientRect().height : 0;
