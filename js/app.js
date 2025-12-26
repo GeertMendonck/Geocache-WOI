@@ -318,6 +318,76 @@ function scheduleStopsRender(reason){
         });
       }
     }
+  // 1x: delegation voor Willekeurig + Bevestig
+document.addEventListener('click', function(e){
+
+    // 🎲 Willekeurig
+    var regenBtn = e.target && e.target.closest ? e.target.closest('#regenBtn') : null;
+    if(regenBtn){
+      var st = store.get();
+  
+      if(window.__insideStart !== true){
+        toast('🔐 Willekeurig kan enkel aan de start.');
+        return;
+      }
+      if(st.lockedPc || st.pcConfirmed){
+        toast('🔒 Na bevestigen kan je niet meer wisselen.');
+        return;
+      }
+  
+      var pc = pick(DATA.personages || []);
+      if(!pc){
+        toast('⚠️ Geen personages geladen.');
+        return;
+      }
+  
+      st.pcId = pc.id;
+      store.set(st);
+  
+      renderProfile();
+      renderCharacterChooser();
+      toast('🎲 Willekeurig gekozen: ' + (pc.naam || pc.id));
+      return;
+    }
+  
+    // ✅ Bevestig keuze
+    var saveBtn = e.target && e.target.closest ? e.target.closest('#savePcBtn') : null;
+    if(saveBtn){
+      var st2 = store.get();
+  
+      if(window.__insideStart !== true){
+        toast('🔐 Ga naar de startlocatie om je personage te bevestigen.');
+        return;
+      }
+      if(st2.lockedPc){
+        toast('🔒 Keuze is al vergrendeld.');
+        return;
+      }
+  
+      var sel = document.getElementById('pcSelect');
+      if(!sel || !sel.value){
+        toast('⚠️ Kies eerst een personage.');
+        return;
+      }
+  
+      st2.pcId = sel.value;
+      st2.pcConfirmed = true;
+      st2.geoOn = true;
+      st2.routeStarted = true;       // ✅ meteen UI omschakelen
+      store.set(st2);
+  
+      toast('✅ Personage bevestigd. Je kan vertrekken.');
+  
+      renderProfile();
+      renderCharacterChooser();
+      applyRouteModeUI();
+      renderUnlocked();
+  
+      if(watchId == null) startWatch();
+      return;
+    }
+  
+  });
   
     // ---------- Data loader ----------
     function fetchJSON(url){
@@ -1084,102 +1154,8 @@ function applyRouteModeUI(){
     // ---------- DOM Ready ----------
     document.addEventListener('DOMContentLoaded', function(){
       bindCoreListeners();
-      document.addEventListener('click', function(e){
-        var btn = e.target && (e.target.closest ? e.target.closest('#savePcBtn') : null);
-        if(!btn) return;
       
-        var st = store.get();
-      
-        if(window.__insideStart !== true){
-          toast('🔐 Ga naar de startlocatie om je personage te bevestigen.');
-          return;
-        }
-      
-        var sel = document.getElementById('pcSelect');
-        if(!sel || !sel.value){
-          toast('⚠️ Kies eerst een personage.');
-          return;
-        }
-      
-        // ✅ bevestigen
-        st.pcId = sel.value;
-        st.geoOn = true;          // “echt starten”
-        store.set(st);
-      
-        toast('✅ Keuze bevestigd. Je kan vertrekken.');
-        renderProfile();
-        renderCharacterChooser();
-        applyRouteModeUI();
-        renderUnlocked();         // ✅ UI omschakelen naar nieuwe indeling
-      
-        // (optioneel) als geo nog niet draait, start hem
-        if(watchId == null){
-          startWatch();
-        }
-      });
-      var regen = e.target && (e.target.closest ? e.target.closest('#regenBtn') : null);
-if(regen){
-  var st = store.get();
-
-  if(window.__insideStart !== true){
-    toast('🔐 Willekeurig kan enkel aan de start.');
-    return;
-  }
-  if(st.lockedPc){
-    toast('🔒 Keuze is vergrendeld.');
-    return;
-  }
-
-  var pc = pick(DATA.personages || []);
-  if(!pc){
-    toast('⚠️ Geen personages geladen.');
-    return;
-  }
-
-  // zet pcId maar hou geoOn nog false tot bevestigd
-  st.pcId = pc.id;
-  store.set(st);
-
-  renderProfile();
-  renderCharacterChooser(); // zodat pcSelect mee springt
-  toast('🎲 Willekeurig gekozen: ' + (pc.naam || pc.id));
-  return;
-}
-
-      var saveBtn = qs('savePcBtn');
-            if(saveBtn){
-            saveBtn.addEventListener('click', function(){
-                var st = store.get();
-
-                // enkel aan de start mag je bevestigen
-                if(!window.__insideStart){
-                toast('🔐 Ga naar de startlocatie om je personage te bevestigen.');
-                return;
-                }
-
-                var sel = qs('pcSelect');
-                if(!sel){
-                toast('⚠️ Geen personage geselecteerd.');
-                return;
-                }
-
-                // personage vastleggen
-                st.pcId = sel.value;
-                st.geoOn = true;              // ✅ geo "echt" aan vanaf nu
-                store.set(st);
-
-                renderProfile();
-                renderCharacterChooser();
-                applyRouteModeUI();
-
-                toast('✅ Personage bevestigd. Je kan vertrekken.');
-
-                // start geolocatie pas NU (indien nog niet gestart)
-                if(watchId == null){
-                startWatch();
-                }
-            });
-           }
+    
 
   
       loadScenario().then(function(data){
