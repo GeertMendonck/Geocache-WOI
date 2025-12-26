@@ -596,17 +596,27 @@ function scheduleStopsRender(reason){
     }
   
     // ---------- Route/setup UI (FIX) ----------
-    function applyRouteModeUI(){
-      var st = store.get();
-      var routeMode = (st.geoOn === true) || (st.lockedPc === true) ||
-                      ((st.unlockedSlots||[]).length > 0) || (st.currentLocId);
+   // ---------- Route/setup UI (FIX) ----------
+function applyRouteModeUI(){
+    var st = store.get();
   
-      var setup = document.getElementById('setupGrid');
-      if(setup) setup.style.display = routeMode ? 'none' : '';
+    // ✅ routeMode alleen als je echt "vertrokken" bent
+    // - lockedPc (start verlaten) OF
+    // - al iets unlocked / currentLoc OF
+    // - geo aan én NIET aan de start
+    var routeMode =
+        (st.lockedPc === true) ||
+        ((st.unlockedSlots||[]).length > 0) ||
+        !!st.currentLocId ||
+        (st.geoOn === true && window.__insideStart !== true);
   
-      var stops = document.getElementById('stopsSection');
-      if(stops) stops.style.display = routeMode ? 'none' : '';
-    }
+    var setup = document.getElementById('setupGrid');
+    if(setup) setup.style.display = routeMode ? 'none' : '';
+  
+    var stops = document.getElementById('stopsSection');
+    if(stops) stops.style.display = routeMode ? 'none' : '';
+  }
+  
   
     // ---------- Map (Leaflet) ----------
     function ensureLeafletMap(){
@@ -787,6 +797,7 @@ function scheduleStopsRender(reason){
     }
   
     function startWatch(){
+       if(watchId != null) return; // voorkom dubbele watches
       followMe = true;
       var gs=qs('geoState'); if(gs) gs.textContent='Actief';
   
@@ -823,20 +834,30 @@ function scheduleStopsRender(reason){
   
         var st=store.get(); st.flags=st.flags||{};
         if(insideStart){ st.flags.seenStart = true; store.set(st); }
-        if(!insideStart && st.flags.seenStart && !st.lockedPc){
-          st.lockedPc=true; store.set(st);
-          renderCharacterChooser();
-          toast('🔒 Personage vergrendeld');
-        }
+        // ✅ pas locken nadat leerling bevestigd heeft (geoOn=true)
+        if(st.geoOn === true && !insideStart && st.flags.seenStart && !st.lockedPc){
+        st.lockedPc = true;
+        store.set(st);
+        renderCharacterChooser();
+        toast('🔒 Personage vergrendeld');
+        applyRouteModeUI(); // optioneel: meteen UI omschakelen
+         }
   
         if(best){
           var cl=qs('closest'); if(cl) cl.textContent=best.name;
           var di=qs('dist'); if(di) di.textContent=String(best.d);
           var ra=qs('radius'); if(ra) ra.textContent=String(best.radius);
   
-          tryUnlock(best, accuracy);
-          renderProgress();
-          scheduleStopsRender('unlock');
+          // ✅ pas unlocken nadat leerling bevestigd heeft
+        if(st.geoOn === true){
+        tryUnlock(best, accuracy);
+        renderProgress();
+        scheduleStopsRender('unlock');
+         } else {
+            // pre-start: toon wel progress/stops als je wil, maar zonder unlock-logica
+            renderProgress();
+  }
+  
   
           ensureLeafletMap();
           updateLeafletLive(latitude, longitude, accuracy);
@@ -1057,6 +1078,41 @@ function scheduleStopsRender(reason){
     // ---------- DOM Ready ----------
     document.addEventListener('DOMContentLoaded', function(){
       bindCoreListeners();
+      var saveBtn = qs('savePcBtn');
+            if(saveBtn){
+            saveBtn.addEventListener('click', function(){
+                var st = store.get();
+
+                // enkel aan de start mag je bevestigen
+                if(!window.__insideStart){
+                toast('🔐 Ga naar de startlocatie om je personage te bevestigen.');
+                return;
+                }
+
+                var sel = qs('pcSelect');
+                if(!sel){
+                toast('⚠️ Geen personage geselecteerd.');
+                return;
+                }
+
+                // personage vastleggen
+                st.pcId = sel.value;
+                st.geoOn = true;              // ✅ geo "echt" aan vanaf nu
+                store.set(st);
+
+                renderProfile();
+                renderCharacterChooser();
+                applyRouteModeUI();
+
+                toast('✅ Personage bevestigd. Je kan vertrekken.');
+
+                // start geolocatie pas NU (indien nog niet gestart)
+                if(watchId == null){
+                startWatch();
+                }
+            });
+           }
+
   
       loadScenario().then(function(data){
         DATA = data;
