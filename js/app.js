@@ -1510,7 +1510,7 @@ if(st.unlockedBySlot && st.unlockedBySlot[sid]){
 
         var st=store.get(); if(!st.pcId){ ensureCharacter(); }
         renderProfile(); renderStops(); renderUnlocked(); renderProgress();
-
+        refreshStopsUI();
         var chooser = document.getElementById('pcChooser');
         if (chooser) {
           chooser.addEventListener('focusin', function(e){
