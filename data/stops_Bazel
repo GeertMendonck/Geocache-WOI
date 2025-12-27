@@ -1,0 +1,140 @@
+{
+  "slots": [
+    { "id": "start",  "label": "Start",  "required": true },
+    { "id": "stop05", "label": "Keuze", "required": false },
+    { "id": "stop01", "label": "Stop 1", "required": false },
+    { "id": "stop02", "label": "Stop 2", "required": true },
+    { "id": "stop03", "label": "Stop 3", "required": false },
+    { "id": "stop04", "label": "Stop 4", "required": false },
+    { "id": "end",    "label": "Einde",  "required": true }
+  ],
+  "locaties": [
+    {
+      "id": "Dulpop_Begin",
+      "slot": "start",
+      "naam": "Sporthal De Dulpop",
+      "lat": 51.148562975383086, 
+      "lng": 4.305929734378999,
+      "radius": 100,
+      "uitleg": {
+        "kort": "Teststart: hier controleer je of uitleg altijd vóór de vragen verschijnt.",
+        "uitgebreid": "Gebruik deze startlocatie om snel je volledige flow te testen: (1) verschijnt het uitlegblok boven de vragen, (2) werkt de knop ‘Meer lezen/Minder tonen’, (3) blijft alles mooi staan bij refresh of herladen, en (4) wordt de tekst correct ontsnapt (geen rare HTML-effecten)."
+      },
+      "vragen": [
+        "Wat wil je vandaag testen?",
+        "Welke functies wil je zeker uitproberen?"
+      ]
+    },
+    {
+      "id": "Arcade",
+      "slot": "stop05",
+      "naam": "Arcade",
+      "lat": 51.14461850152901, 
+      "lng": 4.30759501647844,
+      "radius": 50,
+      "uitleg": {
+        "kort": "Arcade (beeldhouwwerk van Gijs Van Vaerenbergh).",
+        "uitgebreid": "In the polder landscape of Kruibeke, a folded steel structure marks a pedestrian crossing on the ring dike. The folded structure sits on the hillside of the dike, perpendicular to it. The Corten steel sheets are cut out in the shape of arches, lending the structure its name. The ring dike was recently constructed to shield the neighbouring village centres from spring tides. It was conceived as part of the SIGMA plan, which aims to protect the floodplains of the river Scheldt. In addition, the dike also has a recreational function as a raised bike lane that runs through the landscape. The upper surface of Arcade is kept horizontal, emphasizing the height of the artificial dike. The arcade construction is nested in the hillside, suggesting that this structure may already have been there before the dike. "
+      },
+      "vragen": [
+        "Waarom denk je dat deze stop optioneel is?",
+        "Gedraagt de app zich hier correct?"
+      ]
+    },
+    {
+      "id": "krugerpark",
+      "slot": "stop01",
+      "naam": "Stop 1: Krugerpark",
+      "lat": 51.21637744837854,
+      "lng": 4.4406549513845235,
+      "radius": 50,
+      "uitleg": {
+        "kort": "Test hier vooral de radius-ontgrendeling en stabiliteit van de afstandsindicator.",
+        "uitgebreid": "Loop bewust even in en uit de radius (bv. 50m) om te zien of er geen ‘flapperen’ gebeurt (constant lock/unlock). Check ook of je GPS-updatefrequentie en smoothing goed aanvoelen: springt de afstand niet wild heen en weer?"
+      },
+      "vragen": [
+        "Werkt de ontgrendeling hier zoals bedoeld?",
+        "Is de afstandsindicatie logisch en stabiel?"
+      ]
+    },
+    {
+      "id": "vincotteplein",
+      "slot": "stop01",
+      "naam": "Stop 1: Vinçotteplein",
+      "lat": 51.2160,
+      "lng": 4.4376,
+      "radius": 50,
+      "uitleg": {
+        "kort": "Tweede kandidaat voor hetzelfde slot: test of je app correct omgaat met meerdere locaties per slot.",
+        "uitgebreid": "Omdat dit ook onder ‘stop01’ valt, kan je testen hoe je UI het presenteert wanneer er meerdere mogelijke locaties bestaan. Wordt de juiste locatie gekozen als ontgrendeler? En blijft de titel/tekst consistent (zeker als je op één dag zowel Krugerpark als Vinçotteplein bezoekt)?"
+      },
+      "vragen": [
+        "We zouden nu op het Vinçotteplein zijn? Klopt dit?"
+      ]
+    },
+    {
+      "id": "Overloopdijk",
+      "slot": "stop02",
+      "naam": "Stop 2: Overloopdijk",
+      "lat": 51.15923731195311, 
+      "lng": 4.325590032000854,
+      "radius": 50,
+      "uitleg": {
+        "kort": "Test hier live positie + ‘dichterbij komen’-gedrag (UI updates, geen haperingen).",
+        "uitgebreid": "Ideale teststop om te zien of de kaart en je ‘you are here’-marker correct meebewegen. Controleer ook: (1) blijft de app responsief als je scherm aan/uit gaat, (2) blijft je positie kloppen na even stil te staan, (3) werkt het opnieuw ‘pakken’ van GPS wanneer je terug begint te wandelen."
+      },
+      "vragen": [
+        "Hoe reageert de app wanneer je dichterbij komt?",
+        "Toont de kaart je live positie correct?"
+      ]
+    },
+    {
+      "id": "sint_willibrorduskerk",
+      "slot": "stop03",
+      "naam": "Stop 3: Sint-Willibrorduskerk",
+      "lat": 51.2193360072171,
+      "lng": 4.431886670037614,
+      "radius": 50,
+      "uitleg": {
+        "kort": "Test hier de tekstvelden + voorleesknop (readBtn) en of alles per locatie-id correct opslaat.",
+        "uitgebreid": "Let hier extra op dat antwoorden gekoppeld blijven aan de juiste locatie via data-stop=locId. Test ook: (1) typen → refresh → blijft antwoord staan, (2) ‘wis’ werkt enkel voor die vraag, (3) voorleesknop leest de juiste tekst (locId/slotId) en niet per ongeluk iets van een andere stop."
+      },
+      "vragen": [
+        "Werken de reflectievelden en de voorleesknop goed?",
+        "Voelt de UI vlot aan op jouw toestel?"
+      ]
+    },
+    {
+      "id": "stuyvenberg",
+      "slot": "stop04",
+      "naam": "Stop 4: Stuyvenberg",
+      "lat": 51.22231751132612,
+      "lng": 4.435140060868664,
+      "radius": 50,
+      "uitleg": {
+        "kort": "Eindtest: export, volledigheid van antwoorden en eventuele randgevallen.",
+        "uitgebreid": "Gebruik deze stop om te checken of alles netjes mee gaat naar je export: uitleg hoeft niet mee, maar antwoorden wel. Check ook of lege antwoorden correct als leeg worden behandeld (en niet als ‘undefined’). Bonus: test export terwijl je offline bent, als dat ooit kan voorkomen."
+      },
+      "vragen": [
+        "Werkt de export van je antwoorden correct?",
+        "Nog bugs of verbeteringen gezien?"
+      ]
+    },
+    {
+      "id": "Dulpop_Einde",
+      "slot": "end",
+      "naam": "Sporthal De Dulpop",
+      "lat": 51.148562975383086, 
+      "lng": 4.305929734378999,
+      "radius": 100,
+      "uitleg": {
+        "kort": "Afsluitstop: controleer of je volledige route-status klopt (alles wat moet unlocked, is unlocked).",
+        "uitgebreid": "Hier test je de eindstaat: (1) zijn alle vereiste slots ontgrendeld, (2) wordt de progress correct berekend, (3) blijven antwoorden bewaard, en (4) blijven ‘details open’/UI-states consistent na herladen. Kortom: de ‘alles is klaar, tijd voor taart’-check."
+      },
+      "vragen": [
+        "Is alles ontgrendeld zoals verwacht?",
+        "Wat fixen of verbeteren we eerst?"
+      ]
+    }
+  ]
+}

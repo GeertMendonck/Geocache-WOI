@@ -40,6 +40,18 @@
     <h1>WOI – Mijn Personage</h1>
 
     <div id="setupGrid" class="grid two">
+      <section id="statusCard" class="card">
+        <h2>Locatiestatus</h2>
+        <div class="small muted" id="permNote"></div>
+        <div class="row kpi"><div>📍 (± <span id="acc">—</span> m)</div><div></div></div>
+        <div class="row kpi"><div>🎯 Dichtstbijzijnde stop:</div><div><b id="closest">—</b></div></div>
+        <div class="row kpi"><div>↔️ Afstand:</div><div><b id="dist">—</b> m</div></div>
+        <div class="row kpi"><div>🛡️ Straal:</div><div><b id="radius">—</b> m</div></div>
+        <div class="row mt-8">
+          <button id="startBtn" class="primary">▶️ Start locatie</button>
+        </div>
+        <div class="small muted">Status: <span id="geoState">Uit</span> • Coördinaten: <span id="coords">—</span></div>
+      </section>
       <section class="card">
         <h2>Jouw personage</h2>
         <div class="small muted">Kiezen of wijzigen kan <b>alleen aan de startlocatie</b>. Zodra je vertrekt, wordt je keuze vergrendeld.</div>
@@ -57,22 +69,11 @@
         <div class="row mt-6">
           <button id="regenBtn">🎲 Willekeurig</button>
           <button id="savePcBtn" class="primary">✅ Bevestig keuze</button>
-          <button id="exportBtn">💾 Exporteer voortgang</button>
+         
         </div>
       </section>
 
-      <section id="statusCard" class="card">
-        <h2>Locatiestatus</h2>
-        <div class="small muted" id="permNote"></div>
-        <div class="row kpi"><div>📍 (± <span id="acc">—</span> m)</div><div></div></div>
-        <div class="row kpi"><div>🎯 Dichtstbijzijnde stop:</div><div><b id="closest">—</b></div></div>
-        <div class="row kpi"><div>↔️ Afstand:</div><div><b id="dist">—</b> m</div></div>
-        <div class="row kpi"><div>🛡️ Straal:</div><div><b id="radius">—</b> m</div></div>
-        <div class="row mt-8">
-          <button id="startBtn" class="primary">▶️ Start locatie</button>
-        </div>
-        <div class="small muted">Status: <span id="geoState">Uit</span> • Coördinaten: <span id="coords">—</span></div>
-      </section>
+      
     </div>
 
     <section class="card mt-12">
