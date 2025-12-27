@@ -70,8 +70,6 @@
         <div class="row kpi"><div>🛡️ Straal:</div><div><b id="radius">—</b> m</div></div>
         <div class="row mt-8">
           <button id="startBtn" class="primary">▶️ Start locatie</button>
-          <button id="stopBtn">⏸️ Pauzeer</button>
-          <button id="demoBtn">🧪 Demo-nabij</button>
         </div>
         <div class="small muted">Status: <span id="geoState">Uit</span> • Coördinaten: <span id="coords">—</span></div>
       </section>
@@ -114,7 +112,7 @@
       if(!window.__APP_BOUND__){
         var d=document.getElementById('diag');
         if(d){ d.style.display='block'; d.textContent='⚠️ app.js NIET geladen — fallback actief'; }
-        ['startBtn','stopBtn','resetBtn','recenterBtn','installHint','regenBtn','savePcBtn','exportBtn'].forEach(function(id){
+        ['startBtn','resetBtn','recenterBtn','installHint','regenBtn','savePcBtn','exportBtn'].forEach(function(id){
           var el=document.getElementById(id);
           if(el) el.addEventListener('click', function(){ alert('Fallback listener: '+id); });
         });

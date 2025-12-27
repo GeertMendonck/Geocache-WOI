@@ -274,7 +274,6 @@ function scheduleStopsRender(reason){
       document.addEventListener('pointerdown', initAudio, { once:true });
   
       b=qs('startBtn'); if(b) b.addEventListener('click', function(){ initAudio(); startWatch(); });
-      b=qs('stopBtn');  if(b) b.addEventListener('click', stopWatch);
       b=qs('resetBtn'); if(b) b.addEventListener('click', function(){ localStorage.removeItem('woi_state'); location.reload(); });
       b=qs('recenterBtn'); if(b) b.addEventListener('click', function(){ followMe = true; });
   
