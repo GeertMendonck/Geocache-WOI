@@ -958,7 +958,7 @@ document.addEventListener('click', function(e){
     // ---------- renderUnlocked (ingekort: park map 1x, restore 1x) ----------
     function renderUnlocked(){
       applyRouteModeUI();
-  
+      var downloadHtml = '';
       var st = store.get();
       var pc = currentPc();
       var cont = qs('unlockList'); if(!cont) return;
@@ -1091,7 +1091,7 @@ document.addEventListener('click', function(e){
         var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
         var isEnd = (loc && loc.slot === endSlot);
         
-        var downloadHtml = '';
+        
         if(isEnd){
           downloadHtml =
             '<div class="card mt-10">'
