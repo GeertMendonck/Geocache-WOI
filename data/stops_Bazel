@@ -1,11 +1,11 @@
 {
   "slots": [
     { "id": "start",  "label": "Start",  "required": true },
-    { "id": "stop05", "label": "Keuze", "required": false },
-    { "id": "stop01", "label": "Stop 1", "required": false },
+    { "id": "stop05", "label": "Keuze 1", "required": false },
+    { "id": "stop01", "label": "Stop 1", "required": true },
     { "id": "stop02", "label": "Stop 2", "required": true },
-    { "id": "stop03", "label": "Stop 3", "required": false },
-    { "id": "stop04", "label": "Stop 4", "required": false },
+    { "id": "stop03", "label": "Stop 3", "required": true },
+    { "id": "stop04", "label": "keuze 2", "required": false },
     { "id": "end",    "label": "Einde",  "required": true }
   ],
   "locaties": [
@@ -42,11 +42,11 @@
       ]
     },
     {
-      "id": "krugerpark",
+      "id": "dweerseGaanweg",
       "slot": "stop01",
-      "naam": "Stop 1: Krugerpark",
-      "lat": 51.21637744837854,
-      "lng": 4.4406549513845235,
+      "naam": "Stop 1: DweerseGaanweg",
+      "lat": 51.15487572763946,
+      "lng":  4.308215059934092,
       "radius": 50,
       "uitleg": {
         "kort": "Test hier vooral de radius-ontgrendeling en stabiliteit van de afstandsindicator.",
@@ -58,22 +58,7 @@
       ]
     },
     {
-      "id": "vincotteplein",
-      "slot": "stop01",
-      "naam": "Stop 1: Vinçotteplein",
-      "lat": 51.2160,
-      "lng": 4.4376,
-      "radius": 50,
-      "uitleg": {
-        "kort": "Tweede kandidaat voor hetzelfde slot: test of je app correct omgaat met meerdere locaties per slot.",
-        "uitgebreid": "Omdat dit ook onder ‘stop01’ valt, kan je testen hoe je UI het presenteert wanneer er meerdere mogelijke locaties bestaan. Wordt de juiste locatie gekozen als ontgrendeler? En blijft de titel/tekst consistent (zeker als je op één dag zowel Krugerpark als Vinçotteplein bezoekt)?"
-      },
-      "vragen": [
-        "We zouden nu op het Vinçotteplein zijn? Klopt dit?"
-      ]
-    },
-    {
-      "id": "Overloopdijk",
+      "id": "overloopdijk",
       "slot": "stop02",
       "naam": "Stop 2: Overloopdijk",
       "lat": 51.15923731195311, 
@@ -89,11 +74,11 @@
       ]
     },
     {
-      "id": "sint_willibrorduskerk",
+      "id": "dijkstraat",
       "slot": "stop03",
-      "naam": "Stop 3: Sint-Willibrorduskerk",
-      "lat": 51.2193360072171,
-      "lng": 4.431886670037614,
+      "naam": "Dijkstraat",
+      "lat": 51.1575892044881, 
+      "lng": 4.319136588576535,
       "radius": 50,
       "uitleg": {
         "kort": "Test hier de tekstvelden + voorleesknop (readBtn) en of alles per locatie-id correct opslaat.",
@@ -105,11 +90,11 @@
       ]
     },
     {
-      "id": "stuyvenberg",
+      "id": "duiventoren",
       "slot": "stop04",
-      "naam": "Stop 4: Stuyvenberg",
-      "lat": 51.22231751132612,
-      "lng": 4.435140060868664,
+      "naam": "Den Duiventoren",
+      "lat": 51.14613412789181, 4.302330010140069
+      "lng": 4.302330010140069,
       "radius": 50,
       "uitleg": {
         "kort": "Eindtest: export, volledigheid van antwoorden en eventuele randgevallen.",
