@@ -270,7 +270,12 @@ function scheduleStopsRender(reason){
     // ---------- Core listeners ----------
     function bindCoreListeners(){
       var b;
-  
+      document.addEventListener('click', function(e){
+        var ex = e.target && e.target.closest ? e.target.closest('#exportBtn') : null;
+        if(!ex) return;
+        exportProgress();
+      });
+      
       document.addEventListener('pointerdown', initAudio, { once:true });
   
       b=qs('startBtn'); if(b) b.addEventListener('click', function(){ initAudio(); startWatch(); });
@@ -836,6 +841,7 @@ document.addEventListener('click', function(e){
       if(bestSlot === endSlot){
         var reqSlots = DATA.requiredSlots || [];
         var missing = [];
+        st.finished = true;
         for (var r=0; r<reqSlots.length; r++){
           var sid = reqSlots[r];
           if(sid === endSlot) continue;
@@ -1068,14 +1074,34 @@ document.addEventListener('click', function(e){
         + '  <div class="muted small" style="margin-bottom:6px">Stops</div>'
         + '  <div id="stopsListHost" class="stopsPills"></div>'
         + '</div>';
-  
+
+
+        var qaBody =
+        '<div id="statusWrapQa"></div>'
+        + (uitlegHtml || '<div class="muted">(Geen uitleg)</div>')
+        + '<div style="margin-top:10px">' + qaHtml + '</div>'
+        + downloadHtml;
+      
       var html =
         '<div class="stack">'
         + panelHtml('story','Personage + Verhaal', storyBody, focus==='story')
         + panelHtml('qa','Uitleg en vragen', qaBody, focus==='qa')
         + panelHtml('map','Kaart', mapBody, focus==='map')
         + '</div>';
-  
+        var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
+        var isEnd = (loc && loc.slot === endSlot);
+        
+        var downloadHtml = '';
+        if(isEnd){
+          downloadHtml =
+            '<div class="card mt-10">'
+          + '  <div class="cardHead">📄 Je bent aan het eindpunt</div>'
+          + '  <div class="cardBody">'
+          + '    <button id="exportBtn" type="button" class="primary">⬇️ Download verslag</button>'
+          + '  </div>'
+          + '</div>';
+        }
+        
       // Park oneMap vóór innerHTML
       var oneMap = document.getElementById('oneMap');
       var park = document.getElementById('mapPark');
@@ -1255,7 +1281,71 @@ document.addEventListener('click', function(e){
         if (window.console) console.error(e);
       });
     });
-  
+    // EXPORT
+    function exportProgress(){
+        var st = store.get();
+        var pc = currentPc() || {};
+        var lines = [];
+      
+        var title = (DATA.meta && DATA.meta.title) ? DATA.meta.title : 'WOI – Voortgang';
+        lines.push('# ' + title);
+        lines.push('Personage: ' + (pc.naam||'—') + ' (' + (pc.herkomst||'—') + ') – ' + (pc.rol||'—'));
+        lines.push('');
+      
+        var arr = DATA.locaties || DATA.stops || [];
+      
+        function findLocById(id){
+          for(var i=0;i<arr.length;i++){
+            if(arr[i] && arr[i].id === id) return arr[i];
+          }
+          return null;
+        }
+      
+        function exportOneLocation(loc){
+          var locId = loc.id;
+          var slotId = loc.slot;
+      
+          lines.push('## ' + (loc.naam || locId || slotId));
+      
+          var verhaal = getStoryFor(pc, slotId, locId);
+          lines.push(verhaal || '(geen tekst)');
+          lines.push('');
+      
+          var qsArr = loc.vragen || [];
+          if(qsArr.length){
+            lines.push('**Reflectie**');
+            for(var qi=0; qi<qsArr.length; qi++){
+              var q = qsArr[qi];
+              var ans = getAns(locId, qi);
+              lines.push('- ' + q);
+              lines.push('  - Antwoord: ' + (ans && ans.trim ? ans.trim().replace(/\r?\n/g,' ') : '(—)'));
+            }
+            lines.push('');
+          }
+        }
+      
+        var ids = st.unlockedLocs || [];
+        for(var u=0; u<ids.length; u++){
+          var loc = findLocById(ids[u]);
+          if(loc) exportOneLocation(loc);
+        }
+      
+        var content = '\ufeff' + lines.join('\n');
+        var blob = new Blob([content], {type:'text/markdown;charset=utf-8'});
+        var url = URL.createObjectURL(blob);
+      
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'woi-verslag.md';
+        a.click();
+      
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+      }
+      
+
+
+
+
     // Globale errors
     window.addEventListener('error', function(e){ showDiag('JS error: '+e.message); });
     window.addEventListener('unhandledrejection', function(e){
