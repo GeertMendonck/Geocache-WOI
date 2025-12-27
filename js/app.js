@@ -13,7 +13,38 @@
     var DEBUG = false;
   
     // ---------- Mini helpers ----------
-    var __stopsRenderTimer = null;
+    function applyLiveFixToMap(){
+        if(!__lastFix) return;
+        if(!window.LMAP || !window.L) return;
+      
+        // zorg dat marker bestaat
+        if(!liveMarker){
+          liveMarker = L.marker([__lastFix.lat, __lastFix.lng], {
+            icon: L.divIcon({ className:'user-dot', iconSize:[14,14], iconAnchor:[7,7] })
+          }).addTo(window.LMAP);
+        }
+      
+        // zorg dat hij op de map staat (na parkeren/verhuizen kan dit soms raar doen)
+        if(!window.LMAP.hasLayer(liveMarker)) liveMarker.addTo(window.LMAP);
+      
+        liveMarker.setLatLng([__lastFix.lat, __lastFix.lng]);
+        liveMarker.setOpacity(1);
+      
+        if(accCircle){
+          if(!window.LMAP.hasLayer(accCircle)) accCircle.addTo(window.LMAP);
+          accCircle.setLatLng([__lastFix.lat, __lastFix.lng]);
+          accCircle.setRadius(Math.max(5, __lastFix.acc||0));
+        }
+      
+        // breng boven andere lagen
+        try { liveMarker.setZIndexOffset(1000); } catch(e){}
+      
+        __liveReady = true;
+        if(followMe) window.LMAP.setView([__lastFix.lat, __lastFix.lng]);
+
+      }
+      
+      var __stopsRenderTimer = null;
 
 function scheduleStopsRender(reason){
   if(__stopsRenderTimer) clearTimeout(__stopsRenderTimer);
@@ -229,7 +260,9 @@ function scheduleStopsRender(reason){
     var liveMarker = null, accCircle = null;
     var watchId = null;
     window.__insideStart = false;
-  
+    var __lastFix = null;     // {lat,lng,acc}
+    var __liveReady = false;  // marker bestaat en staat op de map
+    
     var followMe = true;
     var followResumeTimer = null;
     var lastInsideStart = null;
@@ -734,6 +767,12 @@ document.addEventListener('click', function(e){
   
       liveMarker = L.marker([0,0], { icon: L.divIcon({ className:'user-dot', iconSize:[14,14], iconAnchor:[7,7] }), opacity:0 }).addTo(window.LMAP);
       accCircle  = L.circle([0,0], { radius:0, color:'#3dd1c0', fillOpacity:.1 }).addTo(window.LMAP);
+      setTimeout(function(){
+        if(window.LMAP) window.LMAP.invalidateSize(true);
+        applyLiveFixToMap();
+      }, 0);
+      
+   
     }
   
     function addStopMarkers(){
@@ -891,6 +930,7 @@ document.addEventListener('click', function(e){
   
       watchId = navigator.geolocation.watchPosition(function(pos){
         var c=pos.coords, latitude=c.latitude, longitude=c.longitude, accuracy=c.accuracy;
+
         var cc=qs('coords'); if(cc) cc.textContent = latitude.toFixed(5)+', '+longitude.toFixed(5);
         var ac=qs('acc'); if(ac) ac.textContent = Math.round(accuracy);
   
@@ -939,9 +979,10 @@ document.addEventListener('click', function(e){
             renderProgress();
   }
   
-  
+          __lastFix = { lat: latitude, lng: longitude, acc: accuracy };
           ensureLeafletMap();
-          updateLeafletLive(latitude, longitude, accuracy);
+          applyLiveFixToMap();
+        //  updateLeafletLive(latitude, longitude, accuracy);
         }
       }, function(err){
         var pn2=qs('permNote'); if(pn2) pn2.innerHTML='<span class="warn">Locatie geweigerd</span>';
