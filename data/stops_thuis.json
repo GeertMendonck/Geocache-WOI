@@ -1,13 +1,34 @@
 {
+  "meta": {
+    "title": "Thuistest – Geo-app",
+    "subtitle": "Korte wandelroute om flow, unlocks en UI te testen",
+    "version": "1.0"
+  },
+
+  "settings": {
+    "visibilityMode": "nextOnly",
+    "multiLocationSlotMode": "all",
+    "showOptionalSlots": false
+  },
+
+  "prestart": {
+    "useLocationId": "thuis",
+    "meetingPoint": { "lat": 51.220418, "lng": 4.440854 },
+    "message": "Nog niet aan het startpunt (Thuis). Ga naar de startlocatie om te beginnen."
+  },
+
   "slots": [
     { "id": "start",  "label": "Start",  "required": true },
-    { "id": "stop05", "label": "Keuze", "required": false },
-    { "id": "stop01", "label": "Stop 1", "required": true },
-    { "id": "stop02", "label": "Stop 2", "required": true },
-    { "id": "stop03", "label": "Stop 3", "required": true },
-    { "id": "stop04", "label": "Stop 4", "required": true },
-    { "id": "end",    "label": "Einde",  "required": true }
+
+    { "id": "stop05", "label": "Keuze",  "required": false, "unlockAfterSlot": "start" },
+
+    { "id": "stop01", "label": "Stop 1", "required": true,  "unlockAfterSlot": "start" },
+    { "id": "stop02", "label": "Stop 2", "required": true,  "unlockAfterSlot": "stop01" },
+    { "id": "stop03", "label": "Stop 3", "required": true,  "unlockAfterSlot": "stop02" },
+    { "id": "stop04", "label": "Stop 4", "required": true,  "unlockAfterSlot": "stop03" },
+    { "id": "end",    "label": "Einde",  "required": true,  "unlockAfterSlot": "stop04" }
   ],
+
   "locaties": [
     {
       "id": "thuis",
@@ -16,6 +37,9 @@
       "lat": 51.220418,
       "lng": 4.440854,
       "radius": 120,
+
+      "routeHint": "Ga naar je startpunt (Thuis). Start pas wanneer je binnen de radius staat (±120m).",
+
       "uitleg": {
         "kort": "Teststart: hier controleer je of uitleg altijd vóór de vragen verschijnt.",
         "uitgebreid": "Gebruik deze startlocatie om snel je volledige flow te testen: (1) verschijnt het uitlegblok boven de vragen, (2) werkt de knop ‘Meer lezen/Minder tonen’, (3) blijft alles mooi staan bij refresh of herladen, en (4) wordt de tekst correct ontsnapt (geen rare HTML-effecten)."
@@ -25,13 +49,17 @@
         "Welke functies wil je zeker uitproberen?"
       ]
     },
+
     {
       "id": "ceresstraat-florastraat",
       "slot": "stop05",
-      "naam": "Ceres en Florastraat",
+      "naam": "Keuze: Ceresstraat & Florastraat",
       "lat": 51.219117,
       "lng": 4.441710,
       "radius": 80,
+
+      "routeHint": "Optioneel: wandel richting kruispunt Ceresstraat/Florastraat. Handig om ‘required:false’ te testen.",
+
       "uitleg": {
         "kort": "Optionele stop: ideaal om te checken of ‘required:false’ correct verwerkt is.",
         "uitgebreid": "Deze locatie is je test voor ‘split/keuze’-logica: ontgrendelt de app dit slot alleen als je hier effectief komt? En blijft de rest van de route correct? Ook handig om te controleren of ‘pickVariantLocationIdForSlot’ de juiste locatie-id teruggeeft."
@@ -41,6 +69,7 @@
         "Gedraagt de app zich hier correct?"
       ]
     },
+
     {
       "id": "krugerpark",
       "slot": "stop01",
@@ -48,6 +77,9 @@
       "lat": 51.21637744837854,
       "lng": 4.4406549513845235,
       "radius": 50,
+
+      "routeHint": "Wandel naar het Krugerpark. Test hier vooral het in/uit de radius stappen en de stabiliteit van de afstand.",
+
       "uitleg": {
         "kort": "Test hier vooral de radius-ontgrendeling en stabiliteit van de afstandsindicator.",
         "uitgebreid": "Loop bewust even in en uit de radius (bv. 100m) om te zien of er geen ‘flapperen’ gebeurt (constant lock/unlock). Check ook of je GPS-updatefrequentie en smoothing goed aanvoelen: springt de afstand niet wild heen en weer?"
@@ -57,6 +89,7 @@
         "Is de afstandsindicatie logisch en stabiel?"
       ]
     },
+
     {
       "id": "vincotteplein",
       "slot": "stop01",
@@ -64,6 +97,9 @@
       "lat": 51.2160,
       "lng": 4.4376,
       "radius": 50,
+
+      "routeHint": "Alternatief voor stop 1: wandel naar het Vinçotteplein. Test meerdere locaties binnen hetzelfde slot.",
+
       "uitleg": {
         "kort": "Tweede kandidaat voor hetzelfde slot: test of je app correct omgaat met meerdere locaties per slot.",
         "uitgebreid": "Omdat dit ook onder ‘stop01’ valt, kan je testen hoe je UI het presenteert wanneer er meerdere mogelijke locaties bestaan. Wordt de juiste locatie gekozen als ontgrendeler? En blijft de titel/tekst consistent (zeker als je op één dag zowel Krugerpark als Vinçotteplein bezoekt)?"
@@ -72,6 +108,7 @@
         "We zouden nu op het Vinçotteplein zijn? Klopt dit?"
       ]
     },
+
     {
       "id": "olv_ter_sneeuwkerk",
       "slot": "stop02",
@@ -79,6 +116,9 @@
       "lat": 51.21616987336369,
       "lng": 4.433833093111876,
       "radius": 50,
+
+      "routeHint": "Wandel richting OLV ter Sneeuwkerk. Let op live positie, updates en of de kaart vlot blijft.",
+
       "uitleg": {
         "kort": "Test hier live positie + ‘dichterbij komen’-gedrag (UI updates, geen haperingen).",
         "uitgebreid": "Ideale teststop om te zien of de kaart en je ‘you are here’-marker correct meebewegen. Controleer ook: (1) blijft de app responsief als je scherm aan/uit gaat, (2) blijft je positie kloppen na even stil te staan, (3) werkt het opnieuw ‘pakken’ van GPS wanneer je terug begint te wandelen."
@@ -88,6 +128,7 @@
         "Toont de kaart je live positie correct?"
       ]
     },
+
     {
       "id": "sint_willibrorduskerk",
       "slot": "stop03",
@@ -95,6 +136,9 @@
       "lat": 51.2193360072171,
       "lng": 4.431886670037614,
       "radius": 50,
+
+      "routeHint": "Wandel naar de Sint-Willibrorduskerk. Test tekstvelden, opslag per locatie-id en de voorleesknop.",
+
       "uitleg": {
         "kort": "Test hier de tekstvelden + voorleesknop (readBtn) en of alles per locatie-id correct opslaat.",
         "uitgebreid": "Let hier extra op dat antwoorden gekoppeld blijven aan de juiste locatie via data-stop=locId. Test ook: (1) typen → refresh → blijft antwoord staan, (2) ‘wis’ werkt enkel voor die vraag, (3) voorleesknop leest de juiste tekst (locId/slotId) en niet per ongeluk iets van een andere stop."
@@ -104,6 +148,7 @@
         "Voelt de UI vlot aan op jouw toestel?"
       ]
     },
+
     {
       "id": "stuyvenberg",
       "slot": "stop04",
@@ -111,6 +156,9 @@
       "lat": 51.22231751132612,
       "lng": 4.435140060868664,
       "radius": 50,
+
+      "routeHint": "Wandel naar Stuyvenberg. Eindtest voor export, volledigheid en randgevallen (offline, lege antwoorden).",
+
       "uitleg": {
         "kort": "Eindtest: export, volledigheid van antwoorden en eventuele randgevallen.",
         "uitgebreid": "Gebruik deze stop om te checken of alles netjes mee gaat naar je export: uitleg hoeft niet mee, maar antwoorden wel. Check ook of lege antwoorden correct als leeg worden behandeld (en niet als ‘undefined’). Bonus: test export terwijl je offline bent, als dat ooit kan voorkomen."
@@ -120,6 +168,7 @@
         "Nog bugs of verbeteringen gezien?"
       ]
     },
+
     {
       "id": "thuis_einde",
       "slot": "end",
@@ -127,6 +176,9 @@
       "lat": 51.220428,
       "lng": 4.440834,
       "radius": 120,
+
+      "routeHint": "Ga terug naar huis (binnen radius ±120m). Hier controleer je de eindstaat: progress, unlocks en opslag.",
+
       "uitleg": {
         "kort": "Afsluitstop: controleer of je volledige route-status klopt (alles wat moet unlocked, is unlocked).",
         "uitgebreid": "Hier test je de eindstaat: (1) zijn alle vereiste slots ontgrendeld, (2) wordt de progress correct berekend, (3) blijven antwoorden bewaard, en (4) blijven ‘details open’/UI-states consistent na herladen. Kortom: de ‘alles is klaar, tijd voor taart’-check."

@@ -1,12 +1,30 @@
 {
+  "meta": {
+    "title": "WOI – Mijn Personage",
+    "subtitle": "Interactieve herdenkingsroute rond Ieper",
+    "version": "1.0"
+  },
+
+  "settings": {
+    "visibilityMode": "allAfterStart",
+    "multiLocationSlotMode": "all"
+  },
+
+  "prestart": {
+    "useLocationId": "start_menenpoort",
+    "meetingPoint": { "lat": 50.85210, "lng": 2.89140 },
+    "message": "Nog niet aan het startpunt. Ga naar de Menenpoort om te beginnen."
+  },
+
   "slots": [
     { "id": "start",  "label": "Start",  "required": true },
-    { "id": "stop01", "label": "Stop 1", "required": true },
+    { "id": "stop01", "label": "Stop 1", "required": true, "completeMode": "any" },
     { "id": "stop02", "label": "Stop 2", "required": true },
     { "id": "stop03", "label": "Stop 3", "required": true },
     { "id": "stop04", "label": "Stop 4", "required": true },
     { "id": "end",    "label": "Einde",  "required": true }
   ],
+
   "locaties": [
     {
       "id": "start_menenpoort",
@@ -15,6 +33,9 @@
       "lat": 50.85206,
       "lng": 2.89116,
       "radius": 100,
+
+      "routeHint": "Ga naar de Menenpoort in Ieper. Verzamel onder de boog en start wanneer je binnen de radius staat.",
+
       "uitleg": {
         "kort": "De Menenpoort herdenkt soldaten die sneuvelden zonder gekend graf.",
         "uitgebreid": "De Menenpoort is een herdenkingsmonument voor meer dan 54.000 Britse en Gemenebest-soldaten die tijdens de Eerste Wereldoorlog sneuvelden in de regio rond Ieper en nooit geïdentificeerd of teruggevonden werden. Elke avond sinds 1928 wordt hier de Last Post geblazen. Deze plek maakt duidelijk dat achter elk naamloos slachtoffer een persoonlijk verhaal schuilgaat."
@@ -24,6 +45,7 @@
         "Wat verwacht je vandaag te leren?"
       ]
     },
+
     {
       "id": "flanders_fields_museum",
       "slot": "stop01",
@@ -31,6 +53,9 @@
       "lat": 50.8511,
       "lng": 2.8856,
       "radius": 100,
+
+      "routeHint": "Ga naar de Lakenhallen op de Grote Markt (In Flanders Fields Museum). Volg de bordjes naar het centrum van Ieper.",
+
       "uitleg": {
         "kort": "Dit museum vertelt het verhaal van de oorlog door mensen en objecten.",
         "uitgebreid": "Het In Flanders Fields Museum focust niet alleen op militaire feiten, maar vooral op de menselijke ervaring van de oorlog. Via persoonlijke verhalen, brieven, foto’s en objecten krijg je inzicht in hoe soldaten en burgers de oorlog beleefden. Het museum benadrukt dat oorlog geen abstract begrip is, maar iets wat levens ingrijpend verandert."
@@ -40,6 +65,7 @@
         "Wat leer je hier dat je buiten op de begraafplaatsen minder voelt?"
       ]
     },
+
     {
       "id": "new_irish_farm",
       "slot": "stop01",
@@ -47,6 +73,9 @@
       "lat": 50.87289,
       "lng": 2.89736,
       "radius": 100,
+
+      "routeHint": "Ga naar New Irish Farm Cemetery (regio Boezinge/Ieper). Met de fiets volg je best de richting Boezinge en de lokale bordjes naar de begraafplaats.",
+
       "uitleg": {
         "kort": "Een Ierse begraafplaats midden in het voormalige frontgebied.",
         "uitgebreid": "New Irish Farm Cemetery ligt in een landschap dat tijdens de oorlog volledig verwoest werd. Hier rusten vooral Ierse soldaten die sneuvelden tijdens zware gevechten rond Ieper. De symbolen en inscripties op de grafstenen tonen hoe identiteit, afkomst en geloof ook in de dood een rol bleven spelen."
@@ -56,6 +85,7 @@
         "Welke link hoor jij tussen dit landschap en het verhaal van jouw personage?"
       ]
     },
+
     {
       "id": "langemark",
       "slot": "stop02",
@@ -63,6 +93,9 @@
       "lat": 50.9153,
       "lng": 2.9163,
       "radius": 200,
+
+      "routeHint": "Ga naar het Duitse militaire kerkhof in Langemark. Volg de hoofdwegen richting Langemark-Poelkapelle en de bordjes naar het kerkhof.",
+
       "uitleg": {
         "kort": "Hier liggen vooral jonge Duitse soldaten begraven.",
         "uitgebreid": "Het Duitse militaire kerkhof van Langemark staat bekend als het ‘Studentenfriedhof’, omdat hier veel jonge vrijwilligers begraven liggen, vaak nog studenten. De sobere grafstructuur en massagraven tonen een andere manier van herdenken en confronteren je met het feit dat ook de zogenaamde ‘vijand’ vaak nauwelijks ouder was dan jij."
@@ -72,6 +105,7 @@
         "Hoe verandert dit jouw kijk op ‘de vijand’?"
       ]
     },
+
     {
       "id": "tyne_cot",
       "slot": "stop03",
@@ -79,6 +113,9 @@
       "lat": 50.887,
       "lng": 2.9993,
       "radius": 220,
+
+      "routeHint": "Ga naar Tyne Cot Cemetery (bij Zonnebeke/Passendale). Volg de borden richting Tyne Cot; er is een duidelijke toegang en parking.",
+
       "uitleg": {
         "kort": "De grootste Britse militaire begraafplaats ter wereld.",
         "uitgebreid": "Tyne Cot Cemetery bevat bijna 12.000 graven en herdenkingspanelen met duizenden namen van vermiste soldaten. De eindeloze rijen witte grafstenen maken de schaal van het geweld tastbaar. Deze plek confronteert bezoekers met de massaliteit van de dood en de industriële aard van de oorlog."
@@ -88,6 +125,7 @@
         "Welke zin uit het verhaal bleef hangen en waarom?"
       ]
     },
+
     {
       "id": "passchendaele_museum",
       "slot": "stop04",
@@ -95,6 +133,9 @@
       "lat": 50.87073,
       "lng": 2.9886,
       "radius": 100,
+
+      "routeHint": "Ga naar het Memorial Museum Passchendaele in Zonnebeke. Volg de borden naar het centrum van Zonnebeke en het museumdomein.",
+
       "uitleg": {
         "kort": "Dit museum toont het dagelijkse leven aan het front.",
         "uitgebreid": "Het Memorial Museum Passchendaele focust sterk op het leven in en rond de loopgraven. Je ziet hoe soldaten woonden, aten en probeerden te overleven in extreme omstandigheden. Door originele objecten en gereconstrueerde loopgraven krijg je een concreet beeld van het frontleven."
@@ -104,6 +145,7 @@
         "Welke vraag zou jij willen stellen aan iemand uit die tijd?"
       ]
     },
+
     {
       "id": "end_menenpoort",
       "slot": "end",
@@ -111,6 +153,9 @@
       "lat": 50.85206,
       "lng": 2.89116,
       "radius": 100,
+
+      "routeHint": "Keer terug naar de Menenpoort in Ieper. Eindig de route wanneer je opnieuw binnen de radius staat.",
+
       "uitleg": {
         "kort": "We keren terug naar de plek waar herinneren centraal staat.",
         "uitgebreid": "Aan het einde van de tocht keer je terug naar de Menenpoort. De verhalen, beelden en plekken die je vandaag zag, krijgen hier een nieuwe betekenis. Deze plaats nodigt uit om stil te staan bij herinnering, verantwoordelijkheid en de vraag hoe wij vandaag omgaan met het verleden."
