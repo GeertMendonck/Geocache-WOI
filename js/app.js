@@ -378,6 +378,7 @@ document.addEventListener('click', function(e){
       st2.pcConfirmed = true;
       st2.geoOn = true;
       st2.routeStarted = true;       // ✅ meteen UI omschakelen
+      st2.focus = 'map';
       store.set(st2);
   
       toast('✅ Personage bevestigd. Je kan vertrekken.');
@@ -385,6 +386,7 @@ document.addEventListener('click', function(e){
       renderProfile();
       renderCharacterChooser();
       applyRouteModeUI();
+
       renderUnlocked();
   
       if(watchId == null) startWatch();
@@ -957,6 +959,9 @@ document.addEventListener('click', function(e){
   
     // ---------- renderUnlocked (ingekort: park map 1x, restore 1x) ----------
     function renderUnlocked(){
+        var old = document.getElementById('mapSection');
+        if(old) old.style.display = 'none';
+
         applyRouteModeUI();
       
         var st = store.get();
@@ -976,11 +981,14 @@ document.addEventListener('click', function(e){
         if(!currentLoc && (st.unlockedLocs||[]).length){
           currentLoc = findLocById(st.unlockedLocs[st.unlockedLocs.length-1]);
         }
-        if(!currentLoc){
-          cont.innerHTML = '<div class="muted">Nog geen huidige stop. Wandel eens binnen een cirkel 🙂</div>';
-          renderProgress();
-          return;
+        var hasLoc = !!currentLoc;
+
+        if(!hasLoc){
+        // geen return meer: we bouwen toch de panel-layout
+        // placeholder values zodat de rest niet "undefined" wordt
+        currentLoc = { id:'', slot:'', naam:'Nog geen stop', vragen:[], uitleg:null };
         }
+
       
         var loc = currentLoc;
         var locId = loc.id;
@@ -1002,7 +1010,14 @@ document.addEventListener('click', function(e){
         }
       
         var verhaal = getStoryFor(pc, slotId, locId);
-      
+        var hasRealLoc = hasLoc && locId && slotId;
+
+        if(!hasRealLoc){
+          verhaal = null;            // geen readBtn tonen
+          uitlegHtml = '';           // of laat je uitlegHtml zoals je wil
+          qaHtml = '<div class="muted">Nog geen vragen: wandel eerst een cirkel binnen 🙂</div>';
+        }
+        
         var uitleg = loc.uitleg || null;
         var uitlegKort = '', uitlegLang = '';
         if(uitleg){
@@ -1067,15 +1082,20 @@ document.addEventListener('click', function(e){
           }
         }
       
-        var storyBody = ''
-          + pcCard
-          + '<div style="margin-top:10px">'
-          + '  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
-          + '    <div style="font-weight:800">📘 Verhaal</div>'
-          + '    <button class="readBtn" data-slot="'+slotId+'" data-loc="'+locId+'" title="Lees voor">🔊</button>'
-          + '  </div>'
-          + '  <div style="margin-top:6px">' + (verhaal ? escapeHtml(verhaal) : '<span class="muted">(Geen tekst)</span>') + '</div>'
-          + '</div>';
+            var storyBody = ''
+            + pcCard
+            + '<div style="margin-top:10px">'
+            +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
+            +     '<div style="font-weight:800">📘 Verhaal</div>'
+            +     (hasRealLoc ? '<button class="readBtn" data-slot="'+slotId+'" data-loc="'+locId+'" title="Lees voor">🔊</button>' : '')
+            +   '</div>'
+            +   '<div style="margin-top:6px">'
+            +     (hasRealLoc
+                    ? (verhaal ? escapeHtml(verhaal) : '<span class="muted">(Geen tekst)</span>')
+                    : '<span class="muted">Nog geen huidige stop. Wandel eens binnen een cirkel 🙂</span>')
+            +   '</div>'
+            + '</div>';
+
       
         // ✅ enkel 1x qaBody, mét downloadHtml
         var qaBody = ''
