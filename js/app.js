@@ -957,141 +957,40 @@ document.addEventListener('click', function(e){
   
     // ---------- renderUnlocked (ingekort: park map 1x, restore 1x) ----------
     function renderUnlocked(){
-      applyRouteModeUI();
-      var downloadHtml = '';
-      var st = store.get();
-      var pc = currentPc();
-      var cont = qs('unlockList'); if(!cont) return;
-  
-      var arr = DATA.locaties || DATA.stops || [];
-  
-      function findLocById(id){
-        for(var i=0;i<arr.length;i++){
-          if(arr[i] && arr[i].id === id) return arr[i];
-        }
-        return null;
-      }
-  
-      var currentLoc = st.currentLocId ? findLocById(st.currentLocId) : null;
-      if(!currentLoc && (st.unlockedLocs||[]).length){
-        currentLoc = findLocById(st.unlockedLocs[st.unlockedLocs.length-1]);
-      }
-      if(!currentLoc){
-        cont.innerHTML = '<div class="muted">Nog geen huidige stop. Wandel eens binnen een cirkel 🙂</div>';
-        renderProgress();
-        return;
-      }
-  
-      var loc = currentLoc;
-      var locId = loc.id;
-      var slotId = loc.slot;
-      var title = loc.naam || locId;
-  
-      var verhaal = getStoryFor(pc, slotId, locId);
-  
-      var uitleg = loc.uitleg || null;
-      var uitlegKort = '', uitlegLang = '';
-      if(uitleg){
-        if(typeof uitleg === 'string') uitlegKort = uitleg;
-        else { uitlegKort = uitleg.kort || ''; uitlegLang = uitleg.uitgebreid || ''; }
-      }
-  
-      var uitlegHtml = '';
-      if(uitlegKort || uitlegLang){
-        var moreId = 'more_' + locId;
-        uitlegHtml =
-          '<div class="uitlegBox">'
-          + '  <div class="uitlegTitle">'
-          + '    <span class="uitlegTitleText">ℹ️ Uitleg</span>'
-          + (uitlegLang ? ' <button class="uitlegToggleIcon" type="button" data-toggle="'+moreId+'">+</button>' : '')
-          + '  </div>'
-          + (uitlegKort ? ('<div class="uitlegKort">'+escapeHtml(uitlegKort)+'</div>') : '')
-          + (uitlegLang ? ('<div id="'+moreId+'" class="uitlegLang hidden">'+escapeHtml(uitlegLang)+'</div>') : '')
-          + '</div>';
-      }
-  
-      var qsArr = loc.vragen || [];
-      var qaHtml = '';
-      if(qsArr.length){
-        qaHtml = qsArr.map(function(q,qi){
-          var val = getAns(locId, qi);
-          return '<div class="qa">'
-          + '<div class="q"><b>Vraag '+(qi+1)+':</b> '+escapeHtml(q)+'</div>'
-          + '<div class="controls">'
-          + '  <textarea class="ans" data-stop="'+locId+'" data-q="'+qi+'" placeholder="Jouw antwoord...">'+escapeHtml(val)+'</textarea>'
-          + '  <div class="btnRow">'
-          + (MIC_OK ? '    <button class="micBtn" data-stop="'+locId+'" data-q="'+qi+'">🎙️</button>' : '')
-          + '    <button class="clearAns" data-stop="'+locId+'" data-q="'+qi+'">✖</button>'
-          + '    <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+qi+'"></span>'
-          + '  </div>'
-          + '</div>'
-          + '</div>';
-          }).join('');
-      } else {
-        qaHtml = '<div class="muted">Geen vragen bij deze stop.</div>';
-      }
-  
-      var pcCard =
-        '<div class="pcMini">'
-        + ' <img class="pcMiniImg" src="'+escapeHtml(qs("pcImg") ? qs("pcImg").src : "")+'" alt=""/>'
-        + ' <div class="pcMiniMeta">'
-        + '   <div class="pcMiniName">'+escapeHtml(pc && pc.naam ? pc.naam : '—')+'</div>'
-        + '   <div class="pcMiniSub muted">'+escapeHtml(pc && pc.herkomst ? pc.herkomst : '—')+' — '+escapeHtml(pc && pc.rol ? pc.rol : '—')+'</div>'
-        + (pc && pc.bio ? ('<div class="pcMiniBio">'+escapeHtml(pc.bio)+'</div>') : '')
-        + ' </div>'
-        + '</div>';
-  
-      var focus = (st.focus || 'story');
-      if(!st.focus){
-        var routeMode = (st.geoOn === true) || (st.lockedPc === true) ||
-                        ((st.unlockedSlots||[]).length > 0) || (st.currentLocId);
-        if(routeMode){
-          focus = 'map';
-          st.focus = 'map';
-          store.set(st);
-        }
-      }
-      var storyBody = ''
-        + pcCard
-        + '<div style="margin-top:10px">'
-        +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
-        +     '<div style="font-weight:800">📘 Verhaal</div>'
-        +     '<button class="readBtn" data-slot="'+slotId+'" data-loc="'+locId+'" title="Lees voor">🔊</button>'
-        +   '</div>'
-        +   '<div style="margin-top:6px">' + (verhaal ? escapeHtml(verhaal) : '<span class="muted">(Geen tekst)</span>') + '</div>'
-        + '</div>';
-  
-      var qaBody =
-        '<div id="statusWrapQa"></div>'
-        + (uitlegHtml || '<div class="muted">(Geen uitleg)</div>')
-        + '<div style="margin-top:10px">' + qaHtml + '</div>';
-  
-      var mapBody =
-        '<div id="statusWrapMap"></div>'
-        + '<div id="mapPanelWrap" style="height:68vh; min-height:320px; border-radius:12px; overflow:hidden;"></div>'
-        + '<div id="mapControlsWrap" class="row small mt-8"></div>'
-        + '<div class="mt-10">'
-        + '  <div class="muted small" style="margin-bottom:6px">Stops</div>'
-        + '  <div id="stopsListHost" class="stopsPills"></div>'
-        + '</div>';
-
-
-        var qaBody =
-        '<div id="statusWrapQa"></div>'
-        + (uitlegHtml || '<div class="muted">(Geen uitleg)</div>')
-        + '<div style="margin-top:10px">' + qaHtml + '</div>'
-        + downloadHtml;
+        applyRouteModeUI();
       
-      var html =
-        '<div class="stack">'
-        + panelHtml('story','Personage + Verhaal', storyBody, focus==='story')
-        + panelHtml('qa','Uitleg en vragen', qaBody, focus==='qa')
-        + panelHtml('map','Kaart', mapBody, focus==='map')
-        + '</div>';
+        var st = store.get();
+        var pc = currentPc();
+        var cont = qs('unlockList'); if(!cont) return;
+      
+        var arr = DATA.locaties || DATA.stops || [];
+      
+        function findLocById(id){
+          for(var i=0;i<arr.length;i++){
+            if(arr[i] && arr[i].id === id) return arr[i];
+          }
+          return null;
+        }
+      
+        var currentLoc = st.currentLocId ? findLocById(st.currentLocId) : null;
+        if(!currentLoc && (st.unlockedLocs||[]).length){
+          currentLoc = findLocById(st.unlockedLocs[st.unlockedLocs.length-1]);
+        }
+        if(!currentLoc){
+          cont.innerHTML = '<div class="muted">Nog geen huidige stop. Wandel eens binnen een cirkel 🙂</div>';
+          renderProgress();
+          return;
+        }
+      
+        var loc = currentLoc;
+        var locId = loc.id;
+        var slotId = loc.slot;
+      
+        // ✅ bepaal END + downloadHtml VOOR je qaBody bouwt
         var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
         var isEnd = (loc && loc.slot === endSlot);
-        
-        
+      
+        var downloadHtml = '';
         if(isEnd){
           downloadHtml =
             '<div class="card mt-10">'
@@ -1101,56 +1000,152 @@ document.addEventListener('click', function(e){
           + '  </div>'
           + '</div>';
         }
-        
-      // Park oneMap vóór innerHTML
-      var oneMap = document.getElementById('oneMap');
-      var park = document.getElementById('mapPark');
-      if(!park){
-        park = document.createElement('div');
-        park.id = 'mapPark';
-        park.style.display = 'none';
-        document.body.appendChild(park);
-      }
-      if(oneMap && oneMap.parentElement !== park) park.appendChild(oneMap);
-  
-      cont.innerHTML = html;
-  
-      // Stops lijst naar host
-    //   var host = document.getElementById('stopsListHost');
-    //   var stopsList = document.getElementById('stopsList');
-    //   if(host && stopsList && stopsList.parentElement !== host) host.appendChild(stopsList);
-      scheduleStopsRender('after renderUnlocked move');
-      // oneMap terug naar wrap
-      var wrap = document.getElementById('mapPanelWrap');
-      oneMap = document.getElementById('oneMap');
-      if(wrap && oneMap && oneMap.parentElement !== wrap) wrap.appendChild(oneMap);
-      if(oneMap){
-        oneMap.style.height = '100%';
-        oneMap.style.minHeight = '260px';
-      }
-  
-      // controls verhuizen
-      var ctrl = document.getElementById('mapControlsWrap');
-      if(ctrl){
-        var btn = document.getElementById('recenterBtn');
-        var link = document.getElementById('openInMaps');
-        if(btn) ctrl.appendChild(btn);
-        if(link) ctrl.appendChild(link);
-      }
-  
-      // Leaflet init + invalidate als map focus
-      if(focus === 'map'){
-        ensureLeafletMap();
       
-        setTimeout(function(){
-          if(window.LMAP) window.LMAP.invalidateSize(true);
-          scheduleStopsRender('panel map opened');
-        }, 200);
+        var verhaal = getStoryFor(pc, slotId, locId);
+      
+        var uitleg = loc.uitleg || null;
+        var uitlegKort = '', uitlegLang = '';
+        if(uitleg){
+          if(typeof uitleg === 'string') uitlegKort = uitleg;
+          else { uitlegKort = uitleg.kort || ''; uitlegLang = uitleg.uitgebreid || ''; }
+        }
+      
+        var uitlegHtml = '';
+        if(uitlegKort || uitlegLang){
+          var moreId = 'more_' + locId;
+          uitlegHtml =
+            '<div class="uitlegBox">'
+          + '  <div class="uitlegTitle">'
+          + '    <span class="uitlegTitleText">ℹ️ Uitleg</span>'
+          + (uitlegLang ? ' <button class="uitlegToggleIcon" type="button" data-toggle="'+moreId+'">+</button>' : '')
+          + '  </div>'
+          + (uitlegKort ? ('<div class="uitlegKort">'+escapeHtml(uitlegKort)+'</div>') : '')
+          + (uitlegLang ? ('<div id="'+moreId+'" class="uitlegLang hidden">'+escapeHtml(uitlegLang)+'</div>') : '')
+          + '</div>';
+        }
+      
+        var qsArr = loc.vragen || [];
+        var qaHtml = '';
+        if(qsArr.length){
+          qaHtml = qsArr.map(function(q,qi){
+            var val = getAns(locId, qi);
+            return ''
+              + '<div class="qa">'
+              + '  <div class="q"><b>Vraag '+(qi+1)+':</b> '+escapeHtml(q)+'</div>'
+              + '  <div class="controls">'
+              + '    <textarea class="ans" data-stop="'+locId+'" data-q="'+qi+'" placeholder="Jouw antwoord...">'+escapeHtml(val)+'</textarea>'
+              + '    <div class="btnRow">'
+              + (MIC_OK ? '      <button class="micBtn" data-stop="'+locId+'" data-q="'+qi+'">🎙️</button>' : '')
+              + '      <button class="clearAns" data-stop="'+locId+'" data-q="'+qi+'">✖</button>'
+              + '      <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+qi+'"></span>'
+              + '    </div>'
+              + '  </div>'
+              + '</div>';
+          }).join('');
+        } else {
+          qaHtml = '<div class="muted">Geen vragen bij deze stop.</div>';
+        }
+      
+        var pcCard =
+          '<div class="pcMini">'
+        + ' <img class="pcMiniImg" src="'+escapeHtml(qs("pcImg") ? qs("pcImg").src : "")+'" alt=""/>'
+        + ' <div class="pcMiniMeta">'
+        + '   <div class="pcMiniName">'+escapeHtml(pc && pc.naam ? pc.naam : '—')+'</div>'
+        + '   <div class="pcMiniSub muted">'+escapeHtml(pc && pc.herkomst ? pc.herkomst : '—')+' — '+escapeHtml(pc && pc.rol ? pc.rol : '—')+'</div>'
+        + (pc && pc.bio ? ('<div class="pcMiniBio">'+escapeHtml(pc.bio)+'</div>') : '')
+        + ' </div>'
+        + '</div>';
+      
+        var focus = (st.focus || 'story');
+        if(!st.focus){
+          var routeMode = (st.geoOn === true) || (st.lockedPc === true) ||
+                          ((st.unlockedSlots||[]).length > 0) || (st.currentLocId);
+          if(routeMode){
+            focus = 'map';
+            st.focus = 'map';
+            store.set(st);
+          }
+        }
+      
+        var storyBody = ''
+          + pcCard
+          + '<div style="margin-top:10px">'
+          + '  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
+          + '    <div style="font-weight:800">📘 Verhaal</div>'
+          + '    <button class="readBtn" data-slot="'+slotId+'" data-loc="'+locId+'" title="Lees voor">🔊</button>'
+          + '  </div>'
+          + '  <div style="margin-top:6px">' + (verhaal ? escapeHtml(verhaal) : '<span class="muted">(Geen tekst)</span>') + '</div>'
+          + '</div>';
+      
+        // ✅ enkel 1x qaBody, mét downloadHtml
+        var qaBody = ''
+          + '<div id="statusWrapQa"></div>'
+          + (uitlegHtml || '<div class="muted">(Geen uitleg)</div>')
+          + '<div style="margin-top:10px">' + qaHtml + '</div>'
+          + downloadHtml;
+      
+        var mapBody = ''
+          + '<div id="statusWrapMap"></div>'
+          + '<div id="mapPanelWrap" style="height:68vh; min-height:320px; border-radius:12px; overflow:hidden;"></div>'
+          + '<div id="mapControlsWrap" class="row small mt-8"></div>'
+          + '<div class="mt-10">'
+          + '  <div class="muted small" style="margin-bottom:6px">Stops</div>'
+          + '  <div id="stopsListHost" class="stopsPills"></div>'
+          + '</div>';
+      
+        var html =
+          '<div class="stack">'
+          + panelHtml('story','Personage + Verhaal', storyBody, focus==='story')
+          + panelHtml('qa','Uitleg en vragen', qaBody, focus==='qa')
+          + panelHtml('map','Kaart', mapBody, focus==='map')
+          + '</div>';
+      
+        // Park oneMap vóór innerHTML
+        var oneMap = document.getElementById('oneMap');
+        var park = document.getElementById('mapPark');
+        if(!park){
+          park = document.createElement('div');
+          park.id = 'mapPark';
+          park.style.display = 'none';
+          document.body.appendChild(park);
+        }
+        if(oneMap && oneMap.parentElement !== park) park.appendChild(oneMap);
+      
+        cont.innerHTML = html;
+      
+        // stops render plannen (host bestaat nu)
+        scheduleStopsRender('after renderUnlocked move');
+      
+        // oneMap terug naar wrap
+        var wrap = document.getElementById('mapPanelWrap');
+        oneMap = document.getElementById('oneMap');
+        if(wrap && oneMap && oneMap.parentElement !== wrap) wrap.appendChild(oneMap);
+        if(oneMap){
+          oneMap.style.height = '100%';
+          oneMap.style.minHeight = '260px';
+        }
+      
+        // controls verhuizen
+        var ctrl = document.getElementById('mapControlsWrap');
+        if(ctrl){
+          var btn = document.getElementById('recenterBtn');
+          var link = document.getElementById('openInMaps');
+          if(btn) ctrl.appendChild(btn);
+          if(link) ctrl.appendChild(link);
+        }
+      
+        // Leaflet init + invalidate als map focus
+        if(focus === 'map'){
+          ensureLeafletMap();
+          setTimeout(function(){
+            if(window.LMAP) window.LMAP.invalidateSize(true);
+            scheduleStopsRender('panel map opened');
+          }, 200);
+        }
+      
+        renderProgress();
       }
       
-  
-      renderProgress();
-    }
   
     // ---------- Panel click: focus opslaan ----------
     document.addEventListener('click', function(e){
