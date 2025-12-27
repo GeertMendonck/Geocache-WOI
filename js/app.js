@@ -46,53 +46,35 @@
       
       var __stopsRenderTimer = null;
 
-function scheduleStopsRender(reason){
-  if(__stopsRenderTimer) clearTimeout(__stopsRenderTimer);
-
-  // we plannen render op een moment dat layout/panel/DOM al bestaat
-  __stopsRenderTimer = setTimeout(function(){
-    var tries = 0;
-
-    function attempt(){
-      tries++;
-
-      var st = store.get();
-      var focus = st.focus || 'story';
-
-      var cont = document.getElementById('stopsList');
-      var host = document.getElementById('stopsListHost');
-
-      // cont moet bestaan
-      if(!cont){
-        if(tries < 10) return requestAnimationFrame(attempt);
-        return;
+      function scheduleStopsRender(reason){
+        if(__stopsRenderTimer) clearTimeout(__stopsRenderTimer);
+      
+        __stopsRenderTimer = setTimeout(function(){
+          var tries = 0;
+      
+          function attempt(){
+            tries++;
+      
+            var host = document.getElementById('stopsListHost');
+            if(host){
+              // host bestaat, maar is hij al zichtbaar?
+              if(host.offsetParent === null){
+                if(tries < 20) return requestAnimationFrame(attempt);
+                return;
+              }
+            } else {
+              // nog geen host, dan kan renderStops nergens terecht (in map UI)
+              if(tries < 20) return requestAnimationFrame(attempt);
+              return;
+            }
+      
+            try { renderStops(); } catch(e){}
+          }
+      
+          requestAnimationFrame(attempt);
+        }, 0);
       }
-
-      // Als focus=map verwachten we dat host bestaat, en dat cont in host zit (of kan zitten)
-      if(focus === 'map'){
-        if(!host){
-          if(tries < 10) return requestAnimationFrame(attempt);
-          return;
-        }
-        if(cont.parentElement !== host){
-          host.appendChild(cont);
-        }
-
-        // belangrijk: host/panel moet zichtbaar zijn, anders render je in "display:none"
-        if(host.offsetParent === null){
-          if(tries < 10) return requestAnimationFrame(attempt);
-          return;
-        }
-      }
-
-      // ✅ Hier is het “veilig”
-      try { renderStops(); } catch(e){}
-
-    }
-
-    requestAnimationFrame(attempt);
-  }, 0);
-}
+      
 
     function slotIsRequired(slotId){
         for (var i=0;i<(DATA.slots||[]).length;i++){
@@ -302,6 +284,17 @@ function scheduleStopsRender(reason){
   
     // ---------- Core listeners ----------
     function bindCoreListeners(){
+        document.addEventListener('click', function(e){
+            var r = e.target && e.target.closest ? e.target.closest('#recenterBtn') : null;
+            if(r){
+              followMe = true;
+              if(window.__lastFix && window.LMAP){
+                window.LMAP.setView([window.__lastFix.lat, window.__lastFix.lng], window.LMAP.getZoom());
+              }
+              return;
+            }
+          });
+          
       var b;
       document.addEventListener('click', function(e){
         var ex = e.target && e.target.closest ? e.target.closest('#exportBtn') : null;
@@ -313,7 +306,7 @@ function scheduleStopsRender(reason){
   
       b=qs('startBtn'); if(b) b.addEventListener('click', function(){ initAudio(); startWatch(); });
       b=qs('resetBtn'); if(b) b.addEventListener('click', function(){ localStorage.removeItem('woi_state'); location.reload(); });
-      b=qs('recenterBtn'); if(b) b.addEventListener('click', function(){ followMe = true; });
+     // b=qs('recenterBtn'); if(b) b.addEventListener('click', function(){ followMe = true; });
   
       // Install prompt
       var deferredPrompt=null;
@@ -622,93 +615,89 @@ document.addEventListener('click', function(e){
   
     // ---------- UI: Stops ----------
     function renderStops(){
-     // ✅ render altijd naar de host in het kaartpaneel als die er is
-        var cont = document.getElementById('stopsListHost') || document.getElementById('stopsList');
+        var host = document.getElementById('stopsListHost');
+        var cont = host || document.getElementById('stopsList');
         if(!cont) return;
-
-  
-      var st = store.get();
-      var unlockedSlots = st.unlockedSlots || [];
-      var unlockedMap = {};
-      unlockedSlots.forEach(function(sid){ unlockedMap[sid]=true; });
-  
-      var endSlot   = DATA.endSlot  || (DATA.meta && DATA.meta.endSlot)  || 'end';
-      var slotOrder = DATA.slotOrder || (DATA.slots||[]).map(function(s){ return s.id; });
-  
-      function slotObj(sid){
-        for (var i=0;i<(DATA.slots||[]).length;i++){
-          if (DATA.slots[i].id===sid) return DATA.slots[i];
+      
+        var st = store.get();
+        var unlockedSlots = st.unlockedSlots || [];
+        var unlockedMap = {};
+        unlockedSlots.forEach(function(sid){ unlockedMap[sid]=true; });
+      
+        var endSlot   = DATA.endSlot  || (DATA.meta && DATA.meta.endSlot)  || 'end';
+        var slotOrder = DATA.slotOrder || (DATA.slots||[]).map(function(s){ return s.id; });
+      
+        function slotObj(sid){
+          for (var i=0;i<(DATA.slots||[]).length;i++){
+            if (DATA.slots[i].id===sid) return DATA.slots[i];
+          }
+          return null;
         }
-        return null;
-      }
-      function slotLabel(sid){
-        var o = slotObj(sid);
-        var label = (o && o.label) ? o.label : sid;
-        if(o && o.required === false) label += ' (opt.)';
-        return label;
-      }
-      function isOptionalSlot(sid){
-        var o = slotObj(sid);
-        return o ? (o.required === false) : false;
-      }
-  
-      function stripPrefix(name){
-        if(!name) return '';
-        return name.replace(/^(Stop\s*\d+\s*:\s*|Start\s*:\s*|Einde\s*:\s*)/i, '').trim();
-      }
-  
-      function allLocationsForSlot(slotId){
-        var arr = DATA.locaties || DATA.stops || [];
-        var out = [];
-        for(var i=0;i<arr.length;i++){
-          if(arr[i] && arr[i].slot === slotId) out.push(arr[i]);
+        function slotLabel(sid){
+          var o = slotObj(sid);
+          var label = (o && o.label) ? o.label : sid;
+          if(o && o.required === false) label += ' (opt.)';
+          return label;
         }
-        return out;
-      }
-  
-      function findLocById(locId){
-        var arr = DATA.locaties || DATA.stops || [];
-        for (var i=0;i<arr.length;i++){
-          if(arr[i] && arr[i].id === locId) return arr[i];
+        function isOptionalSlot(sid){
+          var o = slotObj(sid);
+          return o ? (o.required === false) : false;
         }
-        return null;
-      }
-  
-      function displayPlaceForSlot(sid){
-        var locs = allLocationsForSlot(sid);
-        if(!locs.length) return '';
-  
-        if(locs.length > 1 && !unlockedMap[sid]){
-          return '🔀 (' + locs.length + ' opties)';
+        function stripPrefix(name){
+          if(!name) return '';
+          return name.replace(/^(Stop\s*\d+\s*:\s*|Start\s*:\s*|Einde\s*:\s*)/i, '').trim();
         }
-  
-        var chosenId = null;
-        if(st.unlockedBySlot && st.unlockedBySlot[sid]) chosenId = st.unlockedBySlot[sid];
-        else if(locs.length === 1) chosenId = locs[0].id;
-        else chosenId = locs[0].id;
-  
-        var loc = findLocById(chosenId);
-        return loc && loc.naam ? stripPrefix(loc.naam) : '';
+        function allLocationsForSlot(slotId){
+          var arr = DATA.locaties || DATA.stops || [];
+          var out = [];
+          for(var i=0;i<arr.length;i++){
+            if(arr[i] && arr[i].slot === slotId) out.push(arr[i]);
+          }
+          return out;
+        }
+        function findLocById(locId){
+          var arr = DATA.locaties || DATA.stops || [];
+          for (var i=0;i<arr.length;i++){
+            if(arr[i] && arr[i].id === locId) return arr[i];
+          }
+          return null;
+        }
+        function displayPlaceForSlot(sid){
+          var locs = allLocationsForSlot(sid);
+          if(!locs.length) return '';
+      
+          if(locs.length > 1 && !unlockedMap[sid]){
+            return '🔀 (' + locs.length + ' opties)';
+          }
+      
+          var chosenId = null;
+          if(st.unlockedBySlot && st.unlockedBySlot[sid]) chosenId = st.unlockedBySlot[sid];
+          else if(locs.length === 1) chosenId = locs[0].id;
+          else chosenId = locs[0].id;
+      
+          var loc = findLocById(chosenId);
+          return loc && loc.naam ? stripPrefix(loc.naam) : '';
+        }
+      
+        var html = '';
+        (slotOrder||[]).forEach(function(sid){
+          var ok = !!unlockedMap[sid];
+          var optional = isOptionalSlot(sid);
+          var icon = ok ? '✅' : (sid===endSlot ? '🔒' : (optional ? '🧩' : '⏳'));
+      
+          var label = slotLabel(sid);
+          var place = displayPlaceForSlot(sid);
+      
+          html += '<span class="pill">'
+                + icon + ' '
+                + '<span class="pillMain">' + escapeHtml(label) + '</span>'
+                + (place ? ' <span class="pillSub">· ' + escapeHtml(place) + '</span>' : '')
+                + '</span>';
+        });
+      
+        cont.innerHTML = html || '<span class="muted">(Geen stops geladen)</span>';
       }
-  
-      var html = '';
-      (slotOrder||[]).forEach(function(sid){
-        var ok = !!unlockedMap[sid];
-        var optional = isOptionalSlot(sid);
-        var icon = ok ? '✅' : (sid===endSlot ? '🔒' : (optional ? '🧩' : '⏳'));
-  
-        var label = slotLabel(sid);
-        var place = displayPlaceForSlot(sid);
-  
-        html += '<span class="pill">'
-              + icon + ' '
-              + '<span class="pillMain">' + escapeHtml(label) + '</span>'
-              + (place ? ' <span class="pillSub">· ' + escapeHtml(place) + '</span>' : '')
-              + '</span>';
-      });
-  
-      cont.innerHTML = html || '<span class="muted">(Geen stops geladen)</span>';
-    }
+      
   
     // ---------- Route/setup UI (FIX) ----------
    // ---------- Route/setup UI (FIX) ----------
@@ -1145,14 +1134,18 @@ document.addEventListener('click', function(e){
           + '<div style="margin-top:10px">' + qaHtml + '</div>'
           + downloadHtml;
       
-        var mapBody = ''
-          + '<div id="statusWrapMap"></div>'
-          + '<div id="mapPanelWrap" style="height:68vh; min-height:320px; border-radius:12px; overflow:hidden;"></div>'
-          + '<div id="mapControlsWrap" class="row small mt-8"></div>'
-          + '<div class="mt-10">'
-          + '  <div class="muted small" style="margin-bottom:6px">Stops</div>'
-          + '  <div id="stopsListHost" class="stopsPills"></div>'
-          + '</div>';
+          var mapBody =
+          '<div id="statusWrapMap"></div>'
+        + '<div id="mapPanelWrap" style="height:68vh; min-height:320px; border-radius:12px; overflow:hidden;"></div>'
+        + '<div id="mapControlsWrap" class="row small mt-8">'
+        + '  <button id="recenterBtn" type="button" class="primary">🎯 Centreer</button>'
+        + '  <a id="openInMaps" class="btn" target="_blank" rel="noopener">🗺️ Open in Maps</a>'
+        + '</div>'
+        + '<div class="mt-10">'
+        + '  <div class="muted small" style="margin-bottom:6px">Stops</div>'
+        + '  <div id="stopsListHost" class="stopsPills"></div>'
+        + '</div>';
+        
       
         var html =
           '<div class="stack">'
