@@ -13,8 +13,11 @@
 
   "prestart": {
     "useLocationId": "thuis",
-    "meetingPoint": { "lat": 51.220418, "lng": 4.440854 },
-    "message": "Nog niet aan het startpunt (Thuis). Ga naar de startlocatie om te beginnen."
+    "meetingPoint": { "lat": 51.220418, "lng": 4.440854, "label": "Aan de voordeur" },
+    "message": "Nog niet aan het startpunt (Thuis). Ga naar de startlocatie om te beginnen.",
+    "maps": {
+      "label": "Route naar startpunt"
+    }
   },
 
   "slots": [
@@ -36,7 +39,7 @@
       "naam": "Start: Thuis",
       "lat": 51.220418,
       "lng": 4.440854,
-      "radius": 120,
+      "radius": 50,
 
       "routeHint": "Ga naar je startpunt (Thuis). Start pas wanneer je binnen de radius staat (±120m).",
 
@@ -56,7 +59,7 @@
       "naam": "Keuze: Ceresstraat & Florastraat",
       "lat": 51.219117,
       "lng": 4.441710,
-      "radius": 80,
+      "radius": 50,
 
       "routeHint": "Optioneel: wandel richting kruispunt Ceresstraat/Florastraat. Handig om ‘required:false’ te testen.",
 
@@ -175,7 +178,7 @@
       "naam": "Einde: Thuis",
       "lat": 51.220428,
       "lng": 4.440834,
-      "radius": 120,
+      "radius": 50,
 
       "routeHint": "Ga terug naar huis (binnen radius ±120m). Hier controleer je de eindstaat: progress, unlocks en opslag.",
 

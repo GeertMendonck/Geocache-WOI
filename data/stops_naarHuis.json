@@ -1,100 +1,175 @@
 {
-    "slots": [
-      { "id": "start",  "label": "Start",  "required": true },
-      { "id": "stop01", "label": "Stop 1", "required": true },
-      { "id": "stop02", "label": "Stop 2", "required": true },
-      { "id": "stop03", "label": "Stop 3", "required": true },
-      { "id": "optioneel", "label": "Optioneel", "required": false },
-      { "id": "stop04", "label": "Stop 4", "required": true },
-      { "id": "end",    "label": "Einde",  "required": true }
-    ],
-    "locaties": [
-      {
-        "id": "thuis",
-        "slot": "end",
-        "naam": "Thuis",
-        "lat": 51.220418,
-        "lng": 4.440854,
-        "radius": 100,
-        "vragen": [
-          "Wat wil je vandaag testen?",
-          "Welke functies wil je zeker uitproberen?"
-        ]
-      },
-      {
-        "id": "sint_willibrorduskerk",
-        "slot": "stop04",
-        "naam": "Sint-Willibrorduskerk",
-        "lat": 51.2193360072171,
-        "lng": 4.431886670037614,
-        "radius": 100,
-        "vragen": [
-          "Werken de reflectievelden en de voorleesknop goed?",
-          "Voelt de UI vlot aan op jouw toestel?"
-        ]
-      },
-      {
-        "id": "chinese_poort",
-        "slot": "optioneel",
-        "naam": "Chinese Poort",
-        "lat": 51.219200,
-        "lng": 4.420779,
-        "radius": 50,
-        "vragen": [
-          "Werken de reflectievelden en de voorleesknop goed?",
-          "Voelt de UI vlot aan op jouw toestel?"
-        ]
-      },
-      {
-        "id": "centraal_station",
-        "slot": "stop03",
-        "naam": "Centraal-Station",
-        "lat": 51.217525,
-        "lng": 4.421154,
-        "radius": 100,
-        "vragen": [
-          "Werken de reflectievelden en de voorleesknop goed?",
-          "Voelt de UI vlot aan op jouw toestel?"
-        ]
-      },
-      {
-        "id": "metro_opera",
-        "slot": "stop02",
-        "naam": "Metro Opera",
-        "lat": 51.218083,
-        "lng": 4.415521,
-        "radius": 100,
-        "vragen": [
-          "Werken de reflectievelden en de voorleesknop goed?",
-          "Voelt de UI vlot aan op jouw toestel?"
-        ]
-      },
-      {
-        "id": "wapper",
-        "slot": "stop01",
-        "naam": "De Wapper",
-        "lat": 51.218013,
-        "lng": 4.408981,
-        "radius": 100,
-        "vragen": [
-          "Werken de reflectievelden en de voorleesknop goed?",
-          "Voelt de UI vlot aan op jouw toestel?"
-        ]
-      },
-      {
-        "id": "sint_lodewijk_secretariaat",
-        "slot": "start",
-        "naam": "Sint-Lodewijk",
-        "lat": 51.21742931212193,
-        "lng": 4.402670253459137,
-        "radius": 70,
-        "vragen": [
-          "Wat valt je hier op (UI/UX, snelheid, nauwkeurigheid)?",
-          "Werkt het ontgrendelen zoals bedoeld?"
-        ]
-      }
-    ]
-}
+  "meta": {
+    "title": "Testroute – School (Wapper → Station → Kerk → Thuis)",
+    "subtitle": "Lineaire test met één optionele stop (Chinese Poort)",
+    "version": "1.0"
+  },
 
-    
-    
+  "settings": {
+    "visibilityMode": "nextOnly",
+    "multiLocationSlotMode": "all",
+    "showOptionalSlots": false
+  },
+
+  "prestart": {
+    "useLocationId": "sint_lodewijk_secretariaat",
+    "meetingPoint": { "lat": 51.21742931212193, "lng": 4.402670253459137, "label": "Aan de ingang" },
+    "message": "Nog niet aan het startpunt (Sint-Lodewijk). Ga naar het startpunt om te beginnen.",
+    "maps": { "label": "Route naar startpunt" }
+  },
+
+  "slots": [
+    { "id": "start",      "label": "Start",      "required": true },
+
+    { "id": "stop01",     "label": "Stop 1",     "required": true,  "unlockAfterSlot": "start" },
+    { "id": "stop02",     "label": "Stop 2",     "required": true,  "unlockAfterSlot": "stop01" },
+    { "id": "stop03",     "label": "Stop 3",     "required": true,  "unlockAfterSlot": "stop02" },
+
+    { "id": "optioneel",  "label": "Optioneel",  "required": false, "unlockAfterSlot": "stop03" },
+
+    { "id": "stop04",     "label": "Stop 4",     "required": true,  "unlockAfterSlot": "stop03" },
+    { "id": "end",        "label": "Einde",      "required": true,  "unlockAfterSlot": "stop04" }
+  ],
+
+  "locaties": [
+    {
+      "id": "sint_lodewijk_secretariaat",
+      "slot": "start",
+      "naam": "Start: Sint-Lodewijk (secretariaat)",
+      "lat": 51.21742931212193,
+      "lng": 4.402670253459137,
+      "radius": 50,
+
+      "routeHint": "Ga naar het secretariaat van Sint-Lodewijk. Start pas wanneer je binnen de radius staat (±50m).",
+
+      "uitleg": {
+        "kort": "Startpunt om unlock/flow te testen.",
+        "uitgebreid": "Test hier de basis: verschijnt uitleg boven vragen, werkt refresh zonder rare effecten, en start je route pas wanneer je echt binnen de radius staat."
+      },
+      "vragen": [
+        "Wat valt je hier op (UI/UX, snelheid, nauwkeurigheid)?",
+        "Werkt het ontgrendelen zoals bedoeld?"
+      ]
+    },
+
+    {
+      "id": "wapper",
+      "slot": "stop01",
+      "naam": "Stop 1: De Wapper",
+      "lat": 51.218013,
+      "lng": 4.408981,
+      "radius": 50,
+
+      "routeHint": "Ga naar De Wapper. Test de afstandsindicatie en of de stop netjes unlocked zodra je binnen ±50m komt.",
+
+      "uitleg": {
+        "kort": "Teststop: afstand/ontgrendeling.",
+        "uitgebreid": "Controleer of de afstand logisch is en of er geen flapperen is wanneer je net op de rand van de radius zit."
+      },
+      "vragen": [
+        "Werken de reflectievelden en de voorleesknop goed?",
+        "Voelt de UI vlot aan op jouw toestel?"
+      ]
+    },
+
+    {
+      "id": "metro_opera",
+      "slot": "stop02",
+      "naam": "Stop 2: Metro Opera",
+      "lat": 51.218083,
+      "lng": 4.415521,
+      "radius": 50,
+
+      "routeHint": "Ga naar Metro Opera. Let op live updates van je positie en de stabiliteit van de kaart.",
+
+      "uitleg": {
+        "kort": "Teststop: live positie updates.",
+        "uitgebreid": "Test of de kaart/marker vloeiend meebeweegt en of de app responsief blijft tijdens wandelen."
+      },
+      "vragen": [
+        "Werken de reflectievelden en de voorleesknop goed?",
+        "Voelt de UI vlot aan op jouw toestel?"
+      ]
+    },
+
+    {
+      "id": "centraal_station",
+      "slot": "stop03",
+      "naam": "Stop 3: Centraal-Station",
+      "lat": 51.217525,
+      "lng": 4.421154,
+      "radius": 50,
+
+      "routeHint": "Ga naar het Centraal Station. Test opnieuw ontgrendeling + UI responsiviteit.",
+
+      "uitleg": {
+        "kort": "Teststop: unlock + UI vlotheid.",
+        "uitgebreid": "Let op of de stop correct als ‘behaald’ wordt gemarkeerd en of je antwoorden per locatie correct blijven hangen."
+      },
+      "vragen": [
+        "Werken de reflectievelden en de voorleesknop goed?",
+        "Voelt de UI vlot aan op jouw toestel?"
+      ]
+    },
+
+    {
+      "id": "chinese_poort",
+      "slot": "optioneel",
+      "naam": "Optioneel: Chinese Poort",
+      "lat": 51.219200,
+      "lng": 4.420779,
+      "radius": 50,
+
+      "routeHint": "Optioneel: ga langs de Chinese Poort. Test ‘required:false’ en of de route verder correct blijft.",
+
+      "uitleg": {
+        "kort": "Optionele stop: test required:false.",
+        "uitgebreid": "Deze stop mag je overslaan. Test of de app niet ‘vastloopt’ op een optionele stop en of je progress correct blijft."
+      },
+      "vragen": [
+        "Werken de reflectievelden en de voorleesknop goed?",
+        "Voelt de UI vlot aan op jouw toestel?"
+      ]
+    },
+
+    {
+      "id": "sint_willibrorduskerk",
+      "slot": "stop04",
+      "naam": "Stop 4: Sint-Willibrorduskerk",
+      "lat": 51.2193360072171,
+      "lng": 4.431886670037614,
+      "radius": 50,
+
+      "routeHint": "Ga naar de Sint-Willibrorduskerk. Test data-opslag per locatie-id en de voorleesknop.",
+
+      "uitleg": {
+        "kort": "Teststop: opslag/voorlezen per locatie.",
+        "uitgebreid": "Controleer of antwoorden correct gekoppeld worden aan deze locatie en dat refresh niets door elkaar haalt."
+      },
+      "vragen": [
+        "Werken de reflectievelden en de voorleesknop goed?",
+        "Voelt de UI vlot aan op jouw toestel?"
+      ]
+    },
+
+    {
+      "id": "thuis",
+      "slot": "end",
+      "naam": "Einde: Thuis",
+      "lat": 51.220418,
+      "lng": 4.440854,
+      "radius": 50,
+
+      "routeHint": "Ga terug naar thuis (binnen ±50m). Hier test je de eindstaat: progress, unlocks en opslag.",
+
+      "uitleg": {
+        "kort": "Eindpunt: alles moet kloppen.",
+        "uitgebreid": "Controleer of je route-status correct is, of alle nodige stappen als voltooid gelden, en of je antwoorden behouden blijven."
+      },
+      "vragen": [
+        "Wat wil je vandaag testen?",
+        "Welke functies wil je zeker uitproberen?"
+      ]
+    }
+  ]
+}

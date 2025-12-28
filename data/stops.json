@@ -12,8 +12,11 @@
 
   "prestart": {
     "useLocationId": "start_menenpoort",
-    "meetingPoint": { "lat": 50.85210, "lng": 2.89140 },
-    "message": "Nog niet aan het startpunt. Ga naar de Menenpoort om te beginnen."
+    "meetingPoint": { "lat": 50.85210, "lng": 2.89140, "label": "Onder de boog" },
+    "message": "Nog niet aan het startpunt. Ga naar de Menenpoort om te beginnen.",
+    "maps": {
+      "label": "Route naar startpunt"
+    }
   },
 
   "slots": [
@@ -154,7 +157,7 @@
       "lng": 2.89116,
       "radius": 100,
 
-      "routeHint": "Keer terug naar de Menenpoort in Ieper. Eindig de route wanneer je opnieuw binnen de radius staat.",
+      "routeHint": "Keer terug naar de Menenpoort in Ieper. Eindig de route wanneer je opnieuw binnen de radius staat. Als je met de fiets bent, breng deze dan binnen bij het verhuurbedrijf (iets verder in de straat).",
 
       "uitleg": {
         "kort": "We keren terug naar de plek waar herinneren centraal staat.",
