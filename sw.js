@@ -1,5 +1,5 @@
 // sw.js — PWA cache
-const CACHE = 'woi-pwa-v21'; // ← bump bij elke release
+const CACHE = 'woi-pwa-v22'; // ← bump bij elke release
 const PRECACHE = [
   './',
   './index.html',
