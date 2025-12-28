@@ -1311,6 +1311,7 @@ document.addEventListener('click', function(e){
       }
   
       var locs = DATA.locaties || DATA.stops || [];
+      var visibleSlotMap = computeVisibleSlotMap();
       for(var i=0;i<locs.length;i++){
         var s = locs[i];
         if(!s || s.lat==null || s.lng==null) continue;
