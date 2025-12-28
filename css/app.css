@@ -484,8 +484,36 @@ container die 3 panelen onder elkaar stapelt
 
 .stopsPills { display:flex; flex-wrap:wrap; gap:8px; }
 .stopsPills .pill { display:inline-flex; align-items:center; }
-
-
+/* ===============================
+     Verhaal met focus op nieuwste deel
+     =============================== */
+.storyChunk{
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.08);
+    margin-top: 10px;
+  }
+  .storyChunkHead{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:6px;
+    font-weight:800;
+  }
+  .storyChunkBody{
+    white-space:pre-wrap;
+    line-height:1.35;
+  }
+  .storyChunk.is-latest{
+    border-color: rgba(61,209,192,.45);
+    box-shadow: 0 0 0 2px rgba(61,209,192,.12) inset;
+  }
+  .pill.tiny{
+    font-size: 12px;
+    padding: 2px 8px;
+  }
+  
   /* ===============================
      MOBILE
      =============================== */

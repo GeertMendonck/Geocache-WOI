@@ -13,6 +13,87 @@
     var DEBUG = false;
   
     // ---------- Mini helpers ----------
+    function buildStoryTimelineHtml(pc, hasRealLoc){
+        var st = store.get();
+      
+        if(!hasRealLoc){
+          return '<span class="muted">Nog geen huidige stop. Wandel eens binnen een cirkel 🙂</span>';
+        }
+        if(!pc){
+          return '<span class="muted">(Geen personage)</span>';
+        }
+      
+        var arr = DATA.locaties || DATA.stops || [];
+        function findLocById(id){
+          for(var i=0;i<arr.length;i++){
+            if(arr[i] && arr[i].id === id) return arr[i];
+          }
+          return null;
+        }
+      
+        var unlockedLocs = st.unlockedLocs || [];
+        if(!unlockedLocs.length){
+          // fallback: toon current stuk zoals vroeger
+          return (typeof verhaal !== 'undefined' && verhaal)
+            ? escapeHtml(verhaal)
+            : '<span class="muted">(Nog geen verhaal)</span>';
+        }
+      
+        var latestId = st.currentLocId || unlockedLocs[unlockedLocs.length-1];
+      
+        var html = '';
+        for(var i=0;i<unlockedLocs.length;i++){
+          var loc = findLocById(unlockedLocs[i]);
+          if(!loc) continue;
+      
+          var locId2 = loc.id;
+          var slotId2 = loc.slot;
+          var titel = loc.naam || locId2;
+      
+          var text = getStoryFor(pc, slotId2, locId2);
+          if(!text) text = '(Geen tekst)';
+      
+          var isLatest = (locId2 === latestId);
+      
+          html += ''
+            + '<div id="storyChunk_'+locId2+'" class="storyChunk '+(isLatest?'is-latest':'')+'">'
+            + '  <div class="storyChunkHead">'
+            + '    <span class="storyChunkTitle">'+escapeHtml(titel)+'</span>'
+            + (isLatest ? ' <span class="pill tiny">Nieuw</span>' : '')
+            + '  </div>'
+            + '  <div class="storyChunkBody">'+escapeHtml(text)+'</div>'
+            + '</div>';
+        }
+      
+        return html || '<span class="muted">(Geen verhaal)</span>';
+      }
+      
+      
+    function autoFocusNewStory(){
+        var st = store.get();
+        if(!st.lastUnlockedLocId) return;
+      
+        // als focus niet op story staat, spring er naartoe
+        if(st.focus !== 'story'){
+          st.focus = 'story';
+          store.set(st);
+          renderUnlocked(); // re-render met story open
+          return;
+        }
+      
+        // scroll naar het nieuw stuk (als het al bestaat)
+        var el = document.getElementById('storyChunk_' + st.lastUnlockedLocId);
+        if(el && el.scrollIntoView){
+          setTimeout(function(){
+            el.scrollIntoView({ behavior:'smooth', block:'start' });
+          }, 50);
+        }
+      
+        // only-once gedrag
+        st.lastUnlockedLocId = null;
+        store.set(st);
+      }
+      
     function applyLiveFixToMap(){
         if(!__lastFix) return;
         if(!window.LMAP || !window.L) return;
@@ -883,9 +964,11 @@ document.addEventListener('click', function(e){
         }
       }
   
-      if(st.unlockedLocs.indexOf(best.id) === -1) st.unlockedLocs.push(best.id);
+      //if(st.unlockedLocs.indexOf(best.id) === -1) st.unlockedLocs.push(best.id);
   
       if(st.unlockedSlots.indexOf(bestSlot) === -1){
+        st.lastUnlockedLocId = best.id;     // ✅ voor auto-focus
+        st.lastUnlockedAt = Date.now(); 
         st.unlockedSlots.push(bestSlot);
         st.unlockedBySlot[bestSlot] = best.id;
         st.currentLocId = best.id;
@@ -1024,7 +1107,7 @@ document.addEventListener('click', function(e){
       }
     }
   
-    // ---------- renderUnlocked (ingekort: park map 1x, restore 1x) ----------
+    // ---------- renderUnlocked ----------
     function renderUnlocked(){
         var old = document.getElementById('mapSection');
         if(old) old.style.display = 'none';
@@ -1064,17 +1147,19 @@ document.addEventListener('click', function(e){
         // ✅ bepaal END + downloadHtml VOOR je qaBody bouwt
         var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
         var isEnd = (loc && loc.slot === endSlot);
-      
-        var downloadHtml = '';
-        if(isEnd){
-          downloadHtml =
-            '<div class="card mt-10">'
-          + '  <div class="cardHead">📄 Je bent aan het eindpunt</div>'
-          + '  <div class="cardBody">'
-          + '    <button id="exportBtn" type="button" class="primary">⬇️ Download verslag</button>'
-          + '  </div>'
-          + '</div>';
-        }
+        
+        downloadHtml =
+          '<div class="card mt-10">'
+        + '  <div class="cardHead">📄 Verslag</div>'
+        + '  <div class="cardBody">'
+        + (isEnd
+            ? '<div class="muted" style="margin-bottom:10px">Je bent aan het eindpunt. Download nu je verslag.</div>'
+            : '<div class="muted" style="margin-bottom:10px">Je kan tussendoor al downloaden. (Handig voor tips onderweg.)</div>'
+          )
+        + '    <button id="exportBtn" type="button" class="primary">⬇️ Download verslag</button>'
+        + '  </div>'
+        + '</div>';
+        
       
         var verhaal = getStoryFor(pc, slotId, locId);
         var hasRealLoc = hasLoc && locId && slotId;
@@ -1149,19 +1234,18 @@ document.addEventListener('click', function(e){
           }
         }
       
-            var storyBody = ''
-            + pcCard
-            + '<div style="margin-top:10px">'
-            +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
-            +     '<div style="font-weight:800">📘 Verhaal</div>'
-            +     (hasRealLoc ? '<button class="readBtn" data-slot="'+slotId+'" data-loc="'+locId+'" title="Lees voor">🔊</button>' : '')
-            +   '</div>'
-            +   '<div style="margin-top:6px">'
-            +     (hasRealLoc
-                    ? (verhaal ? escapeHtml(verhaal) : '<span class="muted">(Geen tekst)</span>')
-                    : '<span class="muted">Nog geen huidige stop. Wandel eens binnen een cirkel 🙂</span>')
-            +   '</div>'
-            + '</div>';
+        var storyBody = ''
+        + pcCard
+        + '<div style="margin-top:10px">'
+        +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
+        +     '<div style="font-weight:800">📘 Verhaal</div>'
+        +     (hasRealLoc ? '<button class="readBtn" data-slot="'+slotId+'" data-loc="'+locId+'" title="Lees voor">🔊</button>' : '')
+        +   '</div>'
+        +   '<div style="margin-top:6px">'
+        +     buildStoryTimelineHtml(pc, hasRealLoc)   // i.p.v. enkel verhaal
+        +   '</div>'
+        + '</div>';
+      
 
       
         // ✅ enkel 1x qaBody, mét downloadHtml
@@ -1203,7 +1287,7 @@ document.addEventListener('click', function(e){
         if(oneMap && oneMap.parentElement !== park) park.appendChild(oneMap);
       
         cont.innerHTML = html;
-      
+        autoFocusNewStory();
         // stops render plannen (host bestaat nu)
         scheduleStopsRender('after renderUnlocked move');
       
@@ -1378,6 +1462,14 @@ document.addEventListener('click', function(e){
         lines.push('Personage: ' + (pc.naam||'—') + ' (' + (pc.herkomst||'—') + ') – ' + (pc.rol||'—'));
         lines.push('');
       
+        // ✅ optioneel: algemene notities/tips onderweg
+        // (als je dit nog niet hebt: st.notes of st.tips)
+        if(st.notes && String(st.notes).trim()){
+          lines.push('## Notities');
+          lines.push(String(st.notes).trim());
+          lines.push('');
+        }
+      
         var arr = DATA.locaties || DATA.stops || [];
       
         function findLocById(id){
@@ -1385,6 +1477,29 @@ document.addEventListener('click', function(e){
             if(arr[i] && arr[i].id === id) return arr[i];
           }
           return null;
+        }
+      
+        // ✅ bepaal “gekozen locatie per slot”
+        // - voorkeur: unlockedBySlot (beste bij split-stops)
+        // - anders: laatste unlockedLoc per slot
+        var bySlot = {};
+        var unlockedLocs = st.unlockedLocs || [];
+      
+        // 1) begin met unlockedBySlot (indien aanwezig)
+        if(st.unlockedBySlot){
+          for(var sid in st.unlockedBySlot){
+            if(Object.prototype.hasOwnProperty.call(st.unlockedBySlot, sid)){
+              bySlot[sid] = st.unlockedBySlot[sid];
+            }
+          }
+        }
+      
+        // 2) vul aan met unlockedLocs (laatste wins)
+        for(var u=0; u<unlockedLocs.length; u++){
+          var loc = findLocById(unlockedLocs[u]);
+          if(loc && loc.slot){
+            bySlot[loc.slot] = loc.id;
+          }
         }
       
         function exportOneLocation(loc){
@@ -1403,17 +1518,39 @@ document.addEventListener('click', function(e){
             for(var qi=0; qi<qsArr.length; qi++){
               var q = qsArr[qi];
               var ans = getAns(locId, qi);
+      
+              // compact, 1 lijn antwoord
+              var ansLine = '(—)';
+              if(ans && ans.trim){
+                ansLine = ans.trim().replace(/\r?\n/g,' ');
+                if(!ansLine) ansLine = '(—)';
+              }
+      
               lines.push('- ' + q);
-              lines.push('  - Antwoord: ' + (ans && ans.trim ? ans.trim().replace(/\r?\n/g,' ') : '(—)'));
+              lines.push('  - Antwoord: ' + ansLine);
             }
             lines.push('');
           }
         }
       
-        var ids = st.unlockedLocs || [];
-        for(var u=0; u<ids.length; u++){
-          var loc = findLocById(ids[u]);
-          if(loc) exportOneLocation(loc);
+        // ✅ export in vaste slot-volgorde (en zo voorkom je “start opnieuw” rare volgorde)
+        var slotOrder = DATA.slotOrder || (DATA.slots||[]).map(function(s){ return s.id; });
+      
+        for(var i=0; i<slotOrder.length; i++){
+          var sid2 = slotOrder[i];
+          var chosenLocId = bySlot[sid2];
+          if(!chosenLocId) continue;
+      
+          var loc2 = findLocById(chosenLocId);
+          if(loc2) exportOneLocation(loc2);
+        }
+      
+        // fallback: als slotOrder leeg is, exporteer gewoon unlockedLocs zoals jij al deed
+        if(!slotOrder || !slotOrder.length){
+          for(var u2=0; u2<unlockedLocs.length; u2++){
+            var loc3 = findLocById(unlockedLocs[u2]);
+            if(loc3) exportOneLocation(loc3);
+          }
         }
       
         var content = '\ufeff' + lines.join('\n');
@@ -1423,10 +1560,13 @@ document.addEventListener('click', function(e){
         var a = document.createElement('a');
         a.href = url;
         a.download = 'woi-verslag.md';
+        document.body.appendChild(a);
         a.click();
+        a.parentNode.removeChild(a);
       
         setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
       }
+      
       
 
 
