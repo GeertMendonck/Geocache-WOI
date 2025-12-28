@@ -274,7 +274,7 @@
           // we bepalen "te ver" op basis van afstand vs straal (zoals jij het wou laten)
           var inside = best ? (Number(best.d) <= Number(best.radius)) : true;
         
-          var text = inside ? routeHint : teVerMsg;
+          var text = inside  ? '🚶 ' + routeHint    : '🧭 ' + teVerMsg;
         
           msgEl.textContent = text || '';
           msgRow.style.display = text ? '' : 'none';
@@ -1049,6 +1049,13 @@ document.addEventListener('click', function(e){
     })();
   
     // ---------- UI: Stops ----------
+    function isSlotVisible(slotId){
+        // als er geen visibility-map is, toon alles
+        if(!window.visibleSlotMap) return true;
+        // undefined betekent: geen expliciete regel → toon
+        return window.visibleSlotMap[slotId] !== false;
+      }
+      
     function renderStops(){
         var host = document.getElementById('stopsListHost');
         var cont = host || document.getElementById('stopsList');
@@ -1124,7 +1131,7 @@ document.addEventListener('click', function(e){
           var label = slotLabel(sid);
           var place = displayPlaceForSlot(sid);
       
-          html += '<span class="pill">'
+         html += '<span class="pill ' + (ok ? 'ok' : 'no') + '">'
                 + icon + ' '
                 + '<span class="pillMain">' + escapeHtml(label) + '</span>'
                 + (place ? ' <span class="pillSub">· ' + escapeHtml(place) + '</span>' : '')
