@@ -1113,7 +1113,7 @@ document.addEventListener('click', function(e){
         if(old) old.style.display = 'none';
 
         applyRouteModeUI();
-      
+        var downloadHtml = '';
         var st = store.get();
         var pc = currentPc();
         var cont = qs('unlockList'); if(!cont) return;
@@ -1246,6 +1246,20 @@ document.addEventListener('click', function(e){
         +   '</div>'
         + '</div>';
       
+            // --- Exportblok (altijd klaarzetten) ---
+            var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
+            var isEnd = (loc && loc.slot === endSlot);
+
+            downloadHtml =
+            '<div class="card mt-10">'
+            + '  <div class="cardHead">📄 Verslag</div>'
+            + '  <div class="cardBody">'
+            + (isEnd
+                ? '    <div class="muted small" style="margin-bottom:8px">Je bent aan het eindpunt — je kan nu je definitieve verslag downloaden.</div>'
+                : '    <div class="muted small" style="margin-bottom:8px">Je kan onderweg al exporteren (handig voor tips). Definitieve export op het eindpunt.</div>')
+            + '    <button id="exportBtn" type="button" class="primary">⬇️ Download verslag</button>'
+            + '  </div>'
+            + '</div>';
 
       
         // ✅ enkel 1x qaBody, mét downloadHtml
