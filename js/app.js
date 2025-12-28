@@ -11,8 +11,53 @@
   
     // ---------- Config ----------
     var DEBUG = false;
+    var __lastFix = null;
   
     // ---------- Mini helpers ----------
+    function processFix(latitude, longitude, accuracy){
+        var startSlot = DATA.startSlot || (DATA.meta && DATA.meta.startSlot) || 'start';
+      
+        var here = { lat: latitude, lng: longitude };
+        var best = null;
+        var insideStart = false;
+      
+        (DATA.stops||[]).forEach(function(s){
+          var d = Math.round(distanceMeters(here,{lat:s.lat,lng:s.lng}));
+          if(!best || d < best.d){
+            best = { id:s.id, slot:s.slot, name:s.naam, d:d,
+                     radius:(s.radius || (DATA.meta ? DATA.meta.radiusDefaultMeters : 200)) };
+          }
+          if(s.slot === startSlot){
+            if(d <= (s.radius || (DATA.meta ? DATA.meta.radiusDefaultMeters : 200))) insideStart = true;
+          }
+        });
+      
+        window.__insideStart = insideStart;
+      
+        var st = store.get();
+      
+        // UI-info invullen (closest/dist/radius)
+        if(best){
+          var cl=qs('closest'); if(cl) cl.textContent=best.name;
+          var di=qs('dist');   if(di) di.textContent=String(best.d);
+          var ra=qs('radius'); if(ra) ra.textContent=String(best.radius);
+        }
+      
+        // ✅ unlock pas als “route echt gestart” is
+        if(best && st.geoOn === true){
+          tryUnlock(best, accuracy);
+          renderProgress();
+          scheduleStopsRender('unlock');
+        } else {
+          renderProgress();
+        }
+      
+        ensureLeafletMap();
+        // als jij nu met __lastFix + applyLiveFixToMap werkt:
+        __lastFix = { lat: latitude, lng: longitude, acc: accuracy };
+        applyLiveFixToMap();
+      }
+      
     function buildStoryTimelineHtml(pc, hasRealLoc){
         var st = store.get();
       
@@ -511,7 +556,13 @@ document.addEventListener('click', function(e){
       st2.geoOn = true;
       st2.routeStarted = true;       // ✅ meteen UI omschakelen
       st2.focus = 'map';
+      // 🔁 verwerk laatste GPS-fix meteen
+
+  
       store.set(st2);
+      if(__lastFix){
+        processFix(__lastFix.lat, __lastFix.lng, __lastFix.acc);
+      }
   
       toast('✅ Personage bevestigd. Je kan vertrekken.');
   
@@ -1026,102 +1077,31 @@ document.addEventListener('click', function(e){
       var startSlot = DATA.startSlot || (DATA.meta && DATA.meta.startSlot) || 'start';
   
       watchId = navigator.geolocation.watchPosition(function(pos){
-        var c=pos.coords, latitude=c.latitude, longitude=c.longitude, accuracy=c.accuracy;
-
-        var cc=qs('coords'); if(cc) cc.textContent = latitude.toFixed(5)+', '+longitude.toFixed(5);
-        var ac=qs('acc'); if(ac) ac.textContent = Math.round(accuracy);
-  
-        var here={lat:latitude,lng:longitude};
-        var best = null;
-        var insideStart = false;
-        
-        var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
-        var endCandidate = null;
-        
-        function canFinishRoute(){
-          var stx = store.get();
-          var reqSlots = DATA.requiredSlots || [];
-          var unlocked = stx.unlockedSlots || [];
-          for(var i=0;i<reqSlots.length;i++){
-            var sid = reqSlots[i];
-            if(sid === endSlot) continue;          // end zelf niet als “verplicht vooraf”
-            if(unlocked.indexOf(sid) === -1) return false;
-          }
-          return true;
-        }
-        
-        (DATA.stops||[]).forEach(function(s){
-          var d = Math.round(distanceMeters(here,{lat:s.lat,lng:s.lng}));
-          var rad = (s.radius || (DATA.meta ? DATA.meta.radiusDefaultMeters : 200));
-        
-          // insideStart blijven bepalen
-          if(s.slot === startSlot){
-            if(d <= rad) insideStart = true;
-          }
-        
-          // onthoud endCandidate (dichtste end, mocht er meerdere zijn)
-          if(s.slot === endSlot){
-            if(!endCandidate || d < endCandidate.d){
-              endCandidate = { id:s.id, slot:s.slot, name:s.naam, d:d, radius:rad };
-            }
-          }
-        
-          // normale "beste" kiezen (met tie-break: liever end dan start bij gelijke afstand)
-          if(!best || d < best.d || (d === best.d && s.slot === endSlot && best.slot !== endSlot)){
-            best = { id:s.id, slot:s.slot, name:s.naam, d:d, radius:rad };
-          }
-        });
-        
-        // ✅ Prioriteit: als eindpunt mogelijk is en je staat erin, kies eindpunt
-        if(endCandidate && canFinishRoute()){
-          var effectiveEnd = Math.max(0, endCandidate.d - (accuracy || 0));
-          if(effectiveEnd <= endCandidate.radius){
-            best = endCandidate;
-          }
-        }
-        
-  
-        window.__insideStart = insideStart;
-        if (Date.now() >= pcSelectBusyUntil && insideStart !== lastInsideStart) {
-          lastInsideStart = insideStart;
-          renderCharacterChooser();
-        }
-  
-        var st=store.get(); st.flags=st.flags||{};
-        if(insideStart){ st.flags.seenStart = true; store.set(st); }
-        // ✅ pas locken nadat leerling bevestigd heeft (geoOn=true)
-        if(st.geoOn === true && !insideStart && st.flags.seenStart && !st.lockedPc){
-        st.lockedPc = true;
-        store.set(st);
-        renderCharacterChooser();
-        toast('🔒 Personage vergrendeld');
-        applyRouteModeUI(); // optioneel: meteen UI omschakelen
-         }
-  
-        if(best){
-          var cl=qs('closest'); if(cl) cl.textContent=best.name;
-          var di=qs('dist'); if(di) di.textContent=String(best.d);
-          var ra=qs('radius'); if(ra) ra.textContent=String(best.radius);
-  
-          // ✅ pas unlocken nadat leerling bevestigd heeft
-        if(st.geoOn === true){
-        tryUnlock(best, accuracy);
-        renderProgress();
-        scheduleStopsRender('unlock');
-         } else {
-            // pre-start: toon wel progress/stops als je wil, maar zonder unlock-logica
-            renderProgress();
-  }
-  
-          __lastFix = { lat: latitude, lng: longitude, acc: accuracy };
-          ensureLeafletMap();
-          applyLiveFixToMap();
-        //  updateLeafletLive(latitude, longitude, accuracy);
-        }
+        var c = pos.coords;
+        var latitude  = c.latitude;
+        var longitude = c.longitude;
+        var accuracy  = c.accuracy;
+      
+        // UI-status
+        var cc = qs('coords');
+        if(cc) cc.textContent = latitude.toFixed(5)+', '+longitude.toFixed(5);
+        var ac = qs('acc');
+        if(ac) ac.textContent = Math.round(accuracy);
+      
+        // ⬇️ alles gebeurt hier
+        processFix(latitude, longitude, accuracy);
+      
       }, function(err){
-        var pn2=qs('permNote'); if(pn2) pn2.innerHTML='<span class="warn">Locatie geweigerd</span>';
-        var gs2=qs('geoState'); if(gs2) gs2.textContent='Uit';
-      }, {enableHighAccuracy:true,maximumAge:10000,timeout:15000});
+        var pn2=qs('permNote');
+        if(pn2) pn2.innerHTML='<span class="warn">Locatie geweigerd</span>';
+        var gs2=qs('geoState');
+        if(gs2) gs2.textContent='Uit';
+      }, {
+        enableHighAccuracy:true,
+        maximumAge:10000,
+        timeout:15000
+      });
+      
     }
   
     function stopWatch(){
@@ -1156,6 +1136,12 @@ document.addEventListener('click', function(e){
         if(!currentLoc && (st.unlockedLocs||[]).length){
           currentLoc = findLocById(st.unlockedLocs[st.unlockedLocs.length-1]);
         }
+        var hasRealLoc = !!currentLoc;
+        var loc = currentLoc || {};     // ← voorkomt crashes
+        var locId = hasRealLoc ? loc.id  : '';
+        var slotId= hasRealLoc ? loc.slot: '';
+        
+
         var hasLoc = !!currentLoc;
 
         if(!hasLoc){
@@ -1199,7 +1185,7 @@ document.addEventListener('click', function(e){
 //--------------      
 
 
-        var verhaal = getStoryFor(pc, slotId, locId);
+        var verhaal = hasRealLoc ? getStoryFor(pc, slotId, locId) : null;
         var hasRealLoc = hasLoc && locId && slotId;
 
         if(!hasRealLoc){
@@ -1229,7 +1215,7 @@ document.addEventListener('click', function(e){
           + '</div>';
         }
       
-        var qsArr = loc.vragen || [];
+        var qsArr   = hasRealLoc ? (loc.vragen || []) : [];
         var qaHtml = '';
         if(qsArr.length){
           qaHtml = qsArr.map(function(q,qi){
