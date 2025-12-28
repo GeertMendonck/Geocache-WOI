@@ -1322,7 +1322,7 @@ document.addEventListener('click', function(e){
       for(var i=0;i<locs.length;i++){
         var s = locs[i];
         if(!s || s.lat==null || s.lng==null) continue;
-        if(!visibleSlotMap[s.slot]) continue; //verbergt elementen die onzichtbaar moeten zijn
+        if (window.visibleSlotMap && window.visibleSlotMap[s.slot] === false) continue; //verbergt elementen die onzichtbaar moeten zijn
         var rad = s.radius || (DATA.meta ? DATA.meta.radiusDefaultMeters : 200);
   
         L.circle([s.lat, s.lng], { radius: rad, weight:1, fillOpacity:.05 })
