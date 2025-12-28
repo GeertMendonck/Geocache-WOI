@@ -1298,11 +1298,19 @@ document.addEventListener('click', function(e){
         }
       
        // nextOnly:
-  // 1) toon unlocked slots (handig voor lijst; op kaart ok)
-  for (var c=0;c<slotOrder.length;c++){
-    var sidC = slotOrder[c];
-    if (sidC && allowByOptional(sidC) && unlockedMap[sidC]) visible[sidC] = true;
-  }
+ // nextOnly:
+        // 1) toon unlocked slots
+        //    - op MAP: ja
+        //    - in LIST: alleen als listShowFutureSlots true is
+        if (context === 'map' || listShowFuture) {
+            for (var c=0;c<slotOrder.length;c++){
+            var sidC = slotOrder[c];
+            if (sidC && allowByOptional(sidC) && unlockedMap[sidC]) {
+                visible[sidC] = true;
+            }
+            }
+        }
+  
 
   // 2) toon start altijd
   if (allowByOptional(startSid)) visible[startSid] = true;
