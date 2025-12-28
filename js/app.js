@@ -73,12 +73,37 @@
       
         var st = store.get();
       
-        // UI-info invullen (closest/dist/radius)
-        if(best){
-          var cl=qs('closest'); if(cl) cl.textContent=best.name;
-          var di=qs('dist');   if(di) di.textContent=String(best.d);
-          var ra=qs('radius'); if(ra) ra.textContent=String(best.radius);
-        }
+         // Prestart UI invullen (startpunt + message)
+if (DATA && DATA.prestart) {
+
+    // 1) Startpunt-label
+    var cl = qs('closest');
+    if (cl) {
+      var label =
+        (DATA.prestart.meetingPoint && DATA.prestart.meetingPoint.label) ||
+        DATA.prestart.useLocationId ||
+        'Start';
+  
+      cl.textContent = label;
+    }
+  
+    // 2) Prestart-message
+    var msgRow = qs('prestartMsgRow');
+    var msg = qs('prestartMsg');
+  
+    if (msgRow && msg) {
+      var text = DATA.prestart.message;
+  
+      if (text) {
+        msg.textContent = text;
+        msgRow.style.display = '';
+      } else {
+        msg.textContent = '';
+        msgRow.style.display = 'none';
+      }
+    }
+  }
+  
       
         // ✅ unlock pas als “route echt gestart” is
         if(best && st.geoOn === true){
