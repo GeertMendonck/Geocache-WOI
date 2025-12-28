@@ -58,17 +58,19 @@
         applyLiveFixToMap();
       }
       
-    function buildStoryTimelineHtml(pc, hasRealLoc){
-        var st = store.get();
-      
-        if(!hasRealLoc){
-          return '<span class="muted">Nog geen huidige stop. Wandel eens binnen een cirkel 🙂</span>';
+      function buildStoryTimelineHtml(pc, hasRealLoc){
+        if(!pc || !pc.verhalen) {
+          return '<div class="muted">(Geen verhaal beschikbaar)</div>';
         }
-        if(!pc){
-          return '<span class="muted">(Geen personage)</span>';
+      
+        var st = store.get();
+        var unlockedLocs = st.unlockedLocs || [];
+        if(!unlockedLocs.length){
+          return '<span class="muted">Nog geen verhaal. Wandel eens binnen een cirkel 🙂</span>';
         }
       
         var arr = DATA.locaties || DATA.stops || [];
+      
         function findLocById(id){
           for(var i=0;i<arr.length;i++){
             if(arr[i] && arr[i].id === id) return arr[i];
@@ -76,42 +78,37 @@
           return null;
         }
       
-        var unlockedLocs = st.unlockedLocs || [];
-        if(!unlockedLocs.length){
-          // fallback: toon current stuk zoals vroeger
-          return (typeof verhaal !== 'undefined' && verhaal)
-            ? escapeHtml(verhaal)
-            : '<span class="muted">(Nog geen verhaal)</span>';
-        }
-      
-        var latestId = st.currentLocId || unlockedLocs[unlockedLocs.length-1];
-      
         var html = '';
+        var lastLocId = unlockedLocs[unlockedLocs.length - 1];
+      
         for(var i=0;i<unlockedLocs.length;i++){
-          var loc = findLocById(unlockedLocs[i]);
+          var locId = unlockedLocs[i];
+          var loc = findLocById(locId);
           if(!loc) continue;
       
-          var locId2 = loc.id;
-          var slotId2 = loc.slot;
-          var titel = loc.naam || locId2;
+          var slotId = (loc.slot || '').toString().trim().toLowerCase();
       
-          var text = getStoryFor(pc, slotId2, locId2);
-          if(!text) text = '(Geen tekst)';
+          // start / end normaliseren
+          var startSlot = DATA.startSlot || (DATA.meta && DATA.meta.startSlot) || 'start';
+          if(slotId === startSlot) slotId = 'start';
+          var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
+          if(slotId === endSlot) slotId = 'end';
       
-          var isLatest = (locId2 === latestId);
+          var verhaal = getStoryFor(pc, slotId, locId);
+          if(!verhaal) continue;
       
-          html += ''
-            + '<div id="storyChunk_'+locId2+'" class="storyChunk '+(isLatest?'is-latest':'')+'">'
-            + '  <div class="storyChunkHead">'
-            + '    <span class="storyChunkTitle">'+escapeHtml(titel)+'</span>'
-            + (isLatest ? ' <span class="pill tiny">Nieuw</span>' : '')
-            + '  </div>'
-            + '  <div class="storyChunkBody">'+escapeHtml(text)+'</div>'
-            + '</div>';
+          var isLatest = (locId === lastLocId);
+      
+          html +=
+            '<div class="storyItem'+(isLatest ? ' latest' : '')+'">'
+          + '  <div class="storyTitle">'+escapeHtml(loc.naam || slotId)+'</div>'
+          + '  <div class="storyText">'+escapeHtml(verhaal)+'</div>'
+          + '</div>';
         }
       
-        return html || '<span class="muted">(Geen verhaal)</span>';
+        return html || '<span class="muted">(Nog geen verhaal)</span>';
       }
+      
       
       
     function autoFocusNewStory(){
@@ -1186,6 +1183,8 @@ document.addEventListener('click', function(e){
 
 
         var verhaal = hasRealLoc ? getStoryFor(pc, slotId, locId) : null;
+        var verhaalText = (verhaal == null) ? '' : String(verhaal);
+
         var hasRealLoc = hasLoc && locId && slotId;
 
         if(!hasRealLoc){
@@ -1266,9 +1265,10 @@ document.addEventListener('click', function(e){
         +     (hasRealLoc ? '<button class="readBtn" data-slot="'+slotId+'" data-loc="'+locId+'" title="Lees voor">🔊</button>' : '')
         +   '</div>'
         +   '<div style="margin-top:6px">'
-        +     buildStoryTimelineHtml(pc, hasRealLoc)   // i.p.v. enkel verhaal
+        +     (hasRealLoc ? (verhaalText.trim() ? escapeHtml(verhaalText) : '<span class="muted">(Nog geen verhaal)</span>') : '<span class="muted">Nog geen huidige stop. Wandel eens binnen een cirkel 🙂</span>')
         +   '</div>'
         + '</div>';
+        
       
             // --- Exportblok (altijd klaarzetten) ---
             var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
