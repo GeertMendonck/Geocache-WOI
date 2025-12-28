@@ -1185,7 +1185,20 @@ document.addEventListener('click', function(e){
         + '  </div>'
         + '</div>';
         
-      
+      //test, mag verwijderd worden
+      if(window.console){
+        console.log('DEBUG verhaal', {
+          pcId: (store.get()||{}).pcId,
+          pcFound: !!pc,
+          slotId: slotId,
+          locId: locId,
+          verhaalType: pc && pc.verhalen ? typeof pc.verhalen[slotId] : '(no pc/verhalen)',
+          verhaalKeys: pc && pc.verhalen ? Object.keys(pc.verhalen) : []
+        });
+      }
+//--------------      
+
+
         var verhaal = getStoryFor(pc, slotId, locId);
         var hasRealLoc = hasLoc && locId && slotId;
 
