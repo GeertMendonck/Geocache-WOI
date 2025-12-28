@@ -77,7 +77,7 @@
 if (DATA && DATA.prestart) {
 
     // 1) Startpunt-label
-    var cl = qs('closest');
+    var cl = qs('closest');//is nu eigenlijk startpunt en niet meer dichtste punt
     if (cl) {
       var label =
         (DATA.prestart.meetingPoint && DATA.prestart.meetingPoint.label) ||
@@ -102,6 +102,12 @@ if (DATA && DATA.prestart) {
         msgRow.style.display = 'none';
       }
     }
+    
+    if(cl) cl.textContent=best.name; 
+    var di=qs('dist'); 
+    if(di) di.textContent=String(best.d); 
+    var ra=qs('radius'); 
+    if(ra) ra.textContent=String(best.radius);
   }
   
       
