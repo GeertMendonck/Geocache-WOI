@@ -1312,31 +1312,58 @@ document.addEventListener('click', function(e){
           return visible;
         }
       
-        // nextOnly:
-        // 1) toon unlocked slots (voor lijst handig; voor kaart ok zolang mapShowFutureLocations=false nog steeds beperkt blijft tot slots)
-        for (var c=0;c<slotOrder.length;c++){
-          var sidC = slotOrder[c];
-          if (sidC && allowByOptional(sidC) && unlockedMap[sidC]) visible[sidC] = true;
-        }
-      
-        // 2) toon start altijd
-        if (allowByOptional(startSid)) visible[startSid] = true;
-      
-        // 3) toon precies 1 volgende slot dat prereq OK heeft
-        for (var d=0;d<slotOrder.length;d++){
-          var cand = slotOrder[d];
-          if (!cand) continue;
-          if (!allowByOptional(cand)) continue;
-          if (unlockedMap[cand]) continue;
-      
-          var o2 = slotObj(cand);
-          var prereq = o2 && o2.unlockAfterSlot ? o2.unlockAfterSlot : null;
-      
-          var prereqOk = (!prereq) || !!unlockedMap[prereq] || (prereq === startSid && !!unlockedMap[startSid]);
-          if (prereqOk) { visible[cand] = true; break; }
-        }
-      
-        return visible;
+       // nextOnly:
+  // 1) toon unlocked slots (handig voor lijst; op kaart ok)
+  for (var c=0;c<slotOrder.length;c++){
+    var sidC = slotOrder[c];
+    if (sidC && allowByOptional(sidC) && unlockedMap[sidC]) visible[sidC] = true;
+  }
+
+  // 2) toon start altijd
+  if (allowByOptional(startSid)) visible[startSid] = true;
+
+  function prereqOkFor(slotId){
+    var o = slotObj(slotId);
+    var prereq = o && o.unlockAfterSlot ? o.unlockAfterSlot : null;
+    return (!prereq) || !!unlockedMap[prereq] || (prereq === startSid && !!unlockedMap[startSid]);
+  }
+
+  // 3) bepaal NEXT REQUIRED (optionals mogen deze niet kapen)
+  var nextRequired = null;
+  for (var d=0;d<slotOrder.length;d++){
+    var cand = slotOrder[d];
+    if(!cand) continue;
+    if(!allowByOptional(cand)) continue;
+    if(unlockedMap[cand]) continue;
+
+    var o2 = slotObj(cand);
+    var isOpt = o2 ? (o2.required === false) : false;
+
+    if(isOpt) continue;              // ✅ skip optionals voor "next"
+    if(!prereqOkFor(cand)) continue;
+
+    nextRequired = cand;
+    break;
+  }
+  if(nextRequired) visible[nextRequired] = true;
+
+  // 4) toon ook beschikbare OPTIONALS (als extra keuzes) wanneer showOptionalSlots=true
+  if (showOptional) {
+    for (var e=0;e<slotOrder.length;e++){
+      var cand2 = slotOrder[e];
+      if(!cand2) continue;
+      if(unlockedMap[cand2]) continue;
+
+      var o3 = slotObj(cand2);
+      var isOpt2 = o3 ? (o3.required === false) : false;
+      if(!isOpt2) continue;
+
+      if(prereqOkFor(cand2)) visible[cand2] = true;
+    }
+  }
+
+  return visible;
+
       }
       
       function rebuildVisibleSlotMaps(){
