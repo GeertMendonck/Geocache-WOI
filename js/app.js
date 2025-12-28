@@ -15,6 +15,15 @@
   
     // ---------- Mini helpers ----------
     function applyMeta(){
+        var dbg = document.getElementById('debugMeta');
+        if(dbg){
+          dbg.textContent = 'applyMeta() RUN ✅';
+        }
+      
+        if(!DATA || !DATA.meta) {
+          if(dbg) dbg.textContent += ' | DATA.meta ontbreekt ❌';
+          return;
+        }
         if(!DATA || !DATA.meta) return;
       
         var title = (DATA.meta.title || '').trim();
