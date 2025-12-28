@@ -924,17 +924,54 @@ document.addEventListener('click', function(e){
         var ac=qs('acc'); if(ac) ac.textContent = Math.round(accuracy);
   
         var here={lat:latitude,lng:longitude};
-        var best=null; var insideStart=false;
-  
+        var best = null;
+        var insideStart = false;
+        
+        var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
+        var endCandidate = null;
+        
+        function canFinishRoute(){
+          var stx = store.get();
+          var reqSlots = DATA.requiredSlots || [];
+          var unlocked = stx.unlockedSlots || [];
+          for(var i=0;i<reqSlots.length;i++){
+            var sid = reqSlots[i];
+            if(sid === endSlot) continue;          // end zelf niet als “verplicht vooraf”
+            if(unlocked.indexOf(sid) === -1) return false;
+          }
+          return true;
+        }
+        
         (DATA.stops||[]).forEach(function(s){
           var d = Math.round(distanceMeters(here,{lat:s.lat,lng:s.lng}));
-          if(!best || d < best.d){
-            best = { id:s.id, slot:s.slot, name:s.naam, d:d, radius:(s.radius || (DATA.meta ? DATA.meta.radiusDefaultMeters : 200)) };
-          }
+          var rad = (s.radius || (DATA.meta ? DATA.meta.radiusDefaultMeters : 200));
+        
+          // insideStart blijven bepalen
           if(s.slot === startSlot){
-            if (d <= (s.radius || (DATA.meta ? DATA.meta.radiusDefaultMeters : 200))) insideStart = true;
+            if(d <= rad) insideStart = true;
+          }
+        
+          // onthoud endCandidate (dichtste end, mocht er meerdere zijn)
+          if(s.slot === endSlot){
+            if(!endCandidate || d < endCandidate.d){
+              endCandidate = { id:s.id, slot:s.slot, name:s.naam, d:d, radius:rad };
+            }
+          }
+        
+          // normale "beste" kiezen (met tie-break: liever end dan start bij gelijke afstand)
+          if(!best || d < best.d || (d === best.d && s.slot === endSlot && best.slot !== endSlot)){
+            best = { id:s.id, slot:s.slot, name:s.naam, d:d, radius:rad };
           }
         });
+        
+        // ✅ Prioriteit: als eindpunt mogelijk is en je staat erin, kies eindpunt
+        if(endCandidate && canFinishRoute()){
+          var effectiveEnd = Math.max(0, endCandidate.d - (accuracy || 0));
+          if(effectiveEnd <= endCandidate.radius){
+            best = endCandidate;
+          }
+        }
+        
   
         window.__insideStart = insideStart;
         if (Date.now() >= pcSelectBusyUntil && insideStart !== lastInsideStart) {
