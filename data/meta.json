@@ -1,6 +1,6 @@
 {
-  "title": "WOI – Mijn Personage",
-  "radiusDefaultMeters": 200,
+  "title": "Geo-app'je Saint-Louis",
+  "radiusDefaultMeters": 50,
   "kmlPath": "./data/route.kml",
   "routePath": "./data/route.gpx"
 }

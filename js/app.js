@@ -632,57 +632,100 @@ document.addEventListener('click', function(e){
     }
   
     function loadScenario(){
-      return Promise.all([
-        fetchJSON('./data/meta.json'),
-        fetchJSON(stopsFileFromQuery()),
-        fetchJSON('./data/personages.json')
-      ]).then(function(arr){
-        var meta = arr[0] || {};
-        var stopsRaw = arr[1];
-        var personages = arr[2] || [];
-  
-        var slots = null, locaties = null;
-  
-        if (stopsRaw && typeof stopsRaw === 'object' && !Array.isArray(stopsRaw) && stopsRaw.locaties && stopsRaw.slots) {
-          slots = stopsRaw.slots || [];
-          locaties = stopsRaw.locaties || [];
-        } else {
-          locaties = Array.isArray(stopsRaw) ? stopsRaw : [];
-          slots = [];
-  
-          var seen = {};
-          locaties.forEach(function(l){
-            var s = l && l.slot ? l.slot : null;
-            if (s && !seen[s]) { seen[s] = true; slots.push({ id:s, label:s, required:true }); }
-          });
-  
-          if (!slots.length) {
-            slots = [
-              { id:'start', label:'Start', required:true },
-              { id:'end', label:'Einde', required:true }
-            ];
+        return Promise.all([
+          fetchJSON('./data/meta.json'),          // defaults (kan leeg zijn)
+          fetchJSON(stopsFileFromQuery()),        // scenario (stops.json of stops_thuis.json)
+          fetchJSON('./data/personages.json')
+        ]).then(function(arr){
+          var metaDefaults = arr[0] || {};
+          var stopsRaw = arr[1];
+          var personages = arr[2] || [];
+      
+          // ---------------------------
+          // 1) Extract scenario-structuur
+          // ---------------------------
+          var isScenarioObject =
+            stopsRaw &&
+            typeof stopsRaw === 'object' &&
+            !Array.isArray(stopsRaw) &&
+            stopsRaw.locaties &&
+            stopsRaw.slots;
+      
+          var slots = null, locaties = null;
+          var scenarioMeta = {};
+          var scenarioSettings = {};
+          var scenarioPrestart = {};
+      
+          if (isScenarioObject) {
+            slots = stopsRaw.slots || [];
+            locaties = stopsRaw.locaties || [];
+      
+            scenarioMeta = stopsRaw.meta || {};
+            scenarioSettings = stopsRaw.settings || {};
+            scenarioPrestart = stopsRaw.prestart || {};
+          } else {
+            // Backward compat: stopsRaw is array of locaties
+            locaties = Array.isArray(stopsRaw) ? stopsRaw : [];
+            slots = [];
+      
+            var seen = {};
+            locaties.forEach(function(l){
+              var s = l && l.slot ? l.slot : null;
+              if (s && !seen[s]) { seen[s] = true; slots.push({ id:s, label:s, required:true }); }
+            });
+      
+            if (!slots.length) {
+              slots = [
+                { id:'start', label:'Start', required:true },
+                { id:'end', label:'Einde', required:true }
+              ];
+            }
           }
-        }
-  
-        var startSlot = meta.startSlot || 'start';
-        var endSlot   = meta.endSlot   || 'end';
-  
-        var slotOrder = (slots || []).map(function(s){ return s.id; });
-        var requiredSlots = (slots || []).filter(function(s){ return !!s.required; }).map(function(s){ return s.id; });
-  
-        return {
-          meta: meta,
-          stops: locaties,
-          slots: slots,
-          locaties: locaties,
-          startSlot: startSlot,
-          endSlot: endSlot,
-          slotOrder: slotOrder,
-          requiredSlots: requiredSlots,
-          personages: personages
-        };
-      });
-    }
+      
+          // ---------------------------
+          // 2) Merge: defaults + scenario override
+          //    (scenario wint)
+          // ---------------------------
+          var meta = Object.assign({}, metaDefaults, scenarioMeta);
+      
+          // settings/prestart bestaan enkel in scenario (of later ook defaults, maar nu ok)
+          var settings = Object.assign({}, scenarioSettings);
+          var prestart = Object.assign({}, scenarioPrestart);
+      
+          // ---------------------------
+          // 3) start/end slots bepalen
+          //    (ook scenario-override mogelijk)
+          // ---------------------------
+          var startSlot = meta.startSlot || 'start';
+          var endSlot   = meta.endSlot   || 'end';
+      
+          // ---------------------------
+          // 4) afgeleide data
+          // ---------------------------
+          var slotOrder = (slots || []).map(function(s){ return s.id; });
+          var requiredSlots = (slots || [])
+            .filter(function(s){ return !!s.required; })
+            .map(function(s){ return s.id; });
+      
+          return {
+            meta: meta,
+            settings: settings,
+            prestart: prestart,
+      
+            // compat: je gebruikt nu soms "stops", soms "locaties"
+            stops: locaties,
+            locaties: locaties,
+      
+            slots: slots,
+            startSlot: startSlot,
+            endSlot: endSlot,
+            slotOrder: slotOrder,
+            requiredSlots: requiredSlots,
+            personages: personages
+          };
+        });
+      }
+      
   
     // ---------- Personage ----------
     function ensureCharacter(){
