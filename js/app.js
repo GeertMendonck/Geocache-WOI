@@ -14,10 +14,36 @@
     var __lastFix = null;
   
     // ---------- Mini helpers ----------
+    function refreshRouteUI(){
+        // 1) visibility herberekenen (kaart + lijst)
+        rebuildVisibleSlotMaps();
+      
+        // 2) lijst onderaan
+        renderStops();
+      
+        // 3) kaart overlays
+        addStopMarkers();
+        addStopCircles();
+      }
+      
     function rebuildVisibleSlotMap(){
         window.visibleSlotMap = computeVisibleSlotMap() || {};
         return window.visibleSlotMap;
       }
+      function rebuildVisibleSlotMaps(){
+        window.visibleSlotMapMap  = computeVisibleSlotMap('map')  || {};
+        window.visibleSlotMapList = computeVisibleSlotMap('list') || {};
+      }
+      function isSlotVisibleOnMap(slotId){
+        if(!window.visibleSlotMapMap) return true;
+        return window.visibleSlotMapMap[slotId] !== false;
+      }
+      function isSlotVisibleInList(slotId){
+        if(!window.visibleSlotMapList) return true;
+        return window.visibleSlotMapList[slotId] !== false;
+      }
+      
+      
       
     function slotById(id){
         var arr = (DATA && DATA.slots) ? DATA.slots : [];
@@ -106,6 +132,13 @@
         var cont = host || document.getElementById('stopsList');
         if(!cont) return;
       
+        if(!window.DATA || !(DATA.slots||[]).length){
+          cont.innerHTML = '<span class="muted">(DATA/slots nog niet geladen)</span>';
+          return;
+        }
+      
+        rebuildVisibleSlotMaps();
+      
         var st = store.get();
         var unlockedSlots = st.unlockedSlots || [];
         var unlockedMap = {};
@@ -153,10 +186,12 @@
           var locs = allLocationsForSlot(sid);
           if(!locs.length) return '';
       
+          // als meerdere opties en nog niet unlocked: toon enkel aantal opties (geen spoilers)
           if(locs.length > 1 && !unlockedMap[sid]){
             return '🔀 (' + locs.length + ' opties)';
           }
       
+          // gekozen locatie (als je dat bewaart), anders 1e
           var chosenId = null;
           if(st.unlockedBySlot && st.unlockedBySlot[sid]) chosenId = st.unlockedBySlot[sid];
           else if(locs.length === 1) chosenId = locs[0].id;
@@ -168,14 +203,18 @@
       
         var html = '';
         (slotOrder||[]).forEach(function(sid){
+          if(!isSlotVisibleInList(sid)) return;
+      
           var ok = !!unlockedMap[sid];
           var optional = isOptionalSlot(sid);
           var icon = ok ? '✅' : (sid===endSlot ? '🔒' : (optional ? '🧩' : '⏳'));
       
           var label = slotLabel(sid);
-          var place = displayPlaceForSlot(sid);
       
-          html += '<span class="pill">'
+          // ✅ Spoiler-proof: place alleen tonen als slot unlocked is
+          var place = ok ? displayPlaceForSlot(sid) : '';
+      
+          html += '<span class="pill ' + (ok?'ok':'no') + '">'
                 + icon + ' '
                 + '<span class="pillMain">' + escapeHtml(label) + '</span>'
                 + (place ? ' <span class="pillSub">· ' + escapeHtml(place) + '</span>' : '')
@@ -185,7 +224,7 @@
         cont.innerHTML = html || '<span class="muted">(Geen stops geladen)</span>';
       }
       
-      
+          
     function getStartLocation(){
         return (DATA.locaties || []).find(function(l){
           return l.slot === 'start';
@@ -434,7 +473,7 @@
               return;
             }
       
-            try { renderStops(); } catch(e){}
+            try { refreshRouteUI();  } catch(e){}
           }
       
           requestAnimationFrame(attempt);
@@ -531,7 +570,7 @@
     }
   
     function refreshStopsUI(){
-      try { renderStops(); } catch(e){}
+      try { refreshRouteUI();  } catch(e){}
       if(window.LMAP && window.L){
         try { addStopMarkers(); } catch(e){}
         try { addStopCircles(); } catch(e){}
@@ -961,7 +1000,7 @@ document.addEventListener('click', function(e){
       store.set(st);
       renderProfile();
       renderUnlocked();
-      renderStops();
+      refreshRouteUI();
     }
   
     function renderCharacterChooser(){
@@ -1211,15 +1250,18 @@ document.addEventListener('click', function(e){
       
    
     }
-    function computeVisibleSlotMap(){
+    function computeVisibleSlotMap(context){
         var st = store.get();
         var unlockedSlots = st.unlockedSlots || [];
         var unlockedMap = {};
         for (var i=0;i<unlockedSlots.length;i++) unlockedMap[unlockedSlots[i]] = true;
       
         var settings = (DATA && DATA.settings) ? DATA.settings : {};
-        var mode = settings.visibilityMode || 'all';
+        var mode = settings.visibilityMode || 'allAfterStart';
         var showOptional = !!settings.showOptionalSlots;
+      
+        var listShowFuture = !!settings.listShowFutureSlots;
+        var mapShowFuture  = !!settings.mapShowFutureLocations;
       
         var slots = DATA.slots || [];
         var slotOrder = DATA.slotOrder || slots.map(function(s){ return s.id; });
@@ -1239,9 +1281,11 @@ document.addEventListener('click', function(e){
         }
       
         var visible = {};
+        var startSid = DATA.startSlot || (DATA.meta && DATA.meta.startSlot) || 'start';
       
-        // default: alles (behalve optional als uit)
-        if (mode !== 'nextOnly') {
+        // -------- CONTEXT OVERRIDES --------
+        // Lijst: als we future slots willen tonen, tonen we ALLE slots (behalve optional indien uit)
+        if (context === 'list' && listShowFuture) {
           for (var a=0;a<slotOrder.length;a++){
             var sidA = slotOrder[a];
             if (sidA && allowByOptional(sidA)) visible[sidA] = true;
@@ -1249,18 +1293,38 @@ document.addEventListener('click', function(e){
           return visible;
         }
       
-        // nextOnly: unlocked + 1 next
-        for (var b=0;b<slotOrder.length;b++){
-          var sidB = slotOrder[b];
-          if (sidB && allowByOptional(sidB) && unlockedMap[sidB]) visible[sidB] = true;
+        // Kaart: als future locations mogen, toon alle slots
+        if (context === 'map' && mapShowFuture) {
+          for (var b0=0;b0<slotOrder.length;b0++){
+            var sidB0 = slotOrder[b0];
+            if (sidB0 && allowByOptional(sidB0)) visible[sidB0] = true;
+          }
+          return visible;
         }
       
-        var startSid = DATA.startSlot || (DATA.meta && DATA.meta.startSlot) || 'start';
+        // -------- DEFAULT BY MODE --------
+        // Niet-nextOnly: toon alles
+        if (mode !== 'nextOnly') {
+          for (var b=0;b<slotOrder.length;b++){
+            var sidB = slotOrder[b];
+            if (sidB && allowByOptional(sidB)) visible[sidB] = true;
+          }
+          return visible;
+        }
+      
+        // nextOnly:
+        // 1) toon unlocked slots (voor lijst handig; voor kaart ok zolang mapShowFutureLocations=false nog steeds beperkt blijft tot slots)
+        for (var c=0;c<slotOrder.length;c++){
+          var sidC = slotOrder[c];
+          if (sidC && allowByOptional(sidC) && unlockedMap[sidC]) visible[sidC] = true;
+        }
+      
+        // 2) toon start altijd
         if (allowByOptional(startSid)) visible[startSid] = true;
       
-        // bepaal "next"
-        for (var c=0;c<slotOrder.length;c++){
-          var cand = slotOrder[c];
+        // 3) toon precies 1 volgende slot dat prereq OK heeft
+        for (var d=0;d<slotOrder.length;d++){
+          var cand = slotOrder[d];
           if (!cand) continue;
           if (!allowByOptional(cand)) continue;
           if (unlockedMap[cand]) continue;
@@ -1275,6 +1339,23 @@ document.addEventListener('click', function(e){
         return visible;
       }
       
+      function rebuildVisibleSlotMaps(){
+        window.visibleSlotMapMap  = computeVisibleSlotMap('map')  || {};
+        window.visibleSlotMapList = computeVisibleSlotMap('list') || {};
+      }
+      
+      function isSlotVisibleOnMap(slotId){
+        if(!window.visibleSlotMapMap) return true;
+        return window.visibleSlotMapMap[slotId] !== false;
+      }
+      
+      function isSlotVisibleInList(slotId){
+        if(!window.visibleSlotMapList) return true;
+        return window.visibleSlotMapList[slotId] !== false;
+      }
+      
+      
+      
       function addStopMarkers(){
         if(!window.LMAP || !window.L) return;
       
@@ -1283,8 +1364,7 @@ document.addEventListener('click', function(e){
         }
         window.__stopMarkerLayer = L.layerGroup().addTo(window.LMAP);
       
-        // Zorg dat window.visibleSlotMap up-to-date is
-        rebuildVisibleSlotMap();
+        rebuildVisibleSlotMaps();
       
         var locs = DATA.locaties || DATA.stops || [];
       
@@ -1300,7 +1380,7 @@ document.addEventListener('click', function(e){
           var s = locs[i];
           if(!s || s.lat==null || s.lng==null) continue;
       
-          if(!isSlotVisible(s.slot)) continue; // ✅ één uniforme check
+          if(!isSlotVisibleOnMap(s.slot)) continue;
       
           // required uit DATA.slots halen
           var so = null;
@@ -1318,22 +1398,21 @@ document.addEventListener('click', function(e){
         }
       }
       
-      
-  
+     
       function addStopCircles(){
         if(!window.LMAP || !window.L) return;
         if(!window.__stopMarkerLayer){
           window.__stopMarkerLayer = L.layerGroup().addTo(window.LMAP);
         }
       
-        rebuildVisibleSlotMap();
+        rebuildVisibleSlotMaps();
       
         var locs = DATA.locaties || DATA.stops || [];
         for(var i=0;i<locs.length;i++){
           var s = locs[i];
           if(!s || s.lat==null || s.lng==null) continue;
       
-          if(!isSlotVisible(s.slot)) continue; // ✅ idem
+          if(!isSlotVisibleOnMap(s.slot)) continue;
       
           var rad = s.radius || (DATA.meta ? DATA.meta.radiusDefaultMeters : 200);
       

@@ -1,13 +1,13 @@
 {
   "meta": {
     "title": "Thuistest – Geo-app",
-    "subtitle": "wel onder niet op kaart",
+    "subtitle": "Met random voor split, wel met info onder kaart",
     "version": "1.0"
   },
 
   "settings": {
     "visibilityMode": "nextOnly",
-    "multiLocationSlotMode": "all",
+    "multiLocationSlotMode": "random",
     "showOptionalSlots": true,
     "listShowFutureSlots": true,
     "mapShowFutureLocations": false

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Thuistest – Geo-app",
-    "subtitle": "wel onder niet op kaart",
+    "subtitle": "enkel volgende op en onder kaart",
     "version": "1.0"
   },
 
@@ -9,7 +9,7 @@
     "visibilityMode": "nextOnly",
     "multiLocationSlotMode": "all",
     "showOptionalSlots": true,
-    "listShowFutureSlots": true,
+    "listShowFutureSlots": false,
     "mapShowFutureLocations": false
   
   },
