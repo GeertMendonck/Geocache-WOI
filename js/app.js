@@ -75,7 +75,10 @@
           }
         });
       
-        window.__insideStart = insideStart;
+        if (window.__insideStart !== insideStart) {
+            window.__insideStart = insideStart;
+            renderCharacterChooser(); // 👈 dit is de essentie
+          }
       
         var st = store.get();
         var msg = qs('prestartMsg');        

@@ -41,7 +41,7 @@
       "lng": 4.440854,
       "radius": 50,
 
-      "routeHint": "Ga naar je startpunt (Thuis). Start pas wanneer je binnen de radius staat (±120m).",
+      "routeHint": "Wandel naar de voordeur.",
 
       "uitleg": {
         "kort": "Teststart: hier controleer je of uitleg altijd vóór de vragen verschijnt.",
