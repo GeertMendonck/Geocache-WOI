@@ -14,6 +14,11 @@
     var __lastFix = null;
   
     // ---------- Mini helpers ----------
+    function rebuildVisibleSlotMap(){
+        window.visibleSlotMap = computeVisibleSlotMap() || {};
+        return window.visibleSlotMap;
+      }
+      
     function slotById(id){
         var arr = (DATA && DATA.slots) ? DATA.slots : [];
         for (var i=0;i<arr.length;i++){
@@ -1270,7 +1275,7 @@ document.addEventListener('click', function(e){
         return visible;
       }
       
-    function addStopMarkers(){
+      function addStopMarkers(){
         if(!window.LMAP || !window.L) return;
       
         if(window.__stopMarkerLayer){
@@ -1278,8 +1283,10 @@ document.addEventListener('click', function(e){
         }
         window.__stopMarkerLayer = L.layerGroup().addTo(window.LMAP);
       
+        // Zorg dat window.visibleSlotMap up-to-date is
+        rebuildVisibleSlotMap();
+      
         var locs = DATA.locaties || DATA.stops || [];
-        var visibleSlotMap = computeVisibleSlotMap();
       
         // tel hoeveel locaties per slot (split-stops)
         var perSlotCount = {};
@@ -1290,10 +1297,11 @@ document.addEventListener('click', function(e){
         }
       
         for(var i=0;i<locs.length;i++){
-
           var s = locs[i];
           if(!s || s.lat==null || s.lng==null) continue;
-          if (!visibleSlotMap[s.slot]) continue; // Als volgende elementen verborgen moeten blijven.
+      
+          if(!isSlotVisible(s.slot)) continue; // ✅ één uniforme check
+      
           // required uit DATA.slots halen
           var so = null;
           for (var j=0;j<(DATA.slots||[]).length;j++){
@@ -1310,25 +1318,30 @@ document.addEventListener('click', function(e){
         }
       }
       
+      
   
-    function addStopCircles(){
-      if(!window.LMAP || !window.L) return;
-      if(!window.__stopMarkerLayer){
-        window.__stopMarkerLayer = L.layerGroup().addTo(window.LMAP);
+      function addStopCircles(){
+        if(!window.LMAP || !window.L) return;
+        if(!window.__stopMarkerLayer){
+          window.__stopMarkerLayer = L.layerGroup().addTo(window.LMAP);
+        }
+      
+        rebuildVisibleSlotMap();
+      
+        var locs = DATA.locaties || DATA.stops || [];
+        for(var i=0;i<locs.length;i++){
+          var s = locs[i];
+          if(!s || s.lat==null || s.lng==null) continue;
+      
+          if(!isSlotVisible(s.slot)) continue; // ✅ idem
+      
+          var rad = s.radius || (DATA.meta ? DATA.meta.radiusDefaultMeters : 200);
+      
+          L.circle([s.lat, s.lng], { radius: rad, weight:1, fillOpacity:.05 })
+            .addTo(window.__stopMarkerLayer);
+        }
       }
-  
-      var locs = DATA.locaties || DATA.stops || [];
-      var visibleSlotMap = computeVisibleSlotMap();
-      for(var i=0;i<locs.length;i++){
-        var s = locs[i];
-        if(!s || s.lat==null || s.lng==null) continue;
-        if (window.visibleSlotMap && window.visibleSlotMap[s.slot] === false) continue; //verbergt elementen die onzichtbaar moeten zijn
-        var rad = s.radius || (DATA.meta ? DATA.meta.radiusDefaultMeters : 200);
-  
-        L.circle([s.lat, s.lng], { radius: rad, weight:1, fillOpacity:.05 })
-          .addTo(window.__stopMarkerLayer);
-      }
-    }
+      
   
     function updateLeafletLive(lat,lng,acc){
       try{

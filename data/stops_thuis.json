@@ -8,7 +8,10 @@
   "settings": {
     "visibilityMode": "nextOnly",
     "multiLocationSlotMode": "all",
-    "showOptionalSlots": false
+    "showOptionalSlots": true,
+    "listShowFutureSlots": true,
+    "mapShowFutureLocations": false
+  
   },
 
   "prestart": {
