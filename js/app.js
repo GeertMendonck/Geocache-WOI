@@ -14,6 +14,34 @@
     var __lastFix = null;
   
     // ---------- Mini helpers ----------
+    function applyMeta(){
+        if(!DATA || !DATA.meta) return;
+      
+        var title = (DATA.meta.title || '').trim();
+        var subtitle = (DATA.meta.subtitle || '').trim();
+      
+        var h1 = document.getElementById('appTitle');
+        if(h1){
+          h1.textContent = title || 'Geo-app';
+        }
+      
+        var h2 = document.getElementById('appSubtitle');
+        if(h2){
+          if(subtitle){
+            h2.textContent = subtitle;
+            h2.style.display = '';
+          }else{
+            h2.textContent = '';
+            h2.style.display = 'none';
+          }
+        }
+      
+        // optioneel maar netjes: browser-titel syncen
+        if(title){
+          document.title = title;
+        }
+      }
+      
     function processFix(latitude, longitude, accuracy){
         var startSlot = DATA.startSlot || (DATA.meta && DATA.meta.startSlot) || 'start';
       
@@ -1393,7 +1421,7 @@ document.addEventListener('click', function(e){
   
       loadScenario().then(function(data){
         DATA = data;
-  
+        applyMeta();
         var st=store.get();
         if(!st.pcId) ensureCharacter();
   
