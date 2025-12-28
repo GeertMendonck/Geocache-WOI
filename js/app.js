@@ -26,15 +26,7 @@
         addStopCircles();
       }
       
-    function rebuildVisibleSlotMap(){
-        window.visibleSlotMap = computeVisibleSlotMap() || {};
-        return window.visibleSlotMap;
-      }
-      function rebuildVisibleSlotMaps(){
-        window.visibleSlotMapMap  = computeVisibleSlotMap('map')  || {};
-        window.visibleSlotMapList = computeVisibleSlotMap('list') || {};
-      }
-        
+ 
     function slotById(id){
         var arr = (DATA && DATA.slots) ? DATA.slots : [];
         for (var i=0;i<arr.length;i++){
@@ -1247,6 +1239,9 @@ document.addEventListener('click', function(e){
         for (var i=0;i<unlockedSlots.length;i++) unlockedMap[unlockedSlots[i]] = true;
       
         var settings = (DATA && DATA.settings) ? DATA.settings : {};
+        console.log('[computeVisibleSlotMap]', context,
+            'listShowFutureSlots=', settings.listShowFutureSlots, 'type=', typeof settings.listShowFutureSlots,
+            'mode=', settings.visibilityMode);
         var mode = settings.visibilityMode || 'allAfterStart';
         var showOptional = !!settings.showOptionalSlots;
       
@@ -1355,7 +1350,11 @@ document.addEventListener('click', function(e){
   return visible;
 
       }
-      
+      function rebuildVisibleSlotMap(){
+        window.visibleSlotMap = computeVisibleSlotMap() || {};
+        return window.visibleSlotMap;
+      }
+        
       function rebuildVisibleSlotMaps(){
         window.visibleSlotMapMap  = computeVisibleSlotMap('map')  || {};
         window.visibleSlotMapList = computeVisibleSlotMap('list') || {};
