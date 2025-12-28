@@ -1345,14 +1345,15 @@ document.addEventListener('click', function(e){
       }
       
       function isSlotVisibleOnMap(slotId){
-        if(!window.visibleSlotMapMap) return true;
-        return window.visibleSlotMapMap[slotId] !== false;
+        if(!window.visibleSlotMapMap) return true;   // fallback als map nog niet bestaat
+        return window.visibleSlotMapMap[slotId] === true;
       }
       
       function isSlotVisibleInList(slotId){
-        if(!window.visibleSlotMapList) return true;
-        return window.visibleSlotMapList[slotId] !== false;
+        if(!window.visibleSlotMapList) return true;  // fallback
+        return window.visibleSlotMapList[slotId] === true;
       }
+      
       
       
       
