@@ -1,5 +1,5 @@
 // sw.js — PWA cache
-const CACHE = 'woi-pwa-v20'; // ← bump bij elke release
+const CACHE = 'woi-pwa-v21'; // ← bump bij elke release
 const PRECACHE = [
   './',
   './index.html',
@@ -32,36 +32,40 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
 
   // Documents: network-first
-  if (e.request.mode === 'navigate' || e.request.destination === 'document') {
-    e.respondWith(
-      fetch(e.request).then(res => {
-        caches.open(CACHE).then(c => c.put(e.request, res.clone()));
-        return res;
-      }).catch(() => caches.match('./index.html'))
-    );
-    return;
-  }
-
-  // Data & static assets: network-first zodat nieuwe versies doorkomen
-  if (/\.(json|kml|gpx|js|css)$/i.test(url.pathname)) {
-    e.respondWith(
-      fetch(e.request).then(res => {
-        caches.open(CACHE).then(c => c.put(e.request, res.clone()));
-        return res;
-      }).catch(() => caches.match(e.request))
-    );
-    return;
-  }
-
-  // Overig: cache-first
+if (e.request.mode === 'navigate' || e.request.destination === 'document') {
   e.respondWith(
-    caches.match(e.request).then(cached =>
-      cached || fetch(e.request).then(res => {
-        if (url.origin === location.origin) {
-          caches.open(CACHE).then(c => c.put(e.request, res.clone()));
-        }
-        return res;
-      })
-    )
+    fetch(e.request).then(res => {
+      const copy = res.clone();
+      e.waitUntil(caches.open(CACHE).then(c => c.put(e.request, copy)));
+      return res;
+    }).catch(() => caches.match('./index.html'))
   );
+  return;
+}
+
+// Data & static assets: network-first zodat nieuwe versies doorkomen
+if (/\.(json|kml|gpx|js|css)$/i.test(url.pathname)) {
+  e.respondWith(
+    fetch(e.request).then(res => {
+      const copy = res.clone();
+      e.waitUntil(caches.open(CACHE).then(c => c.put(e.request, copy)));
+      return res;
+    }).catch(() => caches.match(e.request))
+  );
+  return;
+}
+
+// Overig: cache-first
+e.respondWith(
+  caches.match(e.request).then(cached =>
+    cached || fetch(e.request).then(res => {
+      if (url.origin === location.origin) {
+        const copy = res.clone();
+        e.waitUntil(caches.open(CACHE).then(c => c.put(e.request, copy)));
+      }
+      return res;
+    })
+  )
+);
+
 });
