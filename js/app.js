@@ -21,6 +21,81 @@
         }
         return null;
       }
+      function computeVisibleSlotIds(){
+        var st = store.get();
+        var unlockedSlots = st.unlockedSlots || [];
+        var unlockedMap = {};
+        for (var i=0;i<unlockedSlots.length;i++) unlockedMap[unlockedSlots[i]] = true;
+      
+        var settings = (DATA && DATA.settings) ? DATA.settings : {};
+        var mode = settings.visibilityMode || 'all';
+        var showOptional = !!settings.showOptionalSlots;
+      
+        var slots = DATA.slots || [];
+        var slotOrder = DATA.slotOrder || slots.map(function(s){ return s.id; });
+      
+        function slotObj(id){
+          for (var j=0;j<slots.length;j++){
+            if (slots[j] && slots[j].id === id) return slots[j];
+          }
+          return null;
+        }
+        function isOptional(id){
+          var o = slotObj(id);
+          return o ? (o.required === false) : false;
+        }
+      
+        // optional slots eventueel eruit
+        function allowedByOptional(id){
+          return showOptional || !isOptional(id);
+        }
+      
+        // default: alles zichtbaar (behalve optional als uit)
+        if (mode !== 'nextOnly') {
+          var all = [];
+          for (var k=0;k<slotOrder.length;k++){
+            var sid = slotOrder[k];
+            if (sid && allowedByOptional(sid)) all.push(sid);
+          }
+          return all;
+        }
+      
+        // nextOnly:
+        // 1) toon alle unlocked slots
+        var visible = [];
+        for (var a=0;a<slotOrder.length;a++){
+          var sid1 = slotOrder[a];
+          if (!sid1) continue;
+          if (!allowedByOptional(sid1)) continue;
+          if (unlockedMap[sid1]) visible.push(sid1);
+        }
+      
+        // 2) bepaal 1 "volgende" slot
+        var startSid = DATA.startSlot || (DATA.meta && DATA.meta.startSlot) || 'start';
+        var nextSid = null;
+      
+        for (var b=0;b<slotOrder.length;b++){
+          var sid2 = slotOrder[b];
+          if (!sid2) continue;
+          if (!allowedByOptional(sid2)) continue;
+          if (unlockedMap[sid2]) continue;
+      
+          var o2 = slotObj(sid2);
+          var prereq = o2 && o2.unlockAfterSlot ? o2.unlockAfterSlot : null;
+      
+          var prereqOk = (!prereq) || !!unlockedMap[prereq] || (prereq === startSid && !!unlockedMap[startSid]);
+      
+          if (prereqOk) { nextSid = sid2; break; }
+        }
+      
+        // start altijd zichtbaar
+        if (visible.indexOf(startSid) < 0 && allowedByOptional(startSid)) visible.unshift(startSid);
+      
+        if (nextSid && visible.indexOf(nextSid) < 0) visible.push(nextSid);
+      
+        return visible;
+      }
+      
       function renderStops(){
         var host = document.getElementById('stopsListHost');
         var cont = host || document.getElementById('stopsList');
@@ -1124,7 +1199,70 @@ document.addEventListener('click', function(e){
       
    
     }
-  
+    function computeVisibleSlotMap(){
+        var st = store.get();
+        var unlockedSlots = st.unlockedSlots || [];
+        var unlockedMap = {};
+        for (var i=0;i<unlockedSlots.length;i++) unlockedMap[unlockedSlots[i]] = true;
+      
+        var settings = (DATA && DATA.settings) ? DATA.settings : {};
+        var mode = settings.visibilityMode || 'all';
+        var showOptional = !!settings.showOptionalSlots;
+      
+        var slots = DATA.slots || [];
+        var slotOrder = DATA.slotOrder || slots.map(function(s){ return s.id; });
+      
+        function slotObj(id){
+          for (var j=0;j<slots.length;j++){
+            if (slots[j] && slots[j].id === id) return slots[j];
+          }
+          return null;
+        }
+        function isOptional(id){
+          var o = slotObj(id);
+          return o ? (o.required === false) : false;
+        }
+        function allowByOptional(id){
+          return showOptional || !isOptional(id);
+        }
+      
+        var visible = {};
+      
+        // default: alles (behalve optional als uit)
+        if (mode !== 'nextOnly') {
+          for (var a=0;a<slotOrder.length;a++){
+            var sidA = slotOrder[a];
+            if (sidA && allowByOptional(sidA)) visible[sidA] = true;
+          }
+          return visible;
+        }
+      
+        // nextOnly: unlocked + 1 next
+        for (var b=0;b<slotOrder.length;b++){
+          var sidB = slotOrder[b];
+          if (sidB && allowByOptional(sidB) && unlockedMap[sidB]) visible[sidB] = true;
+        }
+      
+        var startSid = DATA.startSlot || (DATA.meta && DATA.meta.startSlot) || 'start';
+        if (allowByOptional(startSid)) visible[startSid] = true;
+      
+        // bepaal "next"
+        for (var c=0;c<slotOrder.length;c++){
+          var cand = slotOrder[c];
+          if (!cand) continue;
+          if (!allowByOptional(cand)) continue;
+          if (unlockedMap[cand]) continue;
+      
+          var o2 = slotObj(cand);
+          var prereq = o2 && o2.unlockAfterSlot ? o2.unlockAfterSlot : null;
+      
+          var prereqOk = (!prereq) || !!unlockedMap[prereq] || (prereq === startSid && !!unlockedMap[startSid]);
+          if (prereqOk) { visible[cand] = true; break; }
+        }
+      
+        return visible;
+      }
+      
     function addStopMarkers(){
         if(!window.LMAP || !window.L) return;
       
@@ -1134,6 +1272,7 @@ document.addEventListener('click', function(e){
         window.__stopMarkerLayer = L.layerGroup().addTo(window.LMAP);
       
         var locs = DATA.locaties || DATA.stops || [];
+        var visibleSlotMap = computeVisibleSlotMap();
       
         // tel hoeveel locaties per slot (split-stops)
         var perSlotCount = {};
@@ -1144,9 +1283,10 @@ document.addEventListener('click', function(e){
         }
       
         for(var i=0;i<locs.length;i++){
+
           var s = locs[i];
           if(!s || s.lat==null || s.lng==null) continue;
-      
+          if (!visibleSlotMap[s.slot]) continue; // Als volgende elementen verborgen moeten blijven.
           // required uit DATA.slots halen
           var so = null;
           for (var j=0;j<(DATA.slots||[]).length;j++){
@@ -1174,7 +1314,7 @@ document.addEventListener('click', function(e){
       for(var i=0;i<locs.length;i++){
         var s = locs[i];
         if(!s || s.lat==null || s.lng==null) continue;
-  
+        if(!visibleSlotMap[s.slot]) continue; //verbergt elementen die onzichtbaar moeten zijn
         var rad = s.radius || (DATA.meta ? DATA.meta.radiusDefaultMeters : 200);
   
         L.circle([s.lat, s.lng], { radius: rad, weight:1, fillOpacity:.05 })
