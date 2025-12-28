@@ -74,46 +74,11 @@
         var st = store.get();
       
          // Prestart UI invullen (startpunt + message)
-        if (DATA && DATA.prestart) {
-
-            // 1) Startpunt-label
-            var cl = qs('closest');//is nu eigenlijk startpunt en niet meer dichtste punt
-            if (cl) {
-            var label =
-                (DATA.prestart.meetingPoint && DATA.prestart.meetingPoint.label) ||
-                DATA.prestart.useLocationId ||
-                'Start';
-        
-            cl.textContent = label;
-            }
-           // Statusmelding "te ver" enkel als het echt zo is
-                var msg = qs('prestartMsg');        
-                var msgRow = qs('prestartMsgRow');  
-
-                if (msg && msgRow) {
-                // basisboodschap uit JSON
-                var base = (DATA && DATA.prestart && DATA.prestart.message) ? DATA.prestart.message : '';
-
-                // als we geen best hebben: toon gewoon base (of niks)
-                if (!best) {
-                    msg.textContent = base;
-                    msgRow.style.display = base ? '' : 'none';
-                } else {
-                    // LET OP: best.d en best.radius moeten getallen zijn
-                    var inside = (Number(best.d) <= Number(best.radius));
-
-                    // als je binnen bent: toon niets (of een korte OK, jouw keuze)
-                    if (inside) {
-                    msg.textContent = '';           // <-- dit is de simpele "fix": geen foutmelding meer
-                    msgRow.style.display = 'none';
-                    } else {
-                    msg.textContent = base;         // "Nog niet aan het startpunt..."
-                    msgRow.style.display = base ? '' : 'none';
-                    }
-                }
-                }
- 
-        }
+         if(best){
+                var cl=qs('closest'); if(cl) cl.textContent=best.name;
+                var di=qs('dist');   if(di) di.textContent=String(best.d);
+                var ra=qs('radius'); if(ra) ra.textContent=String(best.radius);
+              }
   
       
         // ✅ unlock pas als “route echt gestart” is
