@@ -34,17 +34,7 @@
         window.visibleSlotMapMap  = computeVisibleSlotMap('map')  || {};
         window.visibleSlotMapList = computeVisibleSlotMap('list') || {};
       }
-      function isSlotVisibleOnMap(slotId){
-        if(!window.visibleSlotMapMap) return true;
-        return window.visibleSlotMapMap[slotId] !== false;
-      }
-      function isSlotVisibleInList(slotId){
-        if(!window.visibleSlotMapList) return true;
-        return window.visibleSlotMapList[slotId] !== false;
-      }
-      
-      
-      
+        
     function slotById(id){
         var arr = (DATA && DATA.slots) ? DATA.slots : [];
         for (var i=0;i<arr.length;i++){
