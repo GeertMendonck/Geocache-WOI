@@ -14,6 +14,12 @@
     var __lastFix = null;
   
     // ---------- Mini helpers ----------
+    function getStartLocation(){
+        return (DATA.locaties || []).find(function(l){
+          return l.slot === 'start';
+        }) || null;
+      }
+      
     function applyMeta(){
         var dbg = document.getElementById('debugMeta');
         if(dbg){
@@ -72,13 +78,37 @@
         window.__insideStart = insideStart;
       
         var st = store.get();
-      
-         // Prestart UI invullen (startpunt + message)
-         if(best){
-                var cl=qs('closest'); if(cl) cl.textContent=best.name;
-                var di=qs('dist');   if(di) di.textContent=String(best.d);
-                var ra=qs('radius'); if(ra) ra.textContent=String(best.radius);
-              }
+        var msg = qs('prestartMsg');        
+        var msgRow = qs('prestartMsgRow');
+        var startLoc = getStartLocation();
+        var startNaam = startLoc ? (startLoc.naam || 'Start') : 'Start';
+        var routeHint = startLoc ? (startLoc.routeHint || '') : '';
+        
+        // UI: naam startpunt
+        var cl = qs('closest');
+        if (cl) cl.textContent = startNaam;
+        
+        // UI: afstand & straal (zoals het was)
+        if (best) {
+          var di = qs('dist');   if (di) di.textContent = String(best.d);
+          var ra = qs('radius'); if (ra) ra.textContent = String(best.radius);
+        }
+        
+        // UI: boodschap
+        var msgRow = qs('prestartMsgRow');
+        var msgEl  = qs('prestartMsg');
+        
+        if (msgRow && msgEl) {
+          var teVerMsg = (DATA && DATA.prestart && DATA.prestart.message) ? DATA.prestart.message : '';
+        
+          // we bepalen "te ver" op basis van afstand vs straal (zoals jij het wou laten)
+          var inside = best ? (Number(best.d) <= Number(best.radius)) : true;
+        
+          var text = inside ? routeHint : teVerMsg;
+        
+          msgEl.textContent = text || '';
+          msgRow.style.display = text ? '' : 'none';
+        }
   
       
         // ✅ unlock pas als “route echt gestart” is
