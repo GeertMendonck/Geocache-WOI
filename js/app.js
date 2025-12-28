@@ -331,30 +331,55 @@
     var lastInsideStart = null;
     var pcSelectBusyUntil = 0;
   
-    // ---------- Story helper (enkel 1x) ----------
+    // ---------- Story helper ----------
     function getStoryFor(pc, slotId, locId){
-      if(!pc || !pc.verhalen) return null;
-  
-      // backward compat: verhaal rechtstreeks op locId
-      if(locId && typeof pc.verhalen[locId] === 'string') return pc.verhalen[locId];
-  
-      // normaal: per slot
-      var s = pc.verhalen[slotId];
-      if(!s) return null;
-  
-      if(typeof s === 'string') return s;
-  
-      // split-slot: object per locatie-id
-      if(locId && typeof s === 'object' && typeof s[locId] === 'string') return s[locId];
-  
-      // fallback: eerste string
-      if(typeof s === 'object'){
-        for(var k in s){
-          if(Object.prototype.hasOwnProperty.call(s,k) && typeof s[k] === 'string') return s[k];
+        if(!pc || !pc.verhalen) return null;
+      
+        function norm(s){ return String(s||'').toLowerCase().trim(); }
+      
+        // helper: haal waarde op via exact key of via genormaliseerde key
+        function getByKey(obj, key){
+          if(!obj || key == null) return undefined;
+          if(Object.prototype.hasOwnProperty.call(obj, key)) return obj[key];
+      
+          var nk = norm(key);
+          for(var k in obj){
+            if(Object.prototype.hasOwnProperty.call(obj, k) && norm(k) === nk){
+              return obj[k];
+            }
+          }
+          return undefined;
         }
+      
+        // 1) backward compat: verhaal rechtstreeks op locId
+        if(locId){
+          var direct = getByKey(pc.verhalen, locId);
+          if(typeof direct === 'string') return direct;
+        }
+      
+        // 2) normaal: per slot
+        var s = getByKey(pc.verhalen, slotId);
+        if(!s) return null;
+      
+        if(typeof s === 'string') return s;
+      
+        // 3) split-slot: object per locatie-id
+        if(locId && typeof s === 'object'){
+          var byLoc = getByKey(s, locId);
+          if(typeof byLoc === 'string') return byLoc;
+        }
+      
+        // 4) fallback: eerste string in object
+        if(typeof s === 'object'){
+          for(var k2 in s){
+            if(Object.prototype.hasOwnProperty.call(s,k2) && typeof s[k2] === 'string'){
+              return s[k2];
+            }
+          }
+        }
+        return null;
       }
-      return null;
-    }
+      
   
     // ---------- Boot proof ----------
     (function(){
