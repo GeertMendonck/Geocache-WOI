@@ -1546,15 +1546,17 @@ document.addEventListener('click', function(e){
       var locs = DATA.locaties || DATA.stops || [];
       var first = locs && locs.length ? locs[0] : { lat:50.85, lng:2.89 };
   
-      window.LMAP = L.map(el, {
-        zoomControl: true,
-        rotate: true,
-        touchRotate: true,
-        bearing: 0
-      }).setView([first.lat, first.lng], 13);
-      setTimeout(function(){
-        try { window.LMAP.invalidateSize(true); } catch(e){}
-      }, 120);
+      window.LMAP = L.map(el, { zoomControl:true }).setView([first.lat, first.lng], 13);
+
+    //   window.LMAP = L.map(el, {
+    //     zoomControl: true,
+    //     rotate: true,
+    //     touchRotate: true,
+    //     bearing: 0
+    //   }).setView([first.lat, first.lng], 13);
+    //   setTimeout(function(){
+    //     try { window.LMAP.invalidateSize(true); } catch(e){}
+    //   }, 120);
   
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom:19,
