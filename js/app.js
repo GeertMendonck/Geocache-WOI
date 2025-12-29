@@ -428,16 +428,18 @@
       
           var isLatest = (locId === lastLocId);
       
-          html +=
-            '<div class="storyItem'+(isLatest ? ' latest' : '')+'">'
-          + '  <div class="storyTitle">'+escapeHtml(loc.naam || slotId)+'</div>'
-          + '  <div class="storyText">'+escapeHtml(verhaal)+'</div>'
-          + '</div>';
+          html += ''
+            + '<div class="storyChunk'+(isLatest ? ' is-latest' : '')+'" id="storyChunk_'+escapeHtml(locId)+'">'
+            +   '<div class="storyChunkHead">'
+            +     '<span>'+escapeHtml(loc.naam || slotId)+'</span>'
+            +     (isLatest ? '<span class="pill tiny">nieuw</span>' : '')
+            +   '</div>'
+            +   '<div class="storyChunkBody">'+escapeHtml(verhaal)+'</div>'
+            + '</div>';
         }
       
         return html || '<span class="muted">(Nog geen verhaal)</span>';
       }
-      
       
       
     function autoFocusNewStory(){
