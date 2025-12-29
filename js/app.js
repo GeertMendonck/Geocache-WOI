@@ -19,6 +19,237 @@
 
   
     // ---------- Mini helpers ----------
+    //slotconfig
+    function getSlotConfig(slotId){
+        var slots = DATA.slots || [];
+        for(var i=0;i<slots.length;i++){
+          if(slots[i] && slots[i].id === slotId) return slots[i];
+        }
+        return null;
+      }
+      
+      function getCompleteMode(slotId){
+        var so = getSlotConfig(slotId);
+        var m = (so && so.completeMode) ? String(so.completeMode).toLowerCase() : 'all';
+        // default: all (veilig, strikt)
+        return m;
+      }
+      
+      function isSlotCompleted(slotId){
+        var mode = getCompleteMode(slotId); // 'any' | 'all' | 'nearest' | 'random' ...
+        var unlocked = getUnlockedLocIds();
+        var locs = DATA.locaties || DATA.stops || [];
+      
+        var idsInSlot = [];
+        for(var i=0;i<locs.length;i++){
+          var s = locs[i];
+          if(s && s.slot === slotId) idsInSlot.push(s.id);
+        }
+      
+        // geen locaties? beschouw als completed (of false, maar dit voorkomt vastlopers)
+        if(!idsInSlot.length) return true;
+      
+        if(mode === 'any' || mode === 'nearest' || mode === 'random'){
+          // any: zodra 1 locatie uit dit slot unlocked is -> slot completed
+          for(var j=0;j<idsInSlot.length;j++){
+            if(unlocked.indexOf(idsInSlot[j]) >= 0) return true;
+          }
+          return false;
+        }
+      
+        // default / 'all'
+        for(var k=0;k<idsInSlot.length;k++){
+          if(unlocked.indexOf(idsInSlot[k]) < 0) return false;
+        }
+        return true;
+      }
+      function pickTargetLocForSlot(slotId, myLat, myLng){
+        var mode = getCompleteMode(slotId);
+        var unlocked = getUnlockedLocIds();
+        var locs = DATA.locaties || DATA.stops || [];
+      
+        // verzamel kandidaten in dit slot die nog niet unlocked zijn
+        var cand = [];
+        for(var i=0;i<locs.length;i++){
+          var s = locs[i];
+          if(!s || s.slot !== slotId) continue;
+          if(s.lat==null || s.lng==null) continue;
+          if(unlocked.indexOf(s.id) >= 0) continue;
+          cand.push(s);
+        }
+        if(!cand.length) return null;
+      
+        // nearest: kies dichtste (dit is ook fijn als default)
+        if(mode === 'nearest' || mode === 'any' || mode === 'all'){
+          var best = cand[0], bestD = Infinity;
+          for(var j=0;j<cand.length;j++){
+            var d = haversineMeters(myLat,myLng, cand[j].lat, cand[j].lng);
+            if(d < bestD){ bestD = d; best = cand[j]; }
+          }
+          return best;
+        }
+      
+        // random: kies 1 willekeurige (maar liefst stabiel per sessie)
+        if(mode === 'random'){
+          // TIP: voor echte stabiliteit: bewaar keuze in store per slotId.
+          //var r = Math.floor(Math.random() * cand.length);
+          //return cand[r];
+          return getRandomPickForSlot(slotId, cand);
+        }
+      
+        // fallback
+        return cand[0];
+      }
+      
+      function getNextRequiredLoc(myLat,myLng){
+        var slots = DATA.slots || [];
+      
+        // 1) volgende required slot dat niet completed is
+        var nextSlotId = null;
+        for(var i=0;i<slots.length;i++){
+          var sl = slots[i];
+          if(!sl || !sl.required) continue;
+          if(!isSlotCompleted(sl.id)){
+            nextSlotId = sl.id;
+            break;
+          }
+        }
+        if(!nextSlotId) return null;
+      
+        // 2) target locatie binnen slot volgens completeMode
+        return pickTargetLocForSlot(nextSlotId, myLat, myLng);
+      }
+      function getRandomPickForSlot(slotId, candidates){
+        var st = store.get();
+        if(!st.slotPick) st.slotPick = {};
+      
+        // als er al een pick is en die zit nog in candidates -> behouden
+        var pickedId = st.slotPick[slotId];
+        if(pickedId){
+          for(var i=0;i<candidates.length;i++){
+            if(candidates[i].id === pickedId) return candidates[i];
+          }
+        }
+      
+        // anders: nieuw lotje trekken
+        var r = Math.floor(Math.random() * candidates.length);
+        var chosen = candidates[r];
+        st.slotPick[slotId] = chosen.id;
+        store.set(st);
+        return chosen;
+      }
+      
+
+
+    //-----------------
+    //kaart draaien, volgende locatie ligt boven huidige locatie
+    function haversineMeters(lat1,lng1,lat2,lng2){
+        var R = 6371000;
+        var φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
+        var dφ = (lat2-lat1) * Math.PI/180;
+        var dλ = (lng2-lng1) * Math.PI/180;
+        var a = Math.sin(dφ/2)*Math.sin(dφ/2) +
+                Math.cos(φ1)*Math.cos(φ2) *
+                Math.sin(dλ/2)*Math.sin(dλ/2);
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+      }
+      
+      function getUnlockedLocIds(){
+        var st = store.get();
+        return st.unlockedLocs || [];
+      }
+      
+      function isSlotCompleted(slotId){
+        // slot is "completed" als ALLE locaties binnen die slot unlocked zijn.
+        // (werkt mooi met split-stops)
+        var unlocked = getUnlockedLocIds();
+        var locs = DATA.locaties || DATA.stops || [];
+        var anyInSlot = false;
+      
+        for(var i=0;i<locs.length;i++){
+          var s = locs[i];
+          if(!s || s.slot !== slotId) continue;
+          anyInSlot = true;
+          if(unlocked.indexOf(s.id) < 0) return false; // er is nog eentje niet gehaald
+        }
+        // als er geen locaties zijn voor dit slot: behandel als completed (of false, naar keuze)
+        return anyInSlot ? true : true;
+      }
+      
+      function getNextRequiredLoc(myLat,myLng){
+        var slots = DATA.slots || [];
+        var locs  = DATA.locaties || DATA.stops || [];
+        var unlocked = getUnlockedLocIds();
+      
+        // 1) vind eerst de volgende required slot die nog niet completed is (volgorde = slots[] volgorde)
+        var nextSlotId = null;
+        for(var i=0;i<slots.length;i++){
+          var sl = slots[i];
+          if(!sl || !sl.required) continue;
+          if(!isSlotCompleted(sl.id)){
+            nextSlotId = sl.id;
+            break;
+          }
+        }
+        if(!nextSlotId) return null;
+      
+        // 2) kies binnen die slot de dichtstbijzijnde *nog niet unlocked* locatie
+        var best = null, bestD = Infinity;
+        for(var j=0;j<locs.length;j++){
+          var s = locs[j];
+          if(!s || s.slot !== nextSlotId) continue;
+          if(s.lat==null || s.lng==null) continue;
+          if(unlocked.indexOf(s.id) >= 0) continue; // al gehaald
+      
+          var d = haversineMeters(myLat,myLng, s.lat, s.lng);
+          if(d < bestD){
+            bestD = d;
+            best = s;
+          }
+        }
+      
+        // fallback: als alles in die slot al unlocked is (zou niet mogen), neem eender welke
+        if(!best){
+          for(var k=0;k<locs.length;k++){
+            var t = locs[k];
+            if(t && t.slot === nextSlotId && t.lat!=null && t.lng!=null){
+              best = t; break;
+            }
+          }
+        }
+      
+        return best;
+      }
+      function panSoNextIsAboveMe(myLat,myLng){
+        if(!window.LMAP || !followMe) return;
+      
+        var next = getNextRequiredLoc(myLat,myLng);
+        if(!next) return;
+      
+        // 1) Zorg dat zowel jij als next in beeld kunnen passen (smooth)
+        try{
+          var bounds = L.latLngBounds([[myLat,myLng],[next.lat,next.lng]]);
+          // padding zodat het niet "tegen de rand" plakt
+          window.LMAP.fitBounds(bounds, { padding: [30, 60], animate: true });
+        }catch(e){
+          // als fitBounds faalt, fallback op panTo
+          window.LMAP.panTo([myLat,myLng], { animate:true });
+        }
+      
+        // 2) Duw het beeld wat naar beneden zodat "boven" meer ruimte krijgt
+        // (positieve y = kaart naar beneden => jij komt lager in beeld)
+        setTimeout(function(){
+          try{
+            var h = window.LMAP.getSize().y;
+            window.LMAP.panBy([0, Math.round(h*0.20)], { animate:true });
+          }catch(e){}
+        }, 120);
+      }
+      
+      
+
+    //-------------------------
     // GPS aanhouden 
     window.__geoWatchId = null;   // id van watchPosition
     window.__lastGeoAt  = 0;      // timestamp van laatste GPS update (ms)
@@ -1528,16 +1759,29 @@ document.addEventListener('click', function(e){
         }
       }
       
-  
-    function updateLeafletLive(lat,lng,acc){
-      try{
-        if(!window.LMAP || !liveMarker || !accCircle) return;
-        liveMarker.setLatLng([lat,lng]).setOpacity(1);
-        accCircle.setLatLng([lat,lng]).setRadius(acc||0);
-        if (followMe) window.LMAP.setView([lat,lng]);
-        var a=qs('openInMaps'); if(a) a.href='https://maps.google.com/?q='+lat+','+lng;
-      }catch(e){ if (window.console) console.error(e); }
-    }
+      var __lastNextPanAt = 0;
+
+      function updateLeafletLive(lat,lng,acc){
+        try{
+          if(!window.LMAP || !liveMarker || !accCircle) return;
+          liveMarker.setLatLng([lat,lng]).setOpacity(1);
+          accCircle.setLatLng([lat,lng]).setRadius(acc||0);
+      
+          if (followMe){
+            window.LMAP.setView([lat,lng]);
+      
+            var now = Date.now();
+            if(now - __lastNextPanAt > 2500){
+              __lastNextPanAt = now;
+              panSoNextIsAboveMe(lat,lng);
+            }
+          }
+      
+          var a=qs('openInMaps'); 
+          if(a) a.href='https://maps.google.com/?q='+lat+','+lng;
+        }catch(e){ if (window.console) console.error(e); }
+      }
+      
   
     // ---------- Progress ----------
     function renderProgress(){
@@ -1723,18 +1967,18 @@ document.addEventListener('click', function(e){
         + '  </div>'
         + '</div>';
         
-      //test, mag verwijderd worden
-      if(window.console){
-        console.log('DEBUG verhaal', {
-          pcId: (store.get()||{}).pcId,
-          pcFound: !!pc,
-          slotId: slotId,
-          locId: locId,
-          verhaalType: pc && pc.verhalen ? typeof pc.verhalen[slotId] : '(no pc/verhalen)',
-          verhaalKeys: pc && pc.verhalen ? Object.keys(pc.verhalen) : []
-        });
-      }
-//--------------      
+//       //test, mag verwijderd worden
+//       if(window.console){
+//         console.log('DEBUG verhaal', {
+//           pcId: (store.get()||{}).pcId,
+//           pcFound: !!pc,
+//           slotId: slotId,
+//           locId: locId,
+//           verhaalType: pc && pc.verhalen ? typeof pc.verhalen[slotId] : '(no pc/verhalen)',
+//           verhaalKeys: pc && pc.verhalen ? Object.keys(pc.verhalen) : []
+//         });
+//       }
+// //--------------      
 
 
         var verhaal = hasRealLoc ? getStoryFor(pc, slotId, locId) : null;
@@ -1841,7 +2085,6 @@ document.addEventListener('click', function(e){
             + '</div>';
 
       
-        // ✅ enkel 1x qaBody, mét downloadHtml
         var qaBody = ''
           + '<div id="statusWrapQa"></div>'
           + (uitlegHtml || '<div class="muted">(Geen uitleg)</div>')
@@ -2160,12 +2403,7 @@ document.addEventListener('click', function(e){
       
         setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
       }
-      
-      
-
-
-
-
+ 
     // Globale errors
     window.addEventListener('error', function(e){ showDiag('JS error: '+e.message); });
     window.addEventListener('unhandledrejection', function(e){
