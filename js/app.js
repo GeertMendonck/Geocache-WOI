@@ -143,6 +143,35 @@
 
     //-----------------
     //kaart draaien, volgende locatie ligt boven huidige locatie
+        function toRad(d){ return d * Math.PI / 180; }
+        function toDeg(r){ return r * 180 / Math.PI; }
+
+        function bearingDeg(lat1, lng1, lat2, lng2){
+        var φ1 = toRad(lat1), φ2 = toRad(lat2);
+        var Δλ = toRad(lng2 - lng1);
+        var y = Math.sin(Δλ) * Math.cos(φ2);
+        var x = Math.cos(φ1)*Math.sin(φ2) - Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);
+        var θ = Math.atan2(y, x);
+        return (toDeg(θ) + 360) % 360; // 0..360
+        }
+
+
+        function rotateMapToNext(myLat, myLng){
+            if(!window.LMAP) return;
+          
+            var next = getNextRequiredLoc(myLat, myLng);
+            if(!next) return;
+          
+            var b = bearingDeg(myLat, myLng, next.lat, next.lng);
+          
+            // “richting naar next” moet bovenaan staan => kaart roteren met -bearing
+            if (LMAP.setBearing) {
+              LMAP.setBearing(-b);
+            } else if (LMAP.setRotationAngle) {
+              LMAP.setRotationAngle(-b);
+            }
+          }
+          
     function haversineMeters(lat1,lng1,lat2,lng2){
         var R = 6371000;
         var φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
@@ -1517,7 +1546,13 @@ document.addEventListener('click', function(e){
       var locs = DATA.locaties || DATA.stops || [];
       var first = locs && locs.length ? locs[0] : { lat:50.85, lng:2.89 };
   
-      window.LMAP = L.map(el, { zoomControl:true }).setView([first.lat, first.lng], 13);
+      window.LMAP = L.map(el, {
+        zoomControl: true,
+        rotate: true,
+        touchRotate: true,
+        bearing: 0
+      }).setView([first.lat, first.lng], 13);
+      
   
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom:19,
@@ -1769,12 +1804,12 @@ document.addEventListener('click', function(e){
       
           if (followMe){
             window.LMAP.setView([lat,lng]);
-      
-            var now = Date.now();
-            if(now - __lastNextPanAt > 2500){
-              __lastNextPanAt = now;
-              panSoNextIsAboveMe(lat,lng);
-            }
+            rotateMapToNext(lat, lng);
+            // var now = Date.now();
+            // if(now - __lastNextPanAt > 2500){
+            //   __lastNextPanAt = now;
+            //   panSoNextIsAboveMe(lat,lng);
+            //}
           }
       
           var a=qs('openInMaps'); 
