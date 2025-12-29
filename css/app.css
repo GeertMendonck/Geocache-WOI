@@ -521,7 +521,7 @@ container die 3 panelen onder elkaar stapelt
     font-size: 12px;
     padding: 2px 8px;
   }
-  
+
   #map, .leaflet-container{
     transform: none !important;
   }
@@ -573,7 +573,18 @@ container die 3 panelen onder elkaar stapelt
           min-height: 44px;
         }
       }
-      
+   /* Leaflet tiles mogen NOOIT meeschalen door globale img-regels */
+.leaflet-container img{
+  max-width: none !important;
+  max-height: none !important;
+}
+
+/* extra zekerheid (sommige templates raken ook width/height aan) */
+img.leaflet-tile{
+  max-width: none !important;
+  max-height: none !important;
+}
+   
   
   }
 
