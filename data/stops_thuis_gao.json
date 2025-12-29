@@ -99,8 +99,8 @@
       "id": "districthuis",
       "slot": "stop01",
       "naam": "Stop 1: Districthuis",
-      "lat": 51.2160,
-      "lng": 4.4376,
+      "lat": 51.21374715428568, 
+      "lng": 4.433564700049259,
       "radius": 50,
 
       "routeHint": "Alternatief voor stop 1: wandel naar het districthuis. Test meerdere locaties binnen hetzelfde slot.",
