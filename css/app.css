@@ -522,6 +522,9 @@ container die 3 panelen onder elkaar stapelt
     padding: 2px 8px;
   }
   
+  #map, .leaflet-container{
+    transform: none !important;
+  }
   /* ===============================
      MOBILE
      =============================== */
