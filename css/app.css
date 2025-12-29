@@ -607,6 +607,11 @@ container die 3 panelen onder elkaar stapelt
     width: 256px !important;
     height: 256px !important;
   }
+/* Leaflet: gebruik content-box om tile-math correct te houden */
+.leaflet-container,
+.leaflet-container *{
+  box-sizing: content-box !important;
+}
   
    
   
