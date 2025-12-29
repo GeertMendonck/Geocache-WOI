@@ -612,7 +612,9 @@ container die 3 panelen onder elkaar stapelt
 .leaflet-container *{
   box-sizing: content-box !important;
 }
-  
+.leaflet-container{
+    overflow: hidden !important;
+  }  
    
   
   }

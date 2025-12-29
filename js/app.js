@@ -1552,7 +1552,9 @@ document.addEventListener('click', function(e){
         touchRotate: true,
         bearing: 0
       }).setView([first.lat, first.lng], 13);
-      
+      setTimeout(function(){
+        try { window.LMAP.invalidateSize(true); } catch(e){}
+      }, 120);
   
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom:19,
