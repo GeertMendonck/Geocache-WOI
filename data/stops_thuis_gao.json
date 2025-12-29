@@ -1,0 +1,177 @@
+{
+  "meta": {
+    "title": "Thuis naar Gao Dumpling",
+    "subtitle": "wel onder niet op kaart",
+    "version": "1.0"
+  },
+
+  "settings": {
+    "visibilityMode": "nextOnly",
+    "multiLocationSlotMode": "all",
+    "showOptionalSlots": true,
+    "listShowFutureSlots": true,
+    "mapShowFutureLocations": false
+  
+  },
+
+  "prestart": {
+    "useLocationId": "thuis",
+    "meetingPoint": { "lat": 51.220418, "lng": 4.440854, "label": "Aan de voordeur" },
+    "message": "Nog niet aan het startpunt (Thuis). Ga naar de startlocatie om te beginnen.",
+    "maps": {
+      "label": "Route naar startpunt"
+    }
+  },
+
+  "slots": [
+    { "id": "start",  "label": "Start",  "required": true },
+
+    { "id": "stop05", "label": "Keuze",  "required": false, "unlockAfterSlot": "start" },
+
+    { "id": "stop01", "label": "Stop 1", "required": true,  "unlockAfterSlot": "start" },
+    { "id": "stop02", "label": "Stop 2", "required": true,  "unlockAfterSlot": "stop01" },
+    { "id": "stop03", "label": "Stop 3", "required": true,  "unlockAfterSlot": "stop02" },
+    { "id": "end",    "label": "Einde",  "required": true,  "unlockAfterSlot": "stop03" }
+  ],
+
+  "locaties": [
+    {
+      "id": "thuis",
+      "slot": "start",
+      "naam": "Start: Thuis",
+      "lat": 51.220418,
+      "lng": 4.440854,
+      "radius": 50,
+
+      "routeHint": "Wandel naar de voordeur.",
+
+      "uitleg": {
+        "kort": "Teststart: hier controleer je of uitleg altijd vóór de vragen verschijnt.",
+        "uitgebreid": "Gebruik deze startlocatie om snel je volledige flow te testen: (1) verschijnt het uitlegblok boven de vragen, (2) werkt de knop ‘Meer lezen/Minder tonen’, (3) blijft alles mooi staan bij refresh of herladen, en (4) wordt de tekst correct ontsnapt (geen rare HTML-effecten)."
+      },
+      "vragen": [
+        "Wat wil je vandaag testen?",
+        "Welke functies wil je zeker uitproberen?"
+      ]
+    },
+
+    {
+      "id": "butcherscoffee",
+      "slot": "stop05",
+      "naam": "Keuze: Butchers Coffee",
+      "lat": 51.21666799790366, 
+      "lng": 4.436033138284295,
+      "radius": 50,
+
+      "routeHint": "Optioneel: wandel Via de Generaal Eisenhouwerlei.",
+
+      "uitleg": {
+        "kort": "Optionele stop: ideaal om te checken of ‘required:false’ correct verwerkt is.",
+        "uitgebreid": "Deze locatie is je test voor ‘split/keuze’-logica: ontgrendelt de app dit slot alleen als je hier effectief komt? En blijft de rest van de route correct? Ook handig om te controleren of ‘pickVariantLocationIdForSlot’ de juiste locatie-id teruggeeft."
+      },
+      "vragen": [
+        "Waarom denk je dat deze stop optioneel is?",
+        "Gedraagt de app zich hier correct?"
+      ]
+    },
+
+    {
+      "id": "mombasa",
+      "slot": "stop01",
+      "naam": "Stop 1: Mombasa",
+      "lat": 51.214102550696005, 
+      "lng": 4.433162406377622,
+      "radius": 50,
+
+      "routeHint": "Sla rechts af op de Turnhoutsebaan en direct links richting het districtshuis.",
+
+      "uitleg": {
+        "kort": "Test hier vooral de radius-ontgrendeling en stabiliteit van de afstandsindicator.",
+        "uitgebreid": "Loop bewust even in en uit de radius (bv. 100m) om te zien of er geen ‘flapperen’ gebeurt (constant lock/unlock). Check ook of je GPS-updatefrequentie en smoothing goed aanvoelen: springt de afstand niet wild heen en weer?"
+      },
+      "vragen": [
+        "Werkt de ontgrendeling hier zoals bedoeld?",
+        "Is de afstandsindicatie logisch en stabiel?"
+      ]
+    },
+
+    {
+      "id": "districthuis",
+      "slot": "stop01",
+      "naam": "Stop 1: Districthuis",
+      "lat": 51.2160,
+      "lng": 4.4376,
+      "radius": 50,
+
+      "routeHint": "Alternatief voor stop 1: wandel naar het districthuis. Test meerdere locaties binnen hetzelfde slot.",
+
+      "uitleg": {
+        "kort": "Tweede kandidaat voor hetzelfde slot: test of je app correct omgaat met meerdere locaties per slot.",
+        "uitgebreid": "Omdat dit ook onder ‘stop01’ valt, kan je testen hoe je UI het presenteert wanneer er meerdere mogelijke locaties bestaan. Wordt de juiste locatie gekozen als ontgrendeler? En blijft de titel/tekst consistent (zeker als je op één dag zowel Krugerpark als Vinçotteplein bezoekt)?"
+      },
+      "vragen": [
+        "We zouden nu op het Vinçotteplein zijn? Klopt dit?"
+      ]
+    },
+
+    {
+      "id": "nora",
+      "slot": "stop02",
+      "naam": "Stop 2: Nora Indian",
+      "lat": 51.2089638029196, 
+      "lng": 4.4320130632718655,
+      "radius": 50,
+
+      "routeHint": "Vervolg de weg tot je aan de Plantijn en Moretuslei oversteekt.",
+
+      "uitleg": {
+        "kort": "Test hier live positie + ‘dichterbij komen’-gedrag (UI updates, geen haperingen).",
+        "uitgebreid": "Ideale teststop om te zien of de kaart en je ‘you are here’-marker correct meebewegen. Controleer ook: (1) blijft de app responsief als je scherm aan/uit gaat, (2) blijft je positie kloppen na even stil te staan, (3) werkt het opnieuw ‘pakken’ van GPS wanneer je terug begint te wandelen."
+      },
+      "vragen": [
+        "Hoe reageert de app wanneer je dichterbij komt?",
+        "Toont de kaart je live positie correct?"
+      ]
+    },
+
+    {
+      "id": "dageraadplaats",
+      "slot": "stop03",
+      "naam": "Stop 3: Dageraadplaats",
+      "lat": 51.207533186094295, 
+      "lng": 4.430491984405745,
+      "radius": 50,
+
+      "routeHint": "We vervolgen de route tot de Dageraadplaats.",
+
+      "uitleg": {
+        "kort": "Test hier de tekstvelden + voorleesknop (readBtn) en of alles per locatie-id correct opslaat.",
+        "uitgebreid": "Let hier extra op dat antwoorden gekoppeld blijven aan de juiste locatie via data-stop=locId. Test ook: (1) typen → refresh → blijft antwoord staan, (2) ‘wis’ werkt enkel voor die vraag, (3) voorleesknop leest de juiste tekst (locId/slotId) en niet per ongeluk iets van een andere stop."
+      },
+      "vragen": [
+        "Werken de reflectievelden en de voorleesknop goed?",
+        "Voelt de UI vlot aan op jouw toestel?"
+      ]
+    },
+   
+    {
+      "id": "gao",
+      "slot": "end",
+      "naam": "Einde: Gao Dumpling",
+      "lat": 51.20738346917734, 
+      "lng": 4.42972575469085,
+      "radius": 50,
+
+      "routeHint": "Ga terug naar Gao Dumpling. Hier controleer je de eindstaat: progress, unlocks en opslag.",
+
+      "uitleg": {
+        "kort": "Afsluitstop: controleer of je volledige route-status klopt (alles wat moet unlocked, is unlocked).",
+        "uitgebreid": "Hier test je de eindstaat: (1) zijn alle vereiste slots ontgrendeld, (2) wordt de progress correct berekend, (3) blijven antwoorden bewaard, en (4) blijven ‘details open’/UI-states consistent na herladen. Kortom: de ‘alles is klaar, tijd voor taart’-check."
+      },
+      "vragen": [
+        "Is alles ontgrendeld zoals verwacht?",
+        "Wat fixen of verbeteren we eerst?"
+      ]
+    }
+  ]
+}

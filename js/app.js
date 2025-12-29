@@ -12,8 +12,73 @@
     // ---------- Config ----------
     var DEBUG = false;
     var __lastFix = null;
+    window.__geoWatchId = null;
+    window.__lastGeoAt  = 0;
+    window.__lastFix    = null; 
+    window.__pendingRecenter = false; // alleen als je dat gebruikt
+
   
     // ---------- Mini helpers ----------
+    // GPS aanhouden 
+    window.__geoWatchId = null;   // id van watchPosition
+    window.__lastGeoAt  = 0;      // timestamp van laatste GPS update (ms)
+    function startGpsWatch(force){
+        // als er al een watch loopt en we forceren niet: niets doen
+        if(!force && window.__geoWatchId != null) return;
+      
+        if(force && window.__geoWatchId != null){
+          try { navigator.geolocation.clearWatch(window.__geoWatchId); } catch(e){}
+          window.__geoWatchId = null;
+        }
+      
+        var watchId = navigator.geolocation.watchPosition(
+          function(pos){
+            window.__lastGeoAt = Date.now();
+            var c = pos.coords;
+      
+            // handig: bewaar last fix voor 'centreer'
+            window.__lastFix = { lat: c.latitude, lng: c.longitude, acc: c.accuracy };
+      
+            updateLeafletLive(c.latitude, c.longitude, c.accuracy);
+            // ... unlocks/refresh ...
+          },
+          function(err){
+            console.log('GPS error', err && err.code, err && err.message);
+            window.__geoWatchId = null;
+          },
+          { enableHighAccuracy:true, maximumAge:2000, timeout:15000 }
+        );
+      
+        window.__geoWatchId = watchId;
+      }
+      
+      window.__ensureGpsBusyUntil = 0;
+    function ensureGpsAwake(){
+  var STALE_MS = 20000; // 20s (pas gerust aan)
+
+  var now  = Date.now();
+  if(now < (window.__ensureGpsBusyUntil||0)) return;
+  window.__ensureGpsBusyUntil = now + 1000;
+  var last = window.__lastGeoAt || 0;
+
+  // 1) watch bestaat niet (weggevallen) -> herstart
+  if(window.__geoWatchId == null){
+    startGpsWatch(false); // <-- jouw bestaande startfunctie
+    return;
+  }
+
+  // 2) nooit een update gehad of te lang stil -> herstart
+  if(!last || (now - last > STALE_MS)){
+    startGpsWatch(true);  // <-- force herstart (zie stap 4)
+    return;
+  }
+
+  // anders: alles ok, niets doen
+}
+
+      
+
+    //----------------
     function refreshRouteUI(){
         // 1) visibility herberekenen (kaart + lijst)
         rebuildVisibleSlotMaps();
@@ -695,13 +760,27 @@
     })();
   
     // ---------- Core listeners ----------
+ 
+      
     function bindCoreListeners(){
-        document.addEventListener('click', function(e){
+        document.addEventListener('visibilitychange', function(){
+            if(!document.hidden) ensureGpsAwake();
+          });
+          window.addEventListener('focus', function(){
+            ensureGpsAwake();
+          });
+
+          document.addEventListener('click', function(e){
             var r = e.target && e.target.closest ? e.target.closest('#recenterBtn') : null;
             if(r){
               followMe = true;
+              ensureGpsAwake();
+        
               if(window.__lastFix && window.LMAP){
                 window.LMAP.setView([window.__lastFix.lat, window.__lastFix.lng], window.LMAP.getZoom());
+              } else {
+                // optioneel: center zodra de volgende GPS-fix binnenkomt
+                window.__pendingRecenter = true;
               }
               return;
             }
@@ -907,6 +986,7 @@ document.addEventListener('click', function(e){
                 { id:'end', label:'Einde', required:true }
               ];
             }
+
           }
       
           // ---------------------------
@@ -1546,6 +1626,7 @@ document.addEventListener('click', function(e){
       var startSlot = DATA.startSlot || (DATA.meta && DATA.meta.startSlot) || 'start';
   
       watchId = navigator.geolocation.watchPosition(function(pos){
+        window.__lastGeoAt = Date.now();
         var c = pos.coords;
         var latitude  = c.latitude;
         var longitude = c.longitude;
@@ -1858,10 +1939,7 @@ document.addEventListener('click', function(e){
   
     // ---------- DOM Ready ----------
     document.addEventListener('DOMContentLoaded', function(){
-      bindCoreListeners();
-      
-    
-
+         bindCoreListeners();
   
       loadScenario().then(function(data){
         DATA = data;
@@ -1877,7 +1955,11 @@ document.addEventListener('click', function(e){
         // renderStops pas plannen na renderUnlocked (want die maakt stopsListHost aan)
         scheduleStopsRender('after initial renderUnlocked');
         refreshStopsUI();
-  
+        // ✅ GPS pas starten als DATA/UI klaar is
+        startGpsWatch(false);
+
+        // ✅ en meteen één keer "wakker maken" (kan dezelfde zijn)
+        ensureGpsAwake();
         // pcSelect “busy” (picker open)
         var chooser = document.getElementById('pcChooser');
         if (chooser) {
