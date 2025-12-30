@@ -28,7 +28,7 @@
         };
       }
       
-    function handleReadStory(slotId, locId){
+     function handleReadStory(slotId, locId){
         var pc = currentPc();
         if(!pc) return;
       
@@ -72,12 +72,14 @@
       
         var v = pickDutchVoice(voices);
         if(v) u.voice = v;
+        document.body.classList.add('reading');
        // 👉 EINDE: visuele status opruimen
             u.onend = function(){
                 document.body.classList.remove('reading');
             };
             u.onerror = function(ev){
-          console.log('[TTS] error', ev && (ev.error || ev.message || ev));
+                document.body.classList.remove('reading');
+                console.log('[TTS] error', ev && (ev.error || ev.message || ev));
         };
       
         try{
@@ -106,14 +108,32 @@
         }
         return null;
       }
-      function speakToggle(text){
+      function speakToggle(text, gender){
         if(!('speechSynthesis' in window)) return;
+      
+        // 1) Als er gesproken wordt
         if(window.speechSynthesis.speaking){
-          try{ window.speechSynthesis.cancel(); }catch(e){}
+          // a) pauze → hervatten
+          if(window.speechSynthesis.paused){
+            try{
+              window.speechSynthesis.resume();
+              document.body.classList.add('reading');
+            }catch(e){}
+          }
+          // b) bezig → pauze
+          else{
+            try{
+              window.speechSynthesis.pause();
+              document.body.classList.remove('reading');
+            }catch(e){}
+          }
           return;
         }
-        speakText(text);
+      
+        // 2) Niet bezig → nieuw voorlezen
+        speakText(text, gender);
       }
+      
       
     //----------
     

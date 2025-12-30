@@ -538,7 +538,13 @@ container die 3 panelen onder elkaar stapelt
   body.reading .storyChunk.is-latest {
     box-shadow: 0 0 0 2px rgba(61,209,192,.35) inset;
   }
+  body.reading .readBtn::after {
+    content: ' ⏸';
+  }
   
+  body:not(.reading) .readBtn::after {
+    content: ' ▶️';
+  }
 
   /*#map, .leaflet-container{
     transform: none !important;
