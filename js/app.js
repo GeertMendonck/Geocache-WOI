@@ -1314,6 +1314,7 @@
       
         // ✅ fase 2: als je nu al aan start bent (en evt pc ok) -> begin meteen
         if(canBeginRouteNow()){
+            try { applyPcUiState(); } catch(e) {}
           beginRoute();
         } else {
           // geen alert; eventueel status tekst zetten
