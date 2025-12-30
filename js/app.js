@@ -534,9 +534,9 @@
         rebuildVisibleSlotMaps();
       
         var st = store.get();
-        var unlockedSlots = st.unlockedSlots || [];
-        var unlockedMap = {};
-        unlockedSlots.forEach(function(sid){ unlockedMap[sid]=true; });
+        // var unlockedSlots = st.unlockedSlots || [];
+        // var unlockedMap = {};
+        // unlockedSlots.forEach(function(sid){ unlockedMap[sid]=true; });
       
         var endSlot   = DATA.endSlot  || (DATA.meta && DATA.meta.endSlot)  || 'end';
         var slotOrder = DATA.slotOrder || (DATA.slots||[]).map(function(s){ return s.id; });
@@ -576,38 +576,78 @@
           }
           return null;
         }
-        function displayPlaceForSlot(sid){
-          var locs = allLocationsForSlot(sid);
-          if(!locs.length) return '';
-      
-          // als meerdere opties en nog niet unlocked: toon enkel aantal opties (geen spoilers)
-          if(locs.length > 1 && !unlockedMap[sid]){
-            return '🔀 (' + locs.length + ' opties)';
+        function displayPlaceForSlot(sid, ok){
+            var locs = allLocationsForSlot(sid);
+            if(!locs.length) return '';
+          
+            var mode = getCompleteMode(sid);
+            var st2 = store.get();
+            var unlockedLocs = st2.unlockedLocs || [];
+            var pickedId = (st2.slotPick && st2.slotPick[sid]) ? st2.slotPick[sid] : null;
+          
+            // helper: eerste bezochte loc in slot
+            function firstVisitedId(){
+              for(var i=0;i<locs.length;i++){
+                if(unlockedLocs.indexOf(locs[i].id) >= 0) return locs[i].id;
+              }
+              return null;
+            }
+          
+            // random/nearest: als er al een pick is, is het op kaart al "niet-spoiler"
+            if(mode === 'random' || mode === 'nearest'){
+              if(pickedId){
+                var locP = findLocById(pickedId);
+                return (locP && locP.naam) ? stripPrefix(locP.naam) : '';
+              }
+              // nog geen pick (bv. nearest zonder GPS): toon voorlopig aantal
+              return (locs.length > 1) ? '🔀 (' + locs.length + ' opties)' : '';
+            }
+          
+            // any: als al iets bezocht is, toon die plaats; anders toon aantal opties
+            if(mode === 'any'){
+              var vid = firstVisitedId();
+              if(vid){
+                var locV = findLocById(vid);
+                return (locV && locV.naam) ? stripPrefix(locV.naam) : '';
+              }
+              return (locs.length > 1) ? '🔀 (' + locs.length + ' opties)' : '';
+            }
+          
+            // all: je kan hier kiezen: of niets tonen tot alles klaar is, of "x/y"
+            if(mode === 'all'){
+              if(ok){
+                // als alles klaar is, toon gerust de (eerste) plaatsnaam of leeg
+                // (ik toon hier leeg, want "all" is vaak meerdere plekken)
+                return '';
+              }
+              // toon progress x/y (handig!)
+              var done = 0;
+              for(var j=0;j<locs.length;j++){
+                if(unlockedLocs.indexOf(locs[j].id) >= 0) done++;
+              }
+              if(locs.length > 1) return '🧩 (' + done + '/' + locs.length + ')';
+              return '';
+            }
+          
+            // fallback
+            return '';
           }
-      
-          // gekozen locatie (als je dat bewaart), anders 1e
-          var chosenId = null;
-          if(st.unlockedBySlot && st.unlockedBySlot[sid]) chosenId = st.unlockedBySlot[sid];
-          else if(locs.length === 1) chosenId = locs[0].id;
-          else chosenId = locs[0].id;
-      
-          var loc = findLocById(chosenId);
-          return loc && loc.naam ? stripPrefix(loc.naam) : '';
-        }
+          
       
         var html = '';
         (slotOrder||[]).forEach(function(sid){
           if(!isSlotVisibleInList(sid)) return;
       
-          var ok = !!unlockedMap[sid];
+         // var ok = !!unlockedMap[sid];
+          var ok = isSlotCompleted(sid);
           var optional = isOptionalSlot(sid);
           var icon = ok ? '✅' : (sid===endSlot ? '🔒' : (optional ? '🧩' : '⏳'));
       
           var label = slotLabel(sid);
       
           // ✅ Spoiler-proof: place alleen tonen als slot unlocked is
-          var place = ok ? displayPlaceForSlot(sid) : '';
-      
+          //var place = ok ? displayPlaceForSlot(sid) : '';
+          var place = displayPlaceForSlot(sid, ok);
           html += '<span class="pill ' + (ok?'ok':'no') + '">'
                 + icon + ' '
                 + '<span class="pillMain">' + escapeHtml(label) + '</span>'
@@ -1694,7 +1734,7 @@ document.addEventListener('click', function(e){
       
         var st = store.get();
         var unlockedSlots = st.unlockedSlots || [];
-        var unlockedMap = {};
+        //var unlockedMap = {};
         unlockedSlots.forEach(function(sid){ unlockedMap[sid]=true; });
       
         var endSlot   = DATA.endSlot  || (DATA.meta && DATA.meta.endSlot)  || 'end';
@@ -1735,22 +1775,56 @@ document.addEventListener('click', function(e){
           }
           return null;
         }
-        function displayPlaceForSlot(sid){
-          var locs = allLocationsForSlot(sid);
-          if(!locs.length) return '';
-      
-          if(locs.length > 1 && !unlockedMap[sid]){
-            return '🔀 (' + locs.length + ' opties)';
+        function displayPlaceForSlot(sid, ok){
+            var locs = allLocationsForSlot(sid);
+            if(!locs.length) return '';
+          
+            var mode = getCompleteMode(sid);
+            var st2 = store.get();
+            var unlockedLocs = st2.unlockedLocs || [];
+            var pickedId = (st2.slotPick && st2.slotPick[sid]) ? st2.slotPick[sid] : null;
+          
+            function firstVisitedId(){
+              for(var i=0;i<locs.length;i++){
+                if(unlockedLocs.indexOf(locs[i].id) >= 0) return locs[i].id;
+              }
+              return null;
+            }
+          
+            // random/nearest: zodra pick bestaat => toon die naam (zoals kaart)
+            if(mode === 'random' || mode === 'nearest'){
+              if(pickedId){
+                var lp = findLocById(pickedId);
+                return (lp && lp.naam) ? stripPrefix(lp.naam) : '';
+              }
+              // nog geen pick (bv. nearest zonder GPS): toon aantal opties
+              return (locs.length > 1) ? '🔀 (' + locs.length + ' opties)' : '';
+            }
+          
+            // any: vóór bezoek toon opties; na eerste bezoek toon bezochte plek
+            if(mode === 'any'){
+              var vid = firstVisitedId();
+              if(vid){
+                var lv = findLocById(vid);
+                return (lv && lv.naam) ? stripPrefix(lv.naam) : '';
+              }
+              return (locs.length > 1) ? '🔀 (' + locs.length + ' opties)' : '';
+            }
+          
+            // all: toon progress x/y tot compleet
+            if(mode === 'all'){
+              if(ok) return ''; // of bv. '✅' als je wil
+              var done = 0;
+              for(var j=0;j<locs.length;j++){
+                if(unlockedLocs.indexOf(locs[j].id) >= 0) done++;
+              }
+              return (locs.length > 1) ? '🧩 (' + done + '/' + locs.length + ')' : '';
+            }
+          
+            // fallback
+            return '';
           }
-      
-          var chosenId = null;
-          if(st.unlockedBySlot && st.unlockedBySlot[sid]) chosenId = st.unlockedBySlot[sid];
-          else if(locs.length === 1) chosenId = locs[0].id;
-          else chosenId = locs[0].id;
-      
-          var loc = findLocById(chosenId);
-          return loc && loc.naam ? stripPrefix(loc.naam) : '';
-        }
+          
       
         var html = '';
         (slotOrder||[]).forEach(function(sid){
