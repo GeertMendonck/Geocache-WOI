@@ -654,6 +654,22 @@
       
         var st = store.get();
         var unlockedLocs = st.unlockedLocs || [];
+        if(!unlockedLocs.length && Array.isArray(st.unlockedSlots) && st.unlockedSlots.length){
+            var arr2 = DATA.locaties || DATA.stops || [];
+            st.unlockedSlots.forEach(function(slot){
+              slot = (slot||'').toString().trim().toLowerCase();
+              for(var j=0;j<arr2.length;j++){
+                var loc = arr2[j];
+                if(!loc) continue;
+                var s = (loc.slot||'').toString().trim().toLowerCase();
+                if(s === slot){
+                  unlockedLocs.push(loc.id);
+                  break;
+                }
+              }
+            });
+          }
+          
         if(!unlockedLocs.length){
           return '<span class="muted">Nog geen verhaal. Wandel eens binnen een cirkel 🙂</span>';
         }
@@ -1955,14 +1971,16 @@ document.addEventListener('click', function(e){
   
     // ---------- renderUnlocked ----------
     function renderUnlocked(){
+        // verberg oude map sectie (legacy)
         var old = document.getElementById('mapSection');
         if(old) old.style.display = 'none';
-
+      
         applyRouteModeUI();
-        var downloadHtml = '';
+      
         var st = store.get();
         var pc = currentPc();
-        var cont = qs('unlockList'); if(!cont) return;
+        var cont = qs('unlockList');
+        if(!cont) return;
       
         var arr = DATA.locaties || DATA.stops || [];
       
@@ -1973,70 +1991,55 @@ document.addEventListener('click', function(e){
           return null;
         }
       
-        var currentLoc = st.currentLocId ? findLocById(st.currentLocId) : null;
+        function findLocBySlot(slot){
+          slot = (slot||'').toString().trim().toLowerCase();
+          for(var i=0;i<arr.length;i++){
+            var loc = arr[i];
+            if(!loc) continue;
+            var s = (loc.slot||'').toString().trim().toLowerCase();
+            if(s === slot) return loc;
+          }
+          return null;
+        }
+      
+        // -----------------------------
+        // 1) Bepaal currentLoc robuust
+        // -----------------------------
+        var currentLoc = null;
+      
+        // 1) expliciete currentLocId primeert
+        if(st.currentLocId) currentLoc = findLocById(st.currentLocId);
+      
+        // 2) fallback: laatste unlockedLocs
         if(!currentLoc && (st.unlockedLocs||[]).length){
-          currentLoc = findLocById(st.unlockedLocs[st.unlockedLocs.length-1]);
+          var ul = st.unlockedLocs;
+          currentLoc = findLocById(ul[ul.length-1]);
         }
-        var hasRealLoc = !!currentLoc;
-        var loc = currentLoc || {};     // ← voorkomt crashes
-        var locId = hasRealLoc ? loc.id  : '';
-        var slotId= hasRealLoc ? loc.slot: '';
-        
-
+      
+        // 3) fallback: laatste unlockedSlots
+        if(!currentLoc && (st.unlockedSlots||[]).length){
+          var us = st.unlockedSlots;
+          var lastSlot = us[us.length-1];
+          currentLoc = findLocBySlot(lastSlot);
+        }
+      
         var hasLoc = !!currentLoc;
-
+      
+        // placeholder zodat UI altijd kan renderen zonder crashes
         if(!hasLoc){
-        // geen return meer: we bouwen toch de panel-layout
-        // placeholder values zodat de rest niet "undefined" wordt
-        currentLoc = { id:'', slot:'', naam:'Nog geen stop', vragen:[], uitleg:null };
+          currentLoc = { id:'', slot:'', naam:'Nog geen stop', vragen:[], uitleg:null };
         }
-
       
         var loc = currentLoc;
-        var locId = loc.id;
-        var slotId = loc.slot;
+        var locId = loc.id || '';
+        var slotId = loc.slot || '';
       
-        // ✅ bepaal END + downloadHtml VOOR je qaBody bouwt
-        var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
-        var isEnd = (loc && loc.slot === endSlot);
-        
-        downloadHtml =
-          '<div class="card mt-10">'
-        + '  <div class="cardHead">📄 Verslag</div>'
-        + '  <div class="cardBody">'
-        + (isEnd
-            ? '<div class="muted" style="margin-bottom:10px">Je bent aan het eindpunt. Download nu je verslag.</div>'
-            : '<div class="muted" style="margin-bottom:10px">Je kan tussendoor al downloaden. (Handig voor tips onderweg.)</div>'
-          )
-        + '    <button id="exportBtn" type="button" class="primary">⬇️ Download verslag</button>'
-        + '  </div>'
-        + '</div>';
-        
-//       //test, mag verwijderd worden
-//       if(window.console){
-//         console.log('DEBUG verhaal', {
-//           pcId: (store.get()||{}).pcId,
-//           pcFound: !!pc,
-//           slotId: slotId,
-//           locId: locId,
-//           verhaalType: pc && pc.verhalen ? typeof pc.verhalen[slotId] : '(no pc/verhalen)',
-//           verhaalKeys: pc && pc.verhalen ? Object.keys(pc.verhalen) : []
-//         });
-//       }
-// //--------------      
-
-        var hasRealLoc = hasLoc && locId && slotId;
-        var verhaal = hasRealLoc ? getStoryFor(pc, slotId, locId) : null;
-        var verhaalText = (verhaal == null) ? '' : String(verhaal);
-
-        
-
-        if(!hasRealLoc){
-          verhaal = null;            // geen readBtn tonen
-          uitlegHtml = '';           // of laat je uitlegHtml zoals je wil
-          qaHtml = '<div class="muted">Nog geen vragen: wandel eerst een cirkel binnen 🙂</div>';
-        }
-        
+        // "echte loc" = we hebben id + slot (zoals jij al deed)
+        var hasRealLoc = !!(hasLoc && locId && slotId);
+      
+        // ------------------------------------
+        // 2) Uitleg opbouwen (kort + uitgebreid)
+        // ------------------------------------
         var uitleg = loc.uitleg || null;
         var uitlegKort = '', uitlegLang = '';
         if(uitleg){
@@ -2058,9 +2061,15 @@ document.addEventListener('click', function(e){
           + '</div>';
         }
       
-        var qsArr   = hasRealLoc ? (loc.vragen || []) : [];
+        // ------------------------------------
+        // 3) Vragen opbouwen
+        // ------------------------------------
+        var qsArr = hasRealLoc ? (loc.vragen || []) : [];
         var qaHtml = '';
-        if(qsArr.length){
+      
+        if(!hasRealLoc){
+          qaHtml = '<div class="muted">Nog geen vragen: wandel eerst een cirkel binnen 🙂</div>';
+        } else if(qsArr.length){
           qaHtml = qsArr.map(function(q,qi){
             var val = getAns(locId, qi);
             return ''
@@ -2080,6 +2089,26 @@ document.addEventListener('click', function(e){
           qaHtml = '<div class="muted">Geen vragen bij deze stop.</div>';
         }
       
+        // ------------------------------------
+        // 4) Downloadblok (1x)
+        // ------------------------------------
+        var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
+        var isEnd = (loc && loc.slot === endSlot);
+      
+        var downloadHtml =
+          '<div class="card mt-10">'
+        + '  <div class="cardHead">📄 Verslag</div>'
+        + '  <div class="cardBody">'
+        + (isEnd
+            ? '    <div class="muted small" style="margin-bottom:8px">Je bent aan het eindpunt — je kan nu je definitieve verslag downloaden.</div>'
+            : '    <div class="muted small" style="margin-bottom:8px">Je kan onderweg al exporteren (handig voor tips). Definitieve export op het eindpunt.</div>')
+        + '    <button id="exportBtn" type="button" class="primary">⬇️ Download verslag</button>'
+        + '  </div>'
+        + '</div>';
+      
+        // ------------------------------------
+        // 5) PC-card + story
+        // ------------------------------------
         var pcCard =
           '<div class="pcMini">'
         + ' <img class="pcMiniImg" src="'+escapeHtml(qs("pcImg") ? qs("pcImg").src : "")+'" alt=""/>'
@@ -2090,6 +2119,7 @@ document.addEventListener('click', function(e){
         + ' </div>'
         + '</div>';
       
+        // focus bepalen (zelfde logica, maar compact)
         var focus = (st.focus || 'story');
         if(!st.focus){
           var routeMode = (st.geoOn === true) || (st.lockedPc === true) ||
@@ -2101,42 +2131,24 @@ document.addEventListener('click', function(e){
           }
         }
       
-        var storyBody = ''
-        + pcCard
+        var storyBody =
+          pcCard
         + '<div style="margin-top:10px">'
-        +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
-        +     '<div style="font-weight:800">📘 Verhaal</div>'
-        //+     (hasRealLoc ? '<button class="readBtn" data-slot="'+slotId+'" data-loc="'+locId+'" title="Lees voor">🔊</button>' : '')
-        +   '</div>'
-        +   '<div style="margin-top:6px">'
-        +     buildStoryTimelineHtml(pc, hasRealLoc)
-        +   '</div>'
+        + '  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
+        + '    <div style="font-weight:800">📘 Verhaal</div>'
+        + '  </div>'
+        + '  <div style="margin-top:6px">'
+        +       buildStoryTimelineHtml(pc, hasRealLoc)
+        + '  </div>'
         + '</div>';
-        
       
-            // --- Exportblok (altijd klaarzetten) ---
-            var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
-            var isEnd = (loc && loc.slot === endSlot);
-
-            downloadHtml =
-            '<div class="card mt-10">'
-            + '  <div class="cardHead">📄 Verslag</div>'
-            + '  <div class="cardBody">'
-            + (isEnd
-                ? '    <div class="muted small" style="margin-bottom:8px">Je bent aan het eindpunt — je kan nu je definitieve verslag downloaden.</div>'
-                : '    <div class="muted small" style="margin-bottom:8px">Je kan onderweg al exporteren (handig voor tips). Definitieve export op het eindpunt.</div>')
-            + '    <button id="exportBtn" type="button" class="primary">⬇️ Download verslag</button>'
-            + '  </div>'
-            + '</div>';
-
+        var qaBody =
+          '<div id="statusWrapQa"></div>'
+        + (uitlegHtml || '<div class="muted">(Geen uitleg)</div>')
+        + '<div style="margin-top:10px">' + qaHtml + '</div>'
+        + downloadHtml;
       
-        var qaBody = ''
-          + '<div id="statusWrapQa"></div>'
-          + (uitlegHtml || '<div class="muted">(Geen uitleg)</div>')
-          + '<div style="margin-top:10px">' + qaHtml + '</div>'
-          + downloadHtml;
-      
-          var mapBody =
+        var mapBody =
           '<div id="statusWrapMap"></div>'
         + '<div id="mapPanelWrap" style="height:68vh; min-height:320px; border-radius:12px; overflow:hidden;"></div>'
         + '<div id="mapControlsWrap" class="row small mt-8">'
@@ -2147,16 +2159,15 @@ document.addEventListener('click', function(e){
         + '  <div class="muted small" style="margin-bottom:6px">Stops</div>'
         + '  <div id="stopsListHost" class="stopsPills"></div>'
         + '</div>';
-        
       
         var html =
           '<div class="stack">'
-          + panelHtml('story','Personage + Verhaal', storyBody, focus==='story')
-          + panelHtml('qa','Uitleg en vragen', qaBody, focus==='qa')
-          + panelHtml('map','Kaart', mapBody, focus==='map')
-          + '</div>';
+        +   panelHtml('story','Personage + Verhaal', storyBody, focus==='story')
+        +   panelHtml('qa','Uitleg en vragen', qaBody, focus==='qa')
+        +   panelHtml('map','Kaart', mapBody, focus==='map')
+        + '</div>';
       
-        // Park oneMap vóór innerHTML
+        // Park oneMap vóór innerHTML (jouw truc blijft)
         var oneMap = document.getElementById('oneMap');
         var park = document.getElementById('mapPark');
         if(!park){
@@ -2168,8 +2179,8 @@ document.addEventListener('click', function(e){
         if(oneMap && oneMap.parentElement !== park) park.appendChild(oneMap);
       
         cont.innerHTML = html;
+      
         autoFocusNewStory();
-        // stops render plannen (host bestaat nu)
         scheduleStopsRender('after renderUnlocked move');
       
         // oneMap terug naar wrap
@@ -2179,15 +2190,6 @@ document.addEventListener('click', function(e){
         if(oneMap){
           oneMap.style.height = '100%';
           oneMap.style.minHeight = '260px';
-        }
-      
-        // controls verhuizen
-        var ctrl = document.getElementById('mapControlsWrap');
-        if(ctrl){
-          var btn = document.getElementById('recenterBtn');
-          var link = document.getElementById('openInMaps');
-          if(btn) ctrl.appendChild(btn);
-          if(link) ctrl.appendChild(link);
         }
       
         // Leaflet init + invalidate als map focus
