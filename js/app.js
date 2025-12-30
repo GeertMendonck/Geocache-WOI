@@ -1311,10 +1311,10 @@
       
         // ✅ fase 1: GPS aanzetten mag altijd
         enableGps();
-      
+        try { applyPcUiState(); } catch(e) {}
         // ✅ fase 2: als je nu al aan start bent (en evt pc ok) -> begin meteen
         if(canBeginRouteNow()){
-            try { applyPcUiState(); } catch(e) {}
+           
           beginRoute();
         } else {
           // geen alert; eventueel status tekst zetten
