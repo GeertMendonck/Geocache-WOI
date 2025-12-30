@@ -768,6 +768,7 @@
             if(stAuto && stAuto.gpsOn === true && stAuto.geoOn !== true){
             if(canBeginRouteNow()){
     beginRoute();
+    try { applyPcUiState(); } catch(e) {}
   }
 }
             applyPcUiState();}
@@ -1311,7 +1312,7 @@
       
         // ✅ fase 1: GPS aanzetten mag altijd
         enableGps();
-        try { applyPcUiState(); } catch(e) {}
+       
         // ✅ fase 2: als je nu al aan start bent (en evt pc ok) -> begin meteen
         if(canBeginRouteNow()){
            
@@ -2504,6 +2505,7 @@ function charactersEnabled(){
         }
       
         renderProgress();
+        try { applyPcUiState(); } catch(e) {}
       }
       
   
