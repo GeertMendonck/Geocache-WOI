@@ -19,6 +19,36 @@
    
   
     // ---------- Mini helpers ----------
+    function enableGps(){
+        var st = store.get();
+        st.gpsOn = true;          // optioneel vlaggetje
+        store.set(st);
+      
+        startWatch();             // jouw bestaande watchPosition starter
+      }
+      function canBeginRouteNow(){
+        if(window.__insideStart !== true) return false;
+      
+        // personages alleen checken als enabled
+        if(charactersEnabled()){
+          var st = store.get();
+          if(!st.pcId) return false;
+          if(!(st.pcConfirmed || st.lockedPc)) return false;
+        }
+        return true;
+      }
+      function beginRoute(){
+        var st = store.get();
+        if(st.geoOn === true) return;   // al gestart
+      
+        st.geoOn = true;
+        st.startedAt = Date.now();
+        store.set(st);
+      
+        scheduleStopsRender('beginRoute');
+        applyPcUiState();
+      }
+      
     //speak
     function initVoices(){
         if(!('speechSynthesis' in window)) return;
@@ -1268,21 +1298,27 @@
       document.addEventListener('pointerdown', initAudio, { once:true });
   
       b = qs('startBtn');
-if(b) b.addEventListener('click', function(){
-  initAudio();
-
-  if(!canStartRoute()){
-    // optioneel: duidelijke feedback
-    if(window.__insideStart !== true){
-      alert('Je bent nog niet aan de startlocatie.');
-    } else if(charactersEnabled()){
-      alert('Kies eerst een personage aan de startlocatie.');
-    }
-    return;
-  }
-
-  startRoute();
-});
+      if(b) b.addEventListener('click', function(){
+        initAudio();
+      
+        // ✅ fase 1: GPS aanzetten mag altijd
+        enableGps();
+      
+        // ✅ fase 2: als je nu al aan start bent (en evt pc ok) -> begin meteen
+        if(canBeginRouteNow()){
+          beginRoute();
+        } else {
+          // geen alert; eventueel status tekst zetten
+          // bv. "GPS staat aan. Ga naar startpunt om te beginnen."
+          var msg = qs('prestartMsg');
+          if(msg){
+            msg.textContent = (window.__insideStart === true)
+              ? '✅ GPS staat aan. Kies eventueel je personage en start gaat vanzelf.'
+              : '📍 GPS staat aan. Ga naar het startpunt om te beginnen.';
+          }
+        }
+      });
+      
 
       b=qs('resetBtn'); if(b) b.addEventListener('click', function(){ localStorage.removeItem('woi_state'); location.reload(); });
      // b=qs('recenterBtn'); if(b) b.addEventListener('click', function(){ followMe = true; });
