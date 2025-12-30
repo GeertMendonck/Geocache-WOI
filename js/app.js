@@ -1489,32 +1489,36 @@ function charactersEnabled(){
   // ---------- UI: apply state everywhere ----------
   
   function applyPcUiState(){
+    // charactersEnabled moet META respecteren: enabled:false => false
     var enabled = charactersEnabled();
   
-    // 1) Als geen personages: alles weg en klaar.
-    if(!enabled){
-      setVisibleById('pcCard', false);
-      setPanelVisible('story', false);
+    // jouw elementen
+    var pcCardEl = document.getElementById('pcCard');
+    var storyPanel = document.querySelector('section[data-panel="story"]');
   
-      // extra: inhoud leegmaken zodat er ook geen “Laden…” rest
+    if(!enabled){
+      if(pcCardEl) pcCardEl.style.display = 'none';
+      if(storyPanel) storyPanel.style.display = 'none';
+  
       var chooser = qs('pcChooser');
       if(chooser) chooser.innerHTML = '';
   
       return;
     }
   
-    // 2) Wel personages: jouw bestaande logica (choose/active)
-        var st = store.get();
-        var active = !!st.pcId && (!!st.pcConfirmed || !!st.lockedPc);
-
-        // toon pcCard zolang je moet kiezen
-        setVisibleById('pcCard', !active);
-
-        // story alleen als actief
-        setPanelVisible('story', active);
-
-        if(!active) renderCharacterChooser();
-    }
+    // enabled=true: klassiek gedrag
+    var st = store.get();
+    var active = !!st.pcId && (!!st.pcConfirmed || !!st.lockedPc);
+  
+    // pcCard tonen zolang je nog moet kiezen
+    if(pcCardEl) pcCardEl.style.display = active ? 'none' : '';
+  
+    // story alleen als actief
+    if(storyPanel) storyPanel.style.display = active ? '' : 'none';
+  
+    if(!active) renderCharacterChooser();
+  }
+  
     
       
     function setPcId(newId){
@@ -1608,34 +1612,7 @@ function charactersEnabled(){
   
       renderCharacterChooser();
     }
-    function applyPcUiState(){
-        var pcSection = qs('pcSection');      // hele personage-sectie (optioneel)
-        var pcCard    = qs('pcCard');         // kaart met details (optioneel)
-        var storyWrap = qs('storySection') || qs('pcStoryWrap') || qs('storyWrap'); // kies wat jij hebt
-      
-        var state = getPcState();
-      
-        // 1) volledig weg indien geen personages
-        if(state === 'disabled'){
-          if(pcSection) pcSection.style.display = 'none';
-          if(storyWrap) storyWrap.style.display = 'none';
-          return;
-        }
-      
-        // 2) personages bestaan: sectie tonen
-        if(pcSection) pcSection.style.display = '';
-      
-        // 3) chooser vs active
-        if(pcCard){
-          pcCard.style.display = (state === 'active') ? '' : 'none';
-        }
-        if(storyWrap){
-          storyWrap.style.display = (state === 'active') ? '' : 'none';
-        }
-      
-        // 4) chooser altijd renderen (toont dan “locked/outside/…” netjes)
-        renderCharacterChooser();
-      }
+  
       function startRoute(){
         var st = store.get();
       
@@ -1650,12 +1627,13 @@ function charactersEnabled(){
       }
       
       function canStartRoute(){
-        // startzone check doe je elders (insideStart)
+        if(window.__insideStart !== true) return false;
         if(!charactersEnabled()) return true;
       
         var st = store.get();
-        return !!st.pcId; // of pcConfirmed, afhankelijk van jouw regels
+        return !!st.pcId && (!!st.pcConfirmed || !!st.lockedPc);
       }
+      
       
       
     // Bind pcSelect (slechts 1x, document delegation)
