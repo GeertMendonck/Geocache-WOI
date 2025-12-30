@@ -4,7 +4,7 @@
     "subtitle": "enkel volgende op en onder kaart",
     "version": "1.0",
     "characters": {
-      "enabled": true,
+      "enabled": false,
       "source": "personages.json"
     }
   },
