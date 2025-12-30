@@ -1263,7 +1263,23 @@
       
       document.addEventListener('pointerdown', initAudio, { once:true });
   
-      b=qs('startBtn'); if(b) b.addEventListener('click', function(){ initAudio(); startWatch(); });
+      b = qs('startBtn');
+if(b) b.addEventListener('click', function(){
+  initAudio();
+
+  if(!canStartRoute()){
+    // optioneel: duidelijke feedback
+    if(window.__insideStart !== true){
+      alert('Je bent nog niet aan de startlocatie.');
+    } else if(charactersEnabled()){
+      alert('Kies eerst een personage aan de startlocatie.');
+    }
+    return;
+  }
+
+  startRoute();
+});
+
       b=qs('resetBtn'); if(b) b.addEventListener('click', function(){ localStorage.removeItem('woi_state'); location.reload(); });
      // b=qs('recenterBtn'); if(b) b.addEventListener('click', function(){ followMe = true; });
   
@@ -1442,13 +1458,9 @@ document.addEventListener('click', function(e){
 // ---------- Characters: single source of truth ----------
 
 function charactersEnabled(){
-    // DATA.characters komt uit loadScenario()
-    if(window.DATA && DATA.characters){
-      return DATA.characters.enabled !== false;
-    }
-    // backward compat
-    return !!(window.DATA && Array.isArray(DATA.personages) && DATA.personages.length > 0);
+    return !(DATA && DATA.characters && DATA.characters.enabled === false);
   }
+  
   
   function getPcState(){
     // disabled = scenario heeft geen personages (of expliciet uitgeschakeld)
@@ -1476,34 +1488,33 @@ function charactersEnabled(){
   // ---------- UI: apply state everywhere ----------
   
   function applyPcUiState(){
-    var state = getPcState();
+    var enabled = charactersEnabled();
   
-    // pcCard is jouw "Jouw personage" kaart
-    // story panel is "Personage + Verhaal" (data-panel="story")
-    if(state === 'disabled'){
+    // 1) Als geen personages: alles weg en klaar.
+    if(!enabled){
       setVisibleById('pcCard', false);
       setPanelVisible('story', false);
   
-      // ook chooser inhoud leeg maken (voor zekerheid)
-      var el = qs('pcChooser');
-      if(el) el.innerHTML = '';
+      // extra: inhoud leegmaken zodat er ook geen “Laden…” rest
+      var chooser = qs('pcChooser');
+      if(chooser) chooser.innerHTML = '';
   
       return;
     }
   
-    // characters bestaan -> pcCard mag bestaan
-    // Kies: tonen in choose, of altijd tonen. Ik neem choose = tonen, active = verbergen.
-    setVisibleById('pcCard', state === 'choose');
-  
-    // story: alleen tonen wanneer personage actief is
-    setPanelVisible('story', state === 'active');
-  
-    // chooser (select + pill) opnieuw tekenen zolang pcCard zichtbaar is
-    if(state === 'choose'){
-      renderCharacterChooser();
+    // 2) Wel personages: jouw bestaande logica (choose/active)
+        var st = store.get();
+        var active = !!st.pcId && (!!st.pcConfirmed || !!st.lockedPc);
+
+        // toon pcCard zolang je moet kiezen
+        setVisibleById('pcCard', !active);
+
+        // story alleen als actief
+        setPanelVisible('story', active);
+
+        if(!active) renderCharacterChooser();
     }
-  }
-  
+    
       
     function setPcId(newId){
       var st = store.get();
@@ -1621,6 +1632,27 @@ function charactersEnabled(){
         // 4) chooser altijd renderen (toont dan “locked/outside/…” netjes)
         renderCharacterChooser();
       }
+      function startRoute(){
+        var st = store.get();
+      
+        st.geoOn = true;          // route is gestart
+        st.startedAt = Date.now();
+      
+        store.set(st);
+      
+        startWatch();             // GPS watch starten
+        scheduleStopsRender('start');
+        applyPcUiState();
+      }
+      
+      function canStartRoute(){
+        // startzone check doe je elders (insideStart)
+        if(!charactersEnabled()) return true;
+      
+        var st = store.get();
+        return !!st.pcId; // of pcConfirmed, afhankelijk van jouw regels
+      }
+      
       
     // Bind pcSelect (slechts 1x, document delegation)
     (function bindPcSelectOnce(){
