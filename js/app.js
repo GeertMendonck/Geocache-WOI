@@ -762,6 +762,14 @@
             if(prev !== insideStart){
             maybeLockPcOnStartExit(prev, insideStart);
             window.__insideStart = insideStart;
+            // Auto-begin: als GPS aan staat maar route nog niet gestart,
+            // en je komt aan startpunt -> start route vanzelf
+            var stAuto = store.get();
+            if(stAuto && stAuto.gpsOn === true && stAuto.geoOn !== true){
+            if(canBeginRouteNow()){
+    beginRoute();
+  }
+}
             applyPcUiState();}
       
         var st = store.get();
