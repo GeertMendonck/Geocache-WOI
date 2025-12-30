@@ -1829,7 +1829,7 @@ document.addEventListener('click', function(e){
         var html = '';
         (slotOrder||[]).forEach(function(sid){
             if(!isSlotVisible(sid)) return;
-          var ok = !!unlockedMap[sid];
+         // var ok = !!unlockedMap[sid];
           var optional = isOptionalSlot(sid);
           var icon = ok ? '✅' : (sid===endSlot ? '🔒' : (optional ? '🧩' : '⏳'));
       
