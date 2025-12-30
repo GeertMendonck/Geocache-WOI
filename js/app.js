@@ -2522,7 +2522,7 @@ function charactersEnabled(){
       store.set(st);
   
       renderUnlocked();
-  
+      try { applyPcUiState(); } catch(e) {}
       if(focus === 'map'){
         setTimeout(function(){
           if(window.LMAP) window.LMAP.invalidateSize(true);
