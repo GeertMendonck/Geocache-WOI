@@ -646,34 +646,44 @@
         __lastFix = { lat: latitude, lng: longitude, acc: accuracy };
         applyLiveFixToMap();
       }
+      function rememberUnlockedLocInState(st, locId){
+        if(!st || !locId) return;
+        st.unlockedLocs = st.unlockedLocs || [];
+        if(st.unlockedLocs.indexOf(locId) === -1){
+          st.unlockedLocs.push(locId);
+        }
+      }
       
       function buildStoryTimelineHtml(pc, hasRealLoc){
-        var st = store.get();
-console.log('unlockedLocs=', st.unlockedLocs, 'unlockedSlots=', st.unlockedSlots, 'visibleSlotMap=', st.visibleSlotMap);
-
- 
-        if(!pc || !pc.verhalen) {
+        if(!pc || !pc.verhalen){
           return '<div class="muted">(Geen verhaal beschikbaar)</div>';
         }
       
         var st = store.get();
         var unlockedLocs = st.unlockedLocs || [];
+      
+        // fallback 1: unlockedSlots → locIds
         if(!unlockedLocs.length && Array.isArray(st.unlockedSlots) && st.unlockedSlots.length){
-            var arr2 = DATA.locaties || DATA.stops || [];
-            st.unlockedSlots.forEach(function(slot){
-              slot = (slot||'').toString().trim().toLowerCase();
-              for(var j=0;j<arr2.length;j++){
-                var loc = arr2[j];
-                if(!loc) continue;
-                var s = (loc.slot||'').toString().trim().toLowerCase();
-                if(s === slot){
-                  unlockedLocs.push(loc.id);
-                  break;
-                }
+          var arr2 = DATA.locaties || DATA.stops || [];
+          st.unlockedSlots.forEach(function(slot){
+            slot = (slot||'').toString().trim().toLowerCase();
+            for(var j=0;j<arr2.length;j++){
+              var loc = arr2[j];
+              if(!loc) continue;
+              var s = (loc.slot||'').toString().trim().toLowerCase();
+              if(s === slot){
+                unlockedLocs.push(loc.id);
+                break;
               }
-            });
-          }
-          
+            }
+          });
+        }
+      
+        // ✅ fallback 2: minstens currentLoc tonen
+        if(!unlockedLocs.length && st.currentLocId){
+          unlockedLocs = [st.currentLocId];
+        }
+      
         if(!unlockedLocs.length){
           return '<span class="muted">Nog geen verhaal. Wandel eens binnen een cirkel 🙂</span>';
         }
@@ -697,7 +707,6 @@ console.log('unlockedLocs=', st.unlockedLocs, 'unlockedSlots=', st.unlockedSlots
       
           var slotId = (loc.slot || '').toString().trim().toLowerCase();
       
-          // start / end normaliseren
           var startSlot = DATA.startSlot || (DATA.meta && DATA.meta.startSlot) || 'start';
           if(slotId === startSlot) slotId = 'start';
           var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
@@ -708,23 +717,25 @@ console.log('unlockedLocs=', st.unlockedLocs, 'unlockedSlots=', st.unlockedSlots
       
           var isLatest = (locId === lastLocId);
           var domId = safeDomId(locId);
-
-          html += ''  
+      
+          html += ''
             + '<div class="storyChunk'+(isLatest ? ' is-latest' : '')+'" id="storyChunk_'+domId+'">'
             +   '<div class="storyChunkHead">'
             +     '<span>'+escapeHtml(loc.naam || slotId)+'</span>'
             +     '<span style="display:flex;align-items:center;gap:8px">'
             +       (isLatest ? '<span class="pill tiny">nieuw</span>' : '')
-            +       (hasRealLoc ? '<button class="readBtn" data-slot="'+escapeHtml(slotId)+'" data-loc="'+escapeHtml(locId)+'" title="Lees voor">🔊</button>' : '')
+            +       (hasRealLoc
+                  ? '<button class="readBtn" data-slot="'+slotId+'" data-loc="'+locId+'" title="Lees voor">🔊</button>'
+                  : '')
             +     '</span>'
             +   '</div>'
             +   '<div class="storyChunkBody">'+escapeHtml(verhaal)+'</div>'
             + '</div>';
-
         }
       
         return html || '<span class="muted">(Nog geen verhaal)</span>';
       }
+      
       function safeDomId(x){
         return String(x).replace(/[^a-zA-Z0-9_-]/g, '_');
       }
@@ -1904,24 +1915,40 @@ document.addEventListener('click', function(e){
   
       if(st.unlockedSlots.indexOf(bestSlot) === -1){
         st.lastUnlockedLocId = best.id;     // ✅ voor auto-focus
-        st.lastUnlockedAt = Date.now(); 
+        st.lastUnlockedAt = Date.now();
+      
         st.unlockedSlots.push(bestSlot);
+      
+        // ✅ safety: zorg dat unlockedBySlot bestaat
+        if(!st.unlockedBySlot) st.unlockedBySlot = {};
         st.unlockedBySlot[bestSlot] = best.id;
+      
         st.currentLocId = best.id;
         st.currentSlotId = bestSlot;
+      
+        // ✅ dit maakt je story timeline persistent
+        //rememberUnlockedLoc(best.id);
+        rememberUnlockedLocInState(st, best.id);
+        // store.set gebeurt al in rememberUnlockedLoc, maar is oké om hier nog eens te doen
+        // (als je het netter wil: haal store.set uit rememberUnlockedLoc en laat het hier)
         store.set(st);
-  
+      
         renderUnlocked();
         scheduleStopsRender('unlock');
         toast('✅ Ontgrendeld: ' + (best.name || bestSlot));
         playDing();
       } else {
-        // slot al unlocked: alleen currentLoc updaten indien je dat wil
         st.currentLocId = best.id;
         st.currentSlotId = bestSlot;
+      
+        // (optioneel) als je wil dat story ook “bijwerkt” wanneer je terug naar een oude stop gaat:
+        // rememberUnlockedLoc(best.id);
+      
         store.set(st);
         renderUnlocked();
       }
+      
+      
     }
   
     function startWatch(){
