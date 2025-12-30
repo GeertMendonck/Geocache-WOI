@@ -1,4 +1,22 @@
 {
+  "meta": {
+    "title": "Schooltest – Geo-app",
+    "subtitle": "wel onder niet op kaart",
+    "version": "1.0",
+    "characters": {
+      "enabled": true,
+      "source": "personages.json"
+    }
+  },
+
+  "settings": {
+    "visibilityMode": "nextOnly",
+    "multiLocationSlotMode": "all",
+    "showOptionalSlots": true,
+    "listShowFutureSlots": true,
+    "mapShowFutureLocations": false
+  
+  },
   "slots": [
     { "id": "start",  "label": "Start",  "required": true },
     { "id": "stop01", "label": "Stop 1", "required": true },

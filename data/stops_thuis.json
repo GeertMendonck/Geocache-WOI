@@ -2,7 +2,11 @@
   "meta": {
     "title": "Thuistest – Geo-app",
     "subtitle": "wel onder niet op kaart",
-    "version": "1.0"
+    "version": "1.0",
+    "characters": {
+      "enabled": true,
+      "source": "personages.json"
+    }
   },
 
   "settings": {

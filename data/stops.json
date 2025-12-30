@@ -2,7 +2,11 @@
   "meta": {
     "title": "WOI – Mijn Personage",
     "subtitle": "Interactieve herdenkingsroute rond Ieper",
-    "version": "1.0"
+    "version": "1.0",
+    "characters": {
+      "enabled": true,
+      "source": "personages.json"
+    }
   },
 
   "settings": {

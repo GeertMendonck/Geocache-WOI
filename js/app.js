@@ -720,10 +720,16 @@
           }
         });
       
-        if (window.__insideStart !== insideStart) {
+        // if (window.__insideStart !== insideStart) {
+        //     window.__insideStart = insideStart;
+        //     //renderCharacterChooser(); // 👈 dit is de essentie
+        //     applyPcUiState();
+        //   }
+        var prev = window.__insideStart === true;
+            if(prev !== insideStart){
+            maybeLockPcOnStartExit(prev, insideStart);
             window.__insideStart = insideStart;
-            renderCharacterChooser(); // 👈 dit is de essentie
-          }
+            applyPcUiState();}
       
         var st = store.get();
         var msg = qs('prestartMsg');        
@@ -785,6 +791,15 @@
         __lastFix = { lat: latitude, lng: longitude, acc: accuracy };
         applyLiveFixToMap();
       }
+      function maybeLockPcOnStartExit(prevInside, nowInside){
+        if(prevInside === true && nowInside === false){
+          var st = store.get();
+          if(st.pcId && !st.pcConfirmed) st.pcConfirmed = true;
+          if(st.pcId) st.lockedPc = true;
+          store.set(st);
+        }
+      }
+      
       function rememberUnlockedLocInState(st, locId){
         if(!st || !locId) return;
         st.unlockedLocs = st.unlockedLocs || [];
@@ -1389,116 +1404,64 @@ document.addEventListener('click', function(e){
       var name = p.get('stops') || 'stops';
       return './data/' + name + '.json';
     }
-  
-    // function loadScenario(){
-    //     return Promise.all([
-    //       fetchJSON('./data/meta.json'),          // defaults (kan leeg zijn)
-    //       fetchJSON(stopsFileFromQuery()),        // scenario (stops.json of stops_thuis.json)
-    //       fetchJSON('./data/personages.json')
-    //     ]).then(function(arr){
-    //       var metaDefaults = arr[0] || {};
-    //       var stopsRaw = arr[1];
-    //       var personages = arr[2] || [];
-      
-    //       // ---------------------------
-    //       // 1) Extract scenario-structuur
-    //       // ---------------------------
-    //       var isScenarioObject =
-    //         stopsRaw &&
-    //         typeof stopsRaw === 'object' &&
-    //         !Array.isArray(stopsRaw) &&
-    //         stopsRaw.locaties &&
-    //         stopsRaw.slots;
-      
-    //       var slots = null, locaties = null;
-    //       var scenarioMeta = {};
-    //       var scenarioSettings = {};
-    //       var scenarioPrestart = {};
-      
-    //       if (isScenarioObject) {
-    //         slots = stopsRaw.slots || [];
-    //         locaties = stopsRaw.locaties || [];
-      
-    //         scenarioMeta = stopsRaw.meta || {};
-    //         scenarioSettings = stopsRaw.settings || {};
-    //         scenarioPrestart = stopsRaw.prestart || {};
-    //       } else {
-    //         // Backward compat: stopsRaw is array of locaties
-    //         locaties = Array.isArray(stopsRaw) ? stopsRaw : [];
-    //         slots = [];
-      
-    //         var seen = {};
-    //         locaties.forEach(function(l){
-    //           var s = l && l.slot ? l.slot : null;
-    //           if (s && !seen[s]) { seen[s] = true; slots.push({ id:s, label:s, required:true }); }
-    //         });
-      
-    //         if (!slots.length) {
-    //           slots = [
-    //             { id:'start', label:'Start', required:true },
-    //             { id:'end', label:'Einde', required:true }
-    //           ];
-    //         }
-
-    //       }
-      
-    //       // ---------------------------
-    //       // 2) Merge: defaults + scenario override
-    //       //    (scenario wint)
-    //       // ---------------------------
-    //       var meta = Object.assign({}, metaDefaults, scenarioMeta);
-      
-    //       // settings/prestart bestaan enkel in scenario (of later ook defaults, maar nu ok)
-    //       var settings = Object.assign({}, scenarioSettings);
-    //       var prestart = Object.assign({}, scenarioPrestart);
-      
-    //       // ---------------------------
-    //       // 3) start/end slots bepalen
-    //       //    (ook scenario-override mogelijk)
-    //       // ---------------------------
-    //       var startSlot = meta.startSlot || 'start';
-    //       var endSlot   = meta.endSlot   || 'end';
-      
-    //       // ---------------------------
-    //       // 4) afgeleide data
-    //       // ---------------------------
-    //       var slotOrder = (slots || []).map(function(s){ return s.id; });
-    //       var requiredSlots = (slots || [])
-    //         .filter(function(s){ return !!s.required; })
-    //         .map(function(s){ return s.id; });
-      
-    //       return {
-    //         meta: meta,
-    //         settings: settings,
-    //         prestart: prestart,
-      
-    //         // compat: je gebruikt nu soms "stops", soms "locaties"
-    //         stops: locaties,
-    //         locaties: locaties,
-      
-    //         slots: slots,
-    //         startSlot: startSlot,
-    //         endSlot: endSlot,
-    //         slotOrder: slotOrder,
-    //         requiredSlots: requiredSlots,
-    //         personages: personages
-    //       };
-    //     });
-    //   }
-      
-  
+    
     // ---------- Personage ----------
     
     function loadScenario(){
+        function safeFetchJSON(url, fallback){
+          if(!url) return Promise.resolve(fallback);
+          return fetchJSON(url).catch(function(err){
+            console.warn('safeFetchJSON fallback for', url, err);
+            return fallback;
+          });
+        }
+      
+        function resolveRelative(baseFile, relPath){
+          if(!relPath) return null;
+      
+          if(/^https?:\/\//i.test(relPath)) return relPath;
+      
+          relPath = String(relPath).replace(/\\/g, '/');
+          if(relPath.charAt(0) === '/') return relPath;
+      
+          baseFile = String(baseFile || '').replace(/\\/g, '/');
+          var baseDir = baseFile.split('/').slice(0, -1).join('/');
+          if(!baseDir) return relPath;
+      
+          return baseDir + '/' + relPath;
+        }
+      
+        function getCharacterConfig(meta){
+          var m = meta || {};
+          var ch = m.characters;
+      
+          // Backward compat: niets vermeld => probeer personages.json naast scenario
+          if(!ch){
+            return { enabled:true, source:'personages.json', implicit:true };
+          }
+          if(ch.enabled === false){
+            return { enabled:false };
+          }
+          return {
+            enabled: true,
+            source: ch.source || 'personages.json',
+            required: (ch.required === true),
+            lockAtStartExit: (ch.lockAtStartExit !== false)
+          };
+        }
+      
+        var scenarioUrl = stopsFileFromQuery();
+      
         return Promise.all([
-          fetchJSON('./data/meta.json'),
-          fetchJSON(stopsFileFromQuery()),
-          fetchJSON('./data/personages.json')
+          safeFetchJSON('./data/meta.json', {}),
+          fetchJSON(scenarioUrl)
         ]).then(function(arr){
           var metaDefaults = arr[0] || {};
           var stopsRaw = arr[1];
-          var personages = arr[2] || [];
       
+          // ---------------------------
+          // 1) Extract scenario-structuur
+          // ---------------------------
           var isScenarioObject =
             stopsRaw &&
             typeof stopsRaw === 'object' &&
@@ -1519,6 +1482,7 @@ document.addEventListener('click', function(e){
             scenarioSettings = stopsRaw.settings || {};
             scenarioPrestart = stopsRaw.prestart || {};
           } else {
+            // Backward compat: stopsRaw is array of locaties
             locaties = Array.isArray(stopsRaw) ? stopsRaw : [];
             slots = [];
       
@@ -1536,10 +1500,11 @@ document.addEventListener('click', function(e){
             }
           }
       
-          // 2) Merge meta
+          // ---------------------------
+          // 2) Merge meta + settings
+          // ---------------------------
           var meta = Object.assign({}, metaDefaults, scenarioMeta);
       
-          // 2b) Settings defaults + override
           var settingsDefaults = {
             visibilityMode: 'nextOnly',
             multiLocationSlotMode: 'all',
@@ -1551,11 +1516,15 @@ document.addEventListener('click', function(e){
       
           var prestart = Object.assign({}, scenarioPrestart);
       
+          // ---------------------------
           // 3) start/end slots
+          // ---------------------------
           var startSlot = meta.startSlot || 'start';
           var endSlot   = meta.endSlot   || 'end';
       
-          // 3b) Normaliseer slots: completeMode altijd gezet & gevalideerd
+          // ---------------------------
+          // 4) Normaliseer slots
+          // ---------------------------
           var allowedModes = { any:1, all:1, nearest:1, random:1 };
           slots = (slots || []).map(function(s){
             var slot = Object.assign({ required:true }, s || {});
@@ -1566,7 +1535,9 @@ document.addEventListener('click', function(e){
             return slot;
           });
       
-          // 3c) Normaliseer locaties: id/slot/radius defaults
+          // ---------------------------
+          // 5) Normaliseer locaties
+          // ---------------------------
           var defaultRadius = (meta && meta.radiusDefaultMeters != null) ? meta.radiusDefaultMeters : 200;
           locaties = (locaties || []).map(function(l, idx){
             var loc = Object.assign({}, l || {});
@@ -1576,29 +1547,41 @@ document.addEventListener('click', function(e){
             return loc;
           });
       
-          // 4) derived
-          var slotOrder = (slots || []).map(function(s){ return s.id; });
-          var requiredSlots = (slots || [])
-            .filter(function(s){ return !!s.required; })
-            .map(function(s){ return s.id; });
+          // ---------------------------
+          // 6) Personages: scenario-meta gestuurd
+          // ---------------------------
+          var pcCfg = getCharacterConfig(meta);
+          var pcUrl = pcCfg.enabled ? resolveRelative(scenarioUrl, pcCfg.source) : null;
       
-          return {
-            meta: meta,
-            settings: settings,
-            prestart: prestart,
+          return safeFetchJSON(pcUrl, []).then(function(personages){
+            // derived
+            var slotOrder = (slots || []).map(function(s){ return s.id; });
+            var requiredSlots = (slots || [])
+              .filter(function(s){ return !!s.required; })
+              .map(function(s){ return s.id; });
       
-            stops: locaties,
-            locaties: locaties,
+            return {
+              meta: meta,
+              settings: settings,
+              prestart: prestart,
       
-            slots: slots,
-            startSlot: startSlot,
-            endSlot: endSlot,
-            slotOrder: slotOrder,
-            requiredSlots: requiredSlots,
-            personages: personages
-          };
+              stops: locaties,
+              locaties: locaties,
+      
+              slots: slots,
+              startSlot: startSlot,
+              endSlot: endSlot,
+              slotOrder: slotOrder,
+              requiredSlots: requiredSlots,
+      
+              // personages + config
+              personages: Array.isArray(personages) ? personages : [],
+              characters: pcCfg
+            };
+          });
         });
       }
+      
       
     function ensureCharacter(){
       var st = store.get();
@@ -1620,7 +1603,54 @@ document.addEventListener('click', function(e){
       }
       return null;
     }
-  
+    function hasCharacters(){
+        if(DATA && DATA.characters) return DATA.characters.enabled !== false;
+        return (DATA.personages||[]).length > 0;
+      }
+      
+      
+      function isPcActive(){
+        var st = store.get();
+        return !!st.pcId && (!!st.pcConfirmed || !!st.lockedPc);
+      }
+      
+      function setStoryVisible(visible){
+        var el = document.querySelector('section[data-panel="story"]');
+        if(!el) return;
+        el.style.display = visible ? '' : 'none';
+      }
+      
+      function setVisibleById(id, visible){
+        var el = document.getElementById(id);
+        if(!el) return;
+        el.style.display = visible ? '' : 'none';
+      }
+      
+      function setPanelVisible(name, visible){
+        var el = document.querySelector('section[data-panel="'+name+'"]');
+        if(!el) return;
+        el.style.display = visible ? '' : 'none';
+      }
+      function applyCharacterVisibility(){
+        var chars = hasCharacters();
+        var active = chars && isPcActive();
+      
+        // story: alleen als personage actief is
+        setPanelVisible('story', active);
+      
+        // pcCard: als er geen personages zijn => weg
+        if(!chars){
+          setVisibleById('pcCard', false);
+          return;
+        }
+      
+        // Variant A (aanrader): pcCard tonen zolang je nog moet kiezen/bevestigen
+        setVisibleById('pcCard', !active);
+      
+        // Variant B: pcCard altijd tonen zodra er personages zijn (ook als gekozen)
+        // setVisibleById('pcCard', true);
+      }
+      
     function setPcId(newId){
       var st = store.get();
       st.pcId = newId;
@@ -1631,31 +1661,107 @@ document.addEventListener('click', function(e){
     }
   
     function renderCharacterChooser(){
-      var st=store.get();
-      var el=qs('pcChooser'); if(!el) return;
-  
-      var opts='';
-      (DATA.personages||[]).forEach(function(p){
-        opts += '<option value="'+p.id+'" '+(p.id===st.pcId?'selected':'')+'>'+p.naam+' ('+p.leeftijd+') — '+p.rol+'</option>';
-      });
-      if(!opts) opts = '<option>Demo</option>';
-  
-        var inside = window.__insideStart===true;
+        var st = store.get();
+        var el = qs('pcChooser'); if(!el) return;
+      
+        // als scenario geen personages heeft: kiesblok weg
+        if(!charactersEnabled()){
+          el.innerHTML = '';
+          return;
+        }
+      
+        var pcs = DATA.personages || [];
+        if(!pcs.length){
+          el.innerHTML = '<span class="pill no">ℹ️ Geen personages in dit scenario</span>';
+          return;
+        }
+      
+        var opts = '';
+        pcs.forEach(function(p){
+          opts += '<option value="'+p.id+'" '+(p.id===st.pcId?'selected':'')+'>'
+                + escapeHtml(p.naam)+' ('+escapeHtml(String(p.leeftijd))+') — '+escapeHtml(p.rol)
+                + '</option>';
+        });
+      
+        var inside = (window.__insideStart === true);
         var locked = !!st.lockedPc;
         var confirmed = !!st.pcConfirmed;
-        var canChoose = inside && !locked && !confirmed;
-
-  
-        el.innerHTML =
-        '<select id="pcSelect" '+(canChoose?'':'disabled')+'>'+opts+'</select>'
-      + '<span class="pill '+(locked?'ok':'')+'">'
-      + (locked ? '🔒 Keuze vergrendeld'
-                : (confirmed ? '✅ Keuze bevestigd'
-                             : (inside ? '🟢 Je kan hier je personage kiezen'
-                                       : '🔐 Kiesbaar enkel aan de start')))
-      + '</span>';
       
-    }
+        // je kan kiezen enkel in startzone en zolang niet bevestigd/vergrendeld
+        var canChoose = inside && !locked && !confirmed;
+      
+        var msg =
+          locked ? '🔒 Keuze vergrendeld' :
+          (confirmed ? '✅ Keuze bevestigd' :
+            (inside ? '🟢 Kies je personage en bevestig'
+                    : '🔐 Kiesbaar enkel aan de start'));
+      
+        // Extra: geef een duidelijke “call to action”
+        var showConfirm = (!locked && !confirmed);
+      
+        el.innerHTML =
+            '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+          +   '<select id="pcSelect" '+(canChoose?'':'disabled')+'>'+opts+'</select>'
+          +   (showConfirm ? '<button id="pcConfirmBtn" '+(canChoose?'':'disabled')+'>Bevestig</button>' : '')
+          +   '<span id="pcPill" class="pill '+((locked||confirmed)?'ok':'')+'">'+escapeHtml(msg)+'</span>'
+          + '</div>';
+      
+        // bind confirm (idempotent)
+        var btn = qs('pcConfirmBtn');
+        if(btn){
+          btn.onclick = function(){
+            var st2 = store.get();
+            var sel = qs('pcSelect');
+            if(sel && sel.value) st2.pcId = sel.value;
+      
+            // bevestigen = actief
+            st2.pcConfirmed = true;
+            // als jij liever lockt bij verlaten startzone: laat lockedPc hier nog false
+            store.set(st2);
+      
+            applyPcUiState();
+          };
+        }
+      
+        // bij wijzigen select: pcId opslaan maar nog niet bevestigen
+        var sel = qs('pcSelect');
+        if(sel){
+          sel.onchange = function(){
+            var st3 = store.get();
+            st3.pcId = sel.value;
+            store.set(st3);
+            // nog niet active; pas na confirm/lock
+          };
+        }
+      }
+      
+
+    function renderCharacterChooser(){
+        var st=store.get();
+        var el=qs('pcChooser'); if(!el) return;
+    
+        var opts='';
+        (DATA.personages||[]).forEach(function(p){
+          opts += '<option value="'+p.id+'" '+(p.id===st.pcId?'selected':'')+'>'+p.naam+' ('+p.leeftijd+') — '+p.rol+'</option>';
+        });
+        if(!opts) opts = '<option>Demo</option>';
+    
+          var inside = window.__insideStart===true;
+          var locked = !!st.lockedPc;
+          var confirmed = !!st.pcConfirmed;
+          var canChoose = inside && !locked && !confirmed;
+  
+    
+          el.innerHTML =
+          '<select id="pcSelect" '+(canChoose?'':'disabled')+'>'+opts+'</select>'
+        + '<span class="pill '+(locked?'ok':'')+'">'
+        + (locked ? '🔒 Keuze vergrendeld'
+                  : (confirmed ? '✅ Keuze bevestigd'
+                               : (inside ? '🟢 Je kan hier je personage kiezen'
+                                         : '🔐 Kiesbaar enkel aan de start')))
+        + '</span>';
+        
+      }
   
     function renderProfile(){
       var pc=currentPc();
@@ -1693,7 +1799,35 @@ document.addEventListener('click', function(e){
   
       renderCharacterChooser();
     }
-  
+    function applyPcUiState(){
+        var pcSection = qs('pcSection');      // hele personage-sectie (optioneel)
+        var pcCard    = qs('pcCard');         // kaart met details (optioneel)
+        var storyWrap = qs('storySection') || qs('pcStoryWrap') || qs('storyWrap'); // kies wat jij hebt
+      
+        var state = getPcState();
+      
+        // 1) volledig weg indien geen personages
+        if(state === 'disabled'){
+          if(pcSection) pcSection.style.display = 'none';
+          if(storyWrap) storyWrap.style.display = 'none';
+          return;
+        }
+      
+        // 2) personages bestaan: sectie tonen
+        if(pcSection) pcSection.style.display = '';
+      
+        // 3) chooser vs active
+        if(pcCard){
+          pcCard.style.display = (state === 'active') ? '' : 'none';
+        }
+        if(storyWrap){
+          storyWrap.style.display = (state === 'active') ? '' : 'none';
+        }
+      
+        // 4) chooser altijd renderen (toont dan “locked/outside/…” netjes)
+        renderCharacterChooser();
+      }
+      
     // Bind pcSelect (slechts 1x, document delegation)
     (function bindPcSelectOnce(){
       if(document.__pcSelectBound) return;
@@ -2763,6 +2897,188 @@ document.addEventListener('click', function(e){
         setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
       }
  
+      function loadScenario(){
+        // --- helpers -------------------------------------------------------------
+      
+        function safeFetchJSON(url, fallback){
+          return fetchJSON(url).catch(function(err){
+            console.warn('safeFetchJSON fallback for', url, err);
+            return fallback;
+          });
+        }
+      
+        function resolveRelative(baseFile, relPath){
+          if(!relPath) return null;
+      
+          // absolute URL?
+          if(/^https?:\/\//i.test(relPath)) return relPath;
+      
+          // normaliseer backslashes -> forward slashes (voor het geval iemand \ typt)
+          relPath = String(relPath).replace(/\\/g, '/');
+      
+          // als relPath al vanaf root is ("/data/x.json"), laat zo
+          if(relPath.charAt(0) === '/') return relPath;
+      
+          // base dir van het scenario-bestand
+          baseFile = String(baseFile || '').replace(/\\/g, '/');
+          var baseDir = baseFile.split('/').slice(0, -1).join('/');
+          if(!baseDir) return relPath;
+      
+          return baseDir + '/' + relPath;
+        }
+      
+        function getCharacterConfig(meta){
+          // Backward compatible gedrag:
+          // - als meta.characters ontbreekt => enabled=true met default "personages.json" naast scenario
+          // - als enabled=false => geen personages
+          // - als enabled=true => source (default "personages.json")
+          var m = meta || {};
+          var ch = m.characters;
+      
+          if(!ch){
+            return { enabled: true, source: 'personages.json', implicit: true };
+          }
+      
+          if(ch.enabled === false){
+            return { enabled: false };
+          }
+      
+          return {
+            enabled: true,
+            source: ch.source || 'personages.json',
+            required: (ch.required === true),
+            lockAtStartExit: (ch.lockAtStartExit !== false) // default true als je dat later wil gebruiken
+          };
+        }
+      
+        // --- load ---------------------------------------------------------------
+      
+        var scenarioUrl = stopsFileFromQuery();
+      
+        // 1) laad meta defaults + scenario samen
+        return Promise.all([
+          safeFetchJSON('./data/meta.json', {}),      // defaults
+          fetchJSON(scenarioUrl)                      // scenario (moet slagen)
+        ]).then(function(arr){
+          var metaDefaults = arr[0] || {};
+          var stopsRaw = arr[1];
+      
+          // 2) Extract scenario-structuur
+          var isScenarioObject =
+            stopsRaw &&
+            typeof stopsRaw === 'object' &&
+            !Array.isArray(stopsRaw) &&
+            stopsRaw.locaties &&
+            stopsRaw.slots;
+      
+          var slots = null, locaties = null;
+          var scenarioMeta = {};
+          var scenarioSettings = {};
+          var scenarioPrestart = {};
+      
+          if(isScenarioObject){
+            slots = stopsRaw.slots || [];
+            locaties = stopsRaw.locaties || [];
+      
+            scenarioMeta = stopsRaw.meta || {};
+            scenarioSettings = stopsRaw.settings || {};
+            scenarioPrestart = stopsRaw.prestart || {};
+          } else {
+            // Backward compat: stopsRaw is array of locaties
+            locaties = Array.isArray(stopsRaw) ? stopsRaw : [];
+            slots = [];
+      
+            var seen = {};
+            locaties.forEach(function(l){
+              var s = l && l.slot ? l.slot : null;
+              if(s && !seen[s]){ seen[s] = true; slots.push({ id:s, label:s, required:true }); }
+            });
+      
+            if(!slots.length){
+              slots = [
+                { id:'start', label:'Start', required:true },
+                { id:'end', label:'Einde', required:true }
+              ];
+            }
+          }
+      
+          // 3) Merge meta (scenario wint)
+          var meta = Object.assign({}, metaDefaults, scenarioMeta);
+      
+          // 4) Settings defaults + scenario override
+          var settingsDefaults = {
+            visibilityMode: 'nextOnly',
+            multiLocationSlotMode: 'all',
+            showOptionalSlots: true,
+            listShowFutureSlots: true,
+            mapShowFutureLocations: false
+          };
+          var settings = Object.assign({}, settingsDefaults, scenarioSettings);
+      
+          var prestart = Object.assign({}, scenarioPrestart);
+      
+          // 5) start/end slots
+          var startSlot = meta.startSlot || 'start';
+          var endSlot   = meta.endSlot   || 'end';
+      
+          // 6) Normaliseer slots: completeMode altijd gezet & gevalideerd
+          var allowedModes = { any:1, all:1, nearest:1, random:1 };
+          slots = (slots || []).map(function(s){
+            var slot = Object.assign({ required:true }, s || {});
+            var cm = slot.completeMode || settings.multiLocationSlotMode || 'all';
+            cm = (cm + '').toLowerCase();
+            if(!allowedModes[cm]) cm = 'all';
+            slot.completeMode = cm;
+            return slot;
+          });
+      
+          // 7) Normaliseer locaties: id/slot/radius defaults
+          var defaultRadius = (meta && meta.radiusDefaultMeters != null) ? meta.radiusDefaultMeters : 200;
+          locaties = (locaties || []).map(function(l, idx){
+            var loc = Object.assign({}, l || {});
+            if(!loc.id)   loc.id = 'loc_' + (idx+1);
+            if(!loc.slot) loc.slot = startSlot;
+            if(loc.radius == null) loc.radius = defaultRadius;
+            return loc;
+          });
+      
+          // 8) Personages config + laden
+          var pcCfg = getCharacterConfig(meta);
+      
+          // resolve url relatief tov scenario
+          var personagesUrl = pcCfg.enabled ? resolveRelative(scenarioUrl, pcCfg.source) : null;
+      
+          return safeFetchJSON(personagesUrl, []).then(function(personages){
+            // 9) Derived
+            var slotOrder = (slots || []).map(function(s){ return s.id; });
+            var requiredSlots = (slots || [])
+              .filter(function(s){ return !!s.required; })
+              .map(function(s){ return s.id; });
+      
+            return {
+              meta: meta,
+              settings: settings,
+              prestart: prestart,
+      
+              // compat
+              stops: locaties,
+              locaties: locaties,
+      
+              slots: slots,
+              startSlot: startSlot,
+              endSlot: endSlot,
+              slotOrder: slotOrder,
+              requiredSlots: requiredSlots,
+      
+              // personages
+              personages: Array.isArray(personages) ? personages : [],
+              characters: pcCfg // handig voor UI (enabled/required/etc.)
+            };
+          });
+        });
+      }
+      
+
     // Globale errors
     window.addEventListener('error', function(e){ showDiag('JS error: '+e.message); });
     window.addEventListener('unhandledrejection', function(e){

@@ -2,7 +2,10 @@
   "meta": {
     "title": "Testroute – School (Wapper → Station → Kerk → Thuis)",
     "subtitle": "Lineaire test met één optionele stop (Chinese Poort)",
-    "version": "1.0"
+    "version": "1.0",
+    "characters": {
+      "enabled": true,
+      "source": "personages.json"}
   },
 
   "settings": {

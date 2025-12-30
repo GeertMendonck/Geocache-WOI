@@ -2,7 +2,10 @@
   "meta": {
     "title": "Testroute – Omgekeerd (Thuis → Kerk → Keuze → Opera → Wapper → Sint-Lodewijk)",
     "subtitle": "Test met 2 locaties in één slot (stop02) en vaste eindlocatie op school",
-    "version": "1.0"
+    "version": "1.0",
+    "characters": {
+      "enabled": true,
+      "source": "personages.json"}
   },
 
   "settings": {
