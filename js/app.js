@@ -1828,20 +1828,22 @@ document.addEventListener('click', function(e){
       
         var html = '';
         (slotOrder||[]).forEach(function(sid){
-            if(!isSlotVisible(sid)) return;
-         // var ok = !!unlockedMap[sid];
-          var optional = isOptionalSlot(sid);
-          var icon = ok ? '✅' : (sid===endSlot ? '🔒' : (optional ? '🧩' : '⏳'));
-      
-          var label = slotLabel(sid);
-          var place = displayPlaceForSlot(sid);
-      
-         html += '<span class="pill ' + (ok ? 'ok' : 'no') + '">'
-                + icon + ' '
-                + '<span class="pillMain">' + escapeHtml(label) + '</span>'
-                + (place ? ' <span class="pillSub">· ' + escapeHtml(place) + '</span>' : '')
-                + '</span>';
-        });
+            if(!isSlotVisibleInList(sid)) return; 
+          
+            var ok = isSlotCompleted(sid);
+            var optional = isOptionalSlot(sid);
+            var icon = ok ? '✅' : (sid===endSlot ? '🔒' : (optional ? '🧩' : '⏳'));
+          
+            var label = slotLabel(sid);
+            var place = displayPlaceForSlot(sid, ok);
+          
+            html += '<span class="pill ' + (ok?'ok':'no') + '">'
+                  + icon + ' '
+                  + '<span class="pillMain">' + escapeHtml(label) + '</span>'
+                  + (place ? ' <span class="pillSub">· ' + escapeHtml(place) + '</span>' : '')
+                  + '</span>';
+          });
+          
       
         cont.innerHTML = html || '<span class="muted">(Geen stops geladen)</span>';
       }
