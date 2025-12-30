@@ -521,10 +521,16 @@ container die 3 panelen onder elkaar stapelt
     font-size: 12px;
     padding: 2px 8px;
   }
-
-  #map, .leaflet-container{
-    transform: none !important;
+  .storyChunk:not(.is-latest){
+    opacity: .92;
   }
+  .storyChunk.is-latest{
+    transform: translateY(-1px);
+  }
+
+  /*#map, .leaflet-container{
+    transform: none !important;
+  }*/
   /* ===============================
      MOBILE
      =============================== */
@@ -573,19 +579,19 @@ container die 3 panelen onder elkaar stapelt
           min-height: 44px;
         }
       }
-   /* Leaflet tiles mogen NOOIT meeschalen door globale img-regels */
+   /* Leaflet tiles mogen NOOIT meeschalen door globale img-regels 
 .leaflet-container img{
   max-width: none !important;
   max-height: none !important;
 }
 
-/* ---- Leaflet tiles beschermen tegen globale CSS ---- */
+/* ---- Leaflet tiles beschermen tegen globale CSS ---- 
 #oneMap.leaflet-container { 
     position: relative !important;
     overflow: hidden !important;
   }
   
-  /* Cruciaal: tiles en panes moeten absoluut gepositioneerd blijven */
+  /* Cruciaal: tiles en panes moeten absoluut gepositioneerd blijven 
   #oneMap .leaflet-pane,
   #oneMap .leaflet-tile-pane,
   #oneMap .leaflet-overlay-pane,
@@ -607,7 +613,7 @@ container die 3 panelen onder elkaar stapelt
     width: 256px !important;
     height: 256px !important;
   }
-/* Leaflet: gebruik content-box om tile-math correct te houden */
+/* Leaflet: gebruik content-box om tile-math correct te houden 
 .leaflet-container,
 .leaflet-container *{
   box-sizing: content-box !important;
@@ -615,7 +621,7 @@ container die 3 panelen onder elkaar stapelt
 .leaflet-container{
     overflow: hidden !important;
   }  
-   
+  */
   
   }
 

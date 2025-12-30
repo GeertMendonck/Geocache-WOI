@@ -143,46 +143,46 @@
 
     //-----------------
     //kaart draaien, volgende locatie ligt boven huidige locatie
-        function toRad(d){ return d * Math.PI / 180; }
-        function toDeg(r){ return r * 180 / Math.PI; }
+    //     function toRad(d){ return d * Math.PI / 180; }
+    //     function toDeg(r){ return r * 180 / Math.PI; }
 
-        function bearingDeg(lat1, lng1, lat2, lng2){
-        var φ1 = toRad(lat1), φ2 = toRad(lat2);
-        var Δλ = toRad(lng2 - lng1);
-        var y = Math.sin(Δλ) * Math.cos(φ2);
-        var x = Math.cos(φ1)*Math.sin(φ2) - Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);
-        var θ = Math.atan2(y, x);
-        return (toDeg(θ) + 360) % 360; // 0..360
-        }
+    //     function bearingDeg(lat1, lng1, lat2, lng2){
+    //     var φ1 = toRad(lat1), φ2 = toRad(lat2);
+    //     var Δλ = toRad(lng2 - lng1);
+    //     var y = Math.sin(Δλ) * Math.cos(φ2);
+    //     var x = Math.cos(φ1)*Math.sin(φ2) - Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);
+    //     var θ = Math.atan2(y, x);
+    //     return (toDeg(θ) + 360) % 360; // 0..360
+    //     }
 
 
-        function rotateMapToNext(myLat, myLng){
-            if(!window.LMAP) return;
+    //     function rotateMapToNext(myLat, myLng){
+    //         if(!window.LMAP) return;
           
-            var next = getNextRequiredLoc(myLat, myLng);
-            if(!next) return;
+    //         var next = getNextRequiredLoc(myLat, myLng);
+    //         if(!next) return;
           
-            var b = bearingDeg(myLat, myLng, next.lat, next.lng);
+    //         var b = bearingDeg(myLat, myLng, next.lat, next.lng);
           
-            // “richting naar next” moet bovenaan staan => kaart roteren met -bearing
-            if (LMAP.setBearing) {
-              LMAP.setBearing(-b);
-            } else if (LMAP.setRotationAngle) {
-              LMAP.setRotationAngle(-b);
-            }
-          }
+    //         // “richting naar next” moet bovenaan staan => kaart roteren met -bearing
+    //         if (LMAP.setBearing) {
+    //           LMAP.setBearing(-b);
+    //         } else if (LMAP.setRotationAngle) {
+    //           LMAP.setRotationAngle(-b);
+    //         }
+    //       }
           
-    function haversineMeters(lat1,lng1,lat2,lng2){
-        var R = 6371000;
-        var φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
-        var dφ = (lat2-lat1) * Math.PI/180;
-        var dλ = (lng2-lng1) * Math.PI/180;
-        var a = Math.sin(dφ/2)*Math.sin(dφ/2) +
-                Math.cos(φ1)*Math.cos(φ2) *
-                Math.sin(dλ/2)*Math.sin(dλ/2);
-        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
-      }
+    // function haversineMeters(lat1,lng1,lat2,lng2){
+    //     var R = 6371000;
+    //     var φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
+    //     var dφ = (lat2-lat1) * Math.PI/180;
+    //     var dλ = (lng2-lng1) * Math.PI/180;
+    //     var a = Math.sin(dφ/2)*Math.sin(dφ/2) +
+    //             Math.cos(φ1)*Math.cos(φ2) *
+    //             Math.sin(dλ/2)*Math.sin(dλ/2);
+    //     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    //     return R * c;
+    //   }
       
       function getUnlockedLocIds(){
         var st = store.get();
@@ -687,20 +687,27 @@
           if(!verhaal) continue;
       
           var isLatest = (locId === lastLocId);
-      
-          html += ''
-            + '<div class="storyChunk'+(isLatest ? ' is-latest' : '')+'" id="storyChunk_'+escapeHtml(locId)+'">'
+          var domId = safeDomId(locId);
+
+          html += ''  
+            + '<div class="storyChunk'+(isLatest ? ' is-latest' : '')+'" id="storyChunk_'+domId+'">'
             +   '<div class="storyChunkHead">'
             +     '<span>'+escapeHtml(loc.naam || slotId)+'</span>'
-            +     (isLatest ? '<span class="pill tiny">nieuw</span>' : '')
+            +     '<span style="display:flex;align-items:center;gap:8px">'
+            +       (isLatest ? '<span class="pill tiny">nieuw</span>' : '')
+            +       (hasRealLoc ? '<button class="readBtn" data-slot="'+escapeHtml(slotId)+'" data-loc="'+escapeHtml(locId)+'" title="Lees voor">🔊</button>' : '')
+            +     '</span>'
             +   '</div>'
             +   '<div class="storyChunkBody">'+escapeHtml(verhaal)+'</div>'
             + '</div>';
+
         }
       
         return html || '<span class="muted">(Nog geen verhaal)</span>';
       }
-      
+      function safeDomId(x){
+        return String(x).replace(/[^a-zA-Z0-9_-]/g, '_');
+      }
       
     function autoFocusNewStory(){
         var st = store.get();
@@ -715,7 +722,7 @@
         }
       
         // scroll naar het nieuw stuk (als het al bestaat)
-        var el = document.getElementById('storyChunk_' + st.lastUnlockedLocId);
+        var el = document.getElementById('storyChunk_' + safeDomId(st.lastUnlockedLocId));
         if(el && el.scrollIntoView){
           setTimeout(function(){
             el.scrollIntoView({ behavior:'smooth', block:'start' });
@@ -1528,8 +1535,7 @@ document.addEventListener('click', function(e){
     var stops = document.getElementById('stopsSection');
     if(stops) stops.style.display = routeMode ? 'none' : '';
   }
-  
-  
+    
   
     // ---------- Map (Leaflet) ----------
     function ensureLeafletMap(){
@@ -2100,10 +2106,10 @@ document.addEventListener('click', function(e){
         + '<div style="margin-top:10px">'
         +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
         +     '<div style="font-weight:800">📘 Verhaal</div>'
-        +     (hasRealLoc ? '<button class="readBtn" data-slot="'+slotId+'" data-loc="'+locId+'" title="Lees voor">🔊</button>' : '')
+        //+     (hasRealLoc ? '<button class="readBtn" data-slot="'+slotId+'" data-loc="'+locId+'" title="Lees voor">🔊</button>' : '')
         +   '</div>'
         +   '<div style="margin-top:6px">'
-        +     (hasRealLoc ? (verhaalText.trim() ? escapeHtml(verhaalText) : '<span class="muted">(Nog geen verhaal)</span>') : '<span class="muted">Nog geen huidige stop. Wandel eens binnen een cirkel 🙂</span>')
+        +     buildStoryTimelineHtml(pc, hasRealLoc)
         +   '</div>'
         + '</div>';
         
