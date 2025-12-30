@@ -296,6 +296,46 @@
       
         return pickTargetLocForSlot(nextSlotId, myLat, myLng);
       }
+      function prelockVisibleSlots(myLat, myLng){
+        var slots = DATA.slots || [];
+        for(var i=0;i<slots.length;i++){
+          var sl = slots[i];
+          if(!sl) continue;
+      
+          // als jij visibleSlotMap gebruikt: respecteer die
+          if(typeof visibleSlotMap !== 'undefined' && visibleSlotMap && !visibleSlotMap[sl.id]) continue;
+      
+          var mode = getCompleteMode(sl.id);
+      
+          if(mode === 'random'){
+            // GPS niet nodig: lock random zodra slot zichtbaar is
+            pickTargetLocForSlot(sl.id, null, null);
+          } else if(mode === 'nearest'){
+            // GPS nodig: lock zodra we lat/lng hebben
+            if(myLat != null && myLng != null){
+              pickTargetLocForSlot(sl.id, myLat, myLng);
+            }
+          }
+        }
+      }
+      
+      function isLocVisibleUnderMode(loc){
+        var mode = getCompleteMode(loc.slot);
+        if(mode !== 'random' && mode !== 'nearest') return true;
+      
+        var st = store.get();
+        var picked = st.slotPick ? st.slotPick[loc.slot] : null;
+      
+        // nearest zonder pick (nog geen GPS/lock): kies gedrag
+        // Optie A: tijdelijk alles tonen:
+        if(!picked) return true;
+      
+        // Optie B: toon niks tot lock:
+        // if(!picked) return false;
+      
+        return loc.id === picked;
+      }
+      
       
       function panSoNextIsAboveMe(myLat,myLng){
         if(!window.LMAP || !followMe) return;
@@ -345,7 +385,11 @@
             window.__lastFix = { lat: c.latitude, lng: c.longitude, acc: c.accuracy };
       
             updateLeafletLive(c.latitude, c.longitude, c.accuracy);
-            // ... unlocks/refresh ...
+             // 🔑 NIEUW: nearest/random keuzes vastzetten
+            prelockVisibleSlots(c.latitude, c.longitude);
+
+            // 🔁 bestaand mechanisme
+            refreshRouteUI();
           },
           function(err){
             console.log('GPS error', err && err.code, err && err.message);
@@ -2015,12 +2059,7 @@ document.addEventListener('click', function(e){
           if (followMe){
             window.LMAP.setView([lat,lng]);
             rotateMapToNext(lat, lng);
-            // var now = Date.now();
-            // if(now - __lastNextPanAt > 2500){
-            //   __lastNextPanAt = now;
-            //   panSoNextIsAboveMe(lat,lng);
-            //}
-          }
+            }
       
           var a=qs('openInMaps'); 
           if(a) a.href='https://maps.google.com/?q='+lat+','+lng;
