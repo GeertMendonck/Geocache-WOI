@@ -148,13 +148,22 @@
       
       function getCompleteMode(slotId){
         var so = getSlotConfig(slotId);
-        var m = (so && so.completeMode) ? String(so.completeMode).toLowerCase() : 'all';
-        // default: all (veilig, strikt)
+        var m = (so && so.completeMode) ? String(so.completeMode).toLowerCase() : null;
+        if(!m && DATA.settings && DATA.settings.multiLocationSlotMode) {
+          m = String(DATA.settings.multiLocationSlotMode).toLowerCase();
+        }
+        // default veilig
+        m = m || 'all';
         return m;
       }
       
+      function getUnlockedLocIds(){
+        var st = store.get();
+        return st.unlockedLocs || [];
+      }
+      
       function isSlotCompleted(slotId){
-        var mode = getCompleteMode(slotId); // 'any' | 'all' | 'nearest' | 'random' ...
+        var mode = getCompleteMode(slotId);
         var unlocked = getUnlockedLocIds();
         var locs = DATA.locaties || DATA.stops || [];
       
@@ -164,29 +173,83 @@
           if(s && s.slot === slotId) idsInSlot.push(s.id);
         }
       
-        // geen locaties? beschouw als completed (of false, maar dit voorkomt vastlopers)
+        // geen locaties => niet blokkeren
         if(!idsInSlot.length) return true;
       
-        if(mode === 'any' || mode === 'nearest' || mode === 'random'){
-          // any: zodra 1 locatie uit dit slot unlocked is -> slot completed
+        if(mode === 'any'){
           for(var j=0;j<idsInSlot.length;j++){
             if(unlocked.indexOf(idsInSlot[j]) >= 0) return true;
           }
           return false;
         }
       
-        // default / 'all'
+        if(mode === 'random' || mode === 'nearest'){
+          // random/nearest: slot is compleet als de gekozen target gehaald is
+          var st = store.get();
+          var picked = st.slotPick ? st.slotPick[slotId] : null;
+          if(!picked){
+            // nog geen keuze gemaakt => niet compleet (keuze wordt gemaakt wanneer je hem nodig hebt)
+            return false;
+          }
+          return unlocked.indexOf(picked) >= 0;
+        }
+      
+        // default / all
         for(var k=0;k<idsInSlot.length;k++){
           if(unlocked.indexOf(idsInSlot[k]) < 0) return false;
         }
         return true;
       }
+      
+      function getRandomPickForSlot(slotId, candidates){
+        var st = store.get();
+        if(!st.slotPick) st.slotPick = {};
+      
+        var pickedId = st.slotPick[slotId];
+        if(pickedId){
+          for(var i=0;i<candidates.length;i++){
+            if(candidates[i].id === pickedId) return candidates[i];
+          }
+        }
+      
+        var r = Math.floor(Math.random() * candidates.length);
+        var chosen = candidates[r];
+        st.slotPick[slotId] = chosen.id;
+        store.set(st);
+        return chosen;
+      }
+      
+      function getNearestPickForSlot(slotId, candidates, myLat, myLng){
+        var st = store.get();
+        if(!st.slotPick) st.slotPick = {};
+      
+        var pickedId = st.slotPick[slotId];
+        if(pickedId){
+          for(var i=0;i<candidates.length;i++){
+            if(candidates[i].id === pickedId) return candidates[i];
+          }
+        }
+      
+        // zonder GPS kan je geen nearest bepalen
+        if(myLat==null || myLng==null) return null;
+      
+        var best = candidates[0], bestD = Infinity;
+        for(var j=0;j<candidates.length;j++){
+          var d = haversineMeters(myLat,myLng, candidates[j].lat, candidates[j].lng);
+          if(d < bestD){ bestD = d; best = candidates[j]; }
+        }
+      
+        st.slotPick[slotId] = best.id;
+        store.set(st);
+        return best;
+      }
+      
       function pickTargetLocForSlot(slotId, myLat, myLng){
         var mode = getCompleteMode(slotId);
         var unlocked = getUnlockedLocIds();
         var locs = DATA.locaties || DATA.stops || [];
       
-        // verzamel kandidaten in dit slot die nog niet unlocked zijn
+        // kandidaten = locaties in dit slot die nog niet gehaald zijn
         var cand = [];
         for(var i=0;i<locs.length;i++){
           var s = locs[i];
@@ -197,132 +260,43 @@
         }
         if(!cand.length) return null;
       
-        // nearest: kies dichtste (dit is ook fijn als default)
-        if(mode === 'nearest' || mode === 'any' || mode === 'all'){
-          var best = cand[0], bestD = Infinity;
+        if(mode === 'random'){
+          return getRandomPickForSlot(slotId, cand);
+        }
+      
+        if(mode === 'nearest'){
+          return getNearestPickForSlot(slotId, cand, myLat, myLng);
+        }
+      
+        // any/all: voor “next”-navigatie kies je best de dichtstbijzijnde nog-niet-gehaalde
+        var best = cand[0], bestD = Infinity;
+        if(myLat!=null && myLng!=null){
           for(var j=0;j<cand.length;j++){
             var d = haversineMeters(myLat,myLng, cand[j].lat, cand[j].lng);
             if(d < bestD){ bestD = d; best = cand[j]; }
           }
-          return best;
         }
-      
-        // random: kies 1 willekeurige (maar liefst stabiel per sessie)
-        if(mode === 'random'){
-          // TIP: voor echte stabiliteit: bewaar keuze in store per slotId.
-          //var r = Math.floor(Math.random() * cand.length);
-          //return cand[r];
-          return getRandomPickForSlot(slotId, cand);
-        }
-      
-        // fallback
-        return cand[0];
-      }
-      
-      function getNextRequiredLoc(myLat,myLng){
-        var slots = DATA.slots || [];
-      
-        // 1) volgende required slot dat niet completed is
-        var nextSlotId = null;
-        for(var i=0;i<slots.length;i++){
-          var sl = slots[i];
-          if(!sl || !sl.required) continue;
-          if(!isSlotCompleted(sl.id)){
-            nextSlotId = sl.id;
-            break;
-          }
-        }
-        if(!nextSlotId) return null;
-      
-        // 2) target locatie binnen slot volgens completeMode
-        return pickTargetLocForSlot(nextSlotId, myLat, myLng);
-      }
-      function getRandomPickForSlot(slotId, candidates){
-        var st = store.get();
-        if(!st.slotPick) st.slotPick = {};
-      
-        // als er al een pick is en die zit nog in candidates -> behouden
-        var pickedId = st.slotPick[slotId];
-        if(pickedId){
-          for(var i=0;i<candidates.length;i++){
-            if(candidates[i].id === pickedId) return candidates[i];
-          }
-        }
-      
-        // anders: nieuw lotje trekken
-        var r = Math.floor(Math.random() * candidates.length);
-        var chosen = candidates[r];
-        st.slotPick[slotId] = chosen.id;
-        store.set(st);
-        return chosen;
-      }
-      
-      function getUnlockedLocIds(){
-        var st = store.get();
-        return st.unlockedLocs || [];
-      }
-      
-      function isSlotCompleted(slotId){
-        // slot is "completed" als ALLE locaties binnen die slot unlocked zijn.
-        // (werkt mooi met split-stops)
-        var unlocked = getUnlockedLocIds();
-        var locs = DATA.locaties || DATA.stops || [];
-        var anyInSlot = false;
-      
-        for(var i=0;i<locs.length;i++){
-          var s = locs[i];
-          if(!s || s.slot !== slotId) continue;
-          anyInSlot = true;
-          if(unlocked.indexOf(s.id) < 0) return false; // er is nog eentje niet gehaald
-        }
-        // als er geen locaties zijn voor dit slot: behandel als completed (of false, naar keuze)
-        return anyInSlot ? true : true;
-      }
-      
-      function getNextRequiredLoc(myLat,myLng){
-        var slots = DATA.slots || [];
-        var locs  = DATA.locaties || DATA.stops || [];
-        var unlocked = getUnlockedLocIds();
-      
-        // 1) vind eerst de volgende required slot die nog niet completed is (volgorde = slots[] volgorde)
-        var nextSlotId = null;
-        for(var i=0;i<slots.length;i++){
-          var sl = slots[i];
-          if(!sl || !sl.required) continue;
-          if(!isSlotCompleted(sl.id)){
-            nextSlotId = sl.id;
-            break;
-          }
-        }
-        if(!nextSlotId) return null;
-      
-        // 2) kies binnen die slot de dichtstbijzijnde *nog niet unlocked* locatie
-        var best = null, bestD = Infinity;
-        for(var j=0;j<locs.length;j++){
-          var s = locs[j];
-          if(!s || s.slot !== nextSlotId) continue;
-          if(s.lat==null || s.lng==null) continue;
-          if(unlocked.indexOf(s.id) >= 0) continue; // al gehaald
-      
-          var d = haversineMeters(myLat,myLng, s.lat, s.lng);
-          if(d < bestD){
-            bestD = d;
-            best = s;
-          }
-        }
-      
-        // fallback: als alles in die slot al unlocked is (zou niet mogen), neem eender welke
-        if(!best){
-          for(var k=0;k<locs.length;k++){
-            var t = locs[k];
-            if(t && t.slot === nextSlotId && t.lat!=null && t.lng!=null){
-              best = t; break;
-            }
-          }
-        }
-      
         return best;
       }
+      
+      function getNextRequiredLoc(myLat, myLng){
+        var slots = DATA.slots || [];
+      
+        // volgende required slot (volgens slots[] volgorde) die nog niet completed is
+        var nextSlotId = null;
+        for(var i=0;i<slots.length;i++){
+          var sl = slots[i];
+          if(!sl || !sl.required) continue;
+          if(!isSlotCompleted(sl.id)){
+            nextSlotId = sl.id;
+            break;
+          }
+        }
+        if(!nextSlotId) return null;
+      
+        return pickTargetLocForSlot(nextSlotId, myLat, myLng);
+      }
+      
       function panSoNextIsAboveMe(myLat,myLng){
         if(!window.LMAP || !followMe) return;
       
