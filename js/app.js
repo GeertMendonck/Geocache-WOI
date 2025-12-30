@@ -975,6 +975,7 @@
             }
             try { prelockVisibleSlots(null, null); } catch(e){}
             try { refreshRouteUI();  } catch(e){}
+            try { applyPcUiState(); } catch(e) {}
           }
       
           requestAnimationFrame(attempt);
@@ -1528,7 +1529,10 @@ function charactersEnabled(){
     function renderCharacterChooser(){
         var el = qs('pcChooser');
         if(!el) return;
-      
+        if(DATA && DATA.characters && DATA.characters.enabled === false){
+            el.innerHTML = '';
+            return;
+          }
         // Als scenario geen personages wil: niets tonen
         if(!charactersEnabled()){
           el.innerHTML = '';
