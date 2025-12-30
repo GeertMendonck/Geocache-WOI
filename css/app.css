@@ -527,6 +527,18 @@ container die 3 panelen onder elkaar stapelt
   .storyChunk.is-latest{
     transform: translateY(-1px);
   }
+  /* ===============================
+  LEZEN
+  =============================== */
+
+  body.reading .readBtn {
+    background: rgba(61,209,192,.15);
+  }
+  
+  body.reading .storyChunk.is-latest {
+    box-shadow: 0 0 0 2px rgba(61,209,192,.35) inset;
+  }
+  
 
   /*#map, .leaflet-container{
     transform: none !important;

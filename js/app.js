@@ -16,10 +16,19 @@
     window.__lastGeoAt  = 0;
     window.__lastFix    = null; 
     window.__pendingRecenter = false; // alleen als je dat gebruikt
-
+    initVoices();
   
     // ---------- Mini helpers ----------
     //speak
+    (function initVoices(){
+        if(!('speechSynthesis' in window)) return;
+        // forceer dat voices geladen raken
+        try { window.speechSynthesis.getVoices(); } catch(e){}
+        window.speechSynthesis.onvoiceschanged = function(){
+          try { window.speechSynthesis.getVoices(); } catch(e){}
+        };
+      })();
+      
     function handleReadStory(slotId, locId){
         var pc = currentPc();
         if(!pc) return;
@@ -27,7 +36,8 @@
         var verhaal = getStoryFor(pc, slotId, locId);
         if(!verhaal) return;
       
-        speakText(verhaal);   // of wat jij ook gebruikt voor TTS
+        //speakText(verhaal);  
+        speakToggle(verhaal);
       }
       function speakText(text){
         text = (text == null) ? '' : String(text).trim();
@@ -45,7 +55,8 @@
         }catch(e){}
       
         var u = new SpeechSynthesisUtterance(text);
-      
+      // 👉 START: visuele status
+         document.body.classList.add('reading');
         // Taal: probeer NL-BE, anders NL
         // (Sommige browsers negeren dit als er geen voice matcht)
         u.lang = 'nl-BE';
@@ -62,8 +73,11 @@
       
         var v = pickDutchVoice(voices);
         if(v) u.voice = v;
-      
-        u.onerror = function(ev){
+       // 👉 EINDE: visuele status opruimen
+        u.onend = function(){
+            document.body.classList.remove('reading');
+        };
+                u.onerror = function(ev){
           console.log('[TTS] error', ev && (ev.error || ev.message || ev));
         };
       
@@ -93,7 +107,14 @@
         }
         return null;
       }
-      
+      function speakToggle(text){
+        if(!('speechSynthesis' in window)) return;
+        if(window.speechSynthesis.speaking){
+          try{ window.speechSynthesis.cancel(); }catch(e){}
+          return;
+        }
+        speakText(text);
+      }
       
     //----------
     
