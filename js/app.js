@@ -1735,7 +1735,7 @@ document.addEventListener('click', function(e){
         var st = store.get();
         var unlockedSlots = st.unlockedSlots || [];
         //var unlockedMap = {};
-        unlockedSlots.forEach(function(sid){ unlockedMap[sid]=true; });
+        // unlockedSlots.forEach(function(sid){ unlockedMap[sid]=true; });
       
         var endSlot   = DATA.endSlot  || (DATA.meta && DATA.meta.endSlot)  || 'end';
         var slotOrder = DATA.slotOrder || (DATA.slots||[]).map(function(s){ return s.id; });
