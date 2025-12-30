@@ -721,12 +721,24 @@
       
         // ✅ unlock pas als “route echt gestart” is
         if(best && st.geoOn === true){
-          tryUnlock(best, accuracy);
-          renderProgress();
-          scheduleStopsRender('unlock');
-        } else {
-          renderProgress();
-        }
+            // 1) unlock (kan slot/loc status wijzigen)
+            tryUnlock(best, accuracy);
+          
+            // 2) 🔑 lock keuzes (nearest/random) met echte GPS
+            //    (random lockt ook, nearest lockt nu we lat/lng hebben)
+            try { prelockVisibleSlots(latitude, longitude); } catch(e){}
+          
+            // 3) progress + UI refresh (via jouw bestaande render-throttle)
+            renderProgress();
+            scheduleStopsRender('gps/unlock');
+          } else {
+            // ook als geoOn false is, kan random al zichtbaar zijn (future route)
+            // nearest kan niet zonder geoOn/fix — maar random wel
+            try { prelockVisibleSlots(null, null); } catch(e){}
+            renderProgress();
+            scheduleStopsRender('gps/no-unlock'); // als je dit te veel vindt: mag weg
+          }
+          
       
         ensureLeafletMap();
         // als jij nu met __lastFix + applyLiveFixToMap werkt:
@@ -906,7 +918,7 @@
               if(tries < 20) return requestAnimationFrame(attempt);
               return;
             }
-      
+            try { prelockVisibleSlots(null, null); } catch(e){}
             try { refreshRouteUI();  } catch(e){}
           }
       
@@ -1981,8 +1993,6 @@ document.addEventListener('click', function(e){
       }
       
       
-      
-      
       function addStopMarkers(){
         if(!window.LMAP || !window.L) return;
       
@@ -1990,8 +2000,6 @@ document.addEventListener('click', function(e){
           try { window.LMAP.removeLayer(window.__stopMarkerLayer); } catch(e){}
         }
         window.__stopMarkerLayer = L.layerGroup().addTo(window.LMAP);
-      
-        rebuildVisibleSlotMaps();
       
         var locs = DATA.locaties || DATA.stops || [];
       
@@ -2009,6 +2017,11 @@ document.addEventListener('click', function(e){
       
           if(!isSlotVisibleOnMap(s.slot)) continue;
       
+          // ✅ random/nearest => enkel gekozen loc tonen
+          if(typeof isLocVisibleUnderMode === 'function'){
+            if(!isLocVisibleUnderMode(s)) continue;
+          }
+      
           // required uit DATA.slots halen
           var so = null;
           for (var j=0;j<(DATA.slots||[]).length;j++){
@@ -2016,7 +2029,14 @@ document.addEventListener('click', function(e){
           }
           var req = so ? !!so.required : true;
       
+          // ⚠️ als random/nearest maar 1 zichtbaar is, wil je ook variants=1 voor icon
+          // anders toon je een "split" indicator terwijl je eigenlijk 1 target hebt
           var variants = perSlotCount[s.slot] || 1;
+          if(typeof isLocVisibleUnderMode === 'function'){
+            var mode = getCompleteMode(s.slot);
+            if(mode === 'random' || mode === 'nearest') variants = 1;
+          }
+      
           var icon = makeSlotIcon(s.slot, req, variants);
       
           L.marker([s.lat, s.lng], { icon: icon })
@@ -2025,14 +2045,14 @@ document.addEventListener('click', function(e){
         }
       }
       
-     
       function addStopCircles(){
         if(!window.LMAP || !window.L) return;
-        if(!window.__stopMarkerLayer){
-          window.__stopMarkerLayer = L.layerGroup().addTo(window.LMAP);
-        }
       
-        rebuildVisibleSlotMaps();
+        // ✅ aparte layer zodat ringen niet opstapelen
+        if(window.__stopCircleLayer){
+          try { window.LMAP.removeLayer(window.__stopCircleLayer); } catch(e){}
+        }
+        window.__stopCircleLayer = L.layerGroup().addTo(window.LMAP);
       
         var locs = DATA.locaties || DATA.stops || [];
         for(var i=0;i<locs.length;i++){
@@ -2041,12 +2061,18 @@ document.addEventListener('click', function(e){
       
           if(!isSlotVisibleOnMap(s.slot)) continue;
       
+          // ✅ random/nearest => enkel gekozen loc tonen
+          if(typeof isLocVisibleUnderMode === 'function'){
+            if(!isLocVisibleUnderMode(s)) continue;
+          }
+      
           var rad = s.radius || (DATA.meta ? DATA.meta.radiusDefaultMeters : 200);
       
           L.circle([s.lat, s.lng], { radius: rad, weight:1, fillOpacity:.05 })
-            .addTo(window.__stopMarkerLayer);
+            .addTo(window.__stopCircleLayer);
         }
       }
+      
       
       var __lastNextPanAt = 0;
 
