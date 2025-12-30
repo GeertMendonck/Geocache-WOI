@@ -597,49 +597,7 @@ container die 3 panelen onder elkaar stapelt
           min-height: 44px;
         }
       }
-   /* Leaflet tiles mogen NOOIT meeschalen door globale img-regels 
-.leaflet-container img{
-  max-width: none !important;
-  max-height: none !important;
-}
-
-/* ---- Leaflet tiles beschermen tegen globale CSS ---- 
-#oneMap.leaflet-container { 
-    position: relative !important;
-    overflow: hidden !important;
-  }
-  
-  /* Cruciaal: tiles en panes moeten absoluut gepositioneerd blijven 
-  #oneMap .leaflet-pane,
-  #oneMap .leaflet-tile-pane,
-  #oneMap .leaflet-overlay-pane,
-  #oneMap .leaflet-shadow-pane,
-  #oneMap .leaflet-marker-pane,
-  #oneMap .leaflet-tooltip-pane,
-  #oneMap .leaflet-popup-pane{
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-  }
-  
-  #oneMap img.leaflet-tile{
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    max-width: none !important;
-    max-height: none !important;
-    width: 256px !important;
-    height: 256px !important;
-  }
-/* Leaflet: gebruik content-box om tile-math correct te houden 
-.leaflet-container,
-.leaflet-container *{
-  box-sizing: content-box !important;
-}
-.leaflet-container{
-    overflow: hidden !important;
-  }  
-  */
+ 
   
   }
 
