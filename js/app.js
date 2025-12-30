@@ -2076,7 +2076,7 @@ document.addEventListener('click', function(e){
       
           if (followMe){
             window.LMAP.setView([lat,lng]);
-            rotateMapToNext(lat, lng);
+          //  rotateMapToNext(lat, lng);
             }
       
           var a=qs('openInMaps'); 
