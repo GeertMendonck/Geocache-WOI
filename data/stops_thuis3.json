@@ -9,8 +9,8 @@
     "visibilityMode": "allAfterStart",
     "multiLocationSlotMode": "all",
     "showOptionalSlots": true,
-    "listShowFutureSlots": false,
-    "mapShowFutureLocations": false
+    "listShowFutureSlots": true,
+    "mapShowFutureLocations": true
   
   },
 
