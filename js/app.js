@@ -1920,132 +1920,85 @@ document.addEventListener('click', function(e){
       
    
     }
-    function computeVisibleSlotMap(context){
-        var st = store.get();
-        var unlockedSlots = st.unlockedSlots || [];
-        var unlockedMap = {};
-        for (var i=0;i<unlockedSlots.length;i++) unlockedMap[unlockedSlots[i]] = true;
-      
-        var settings = (DATA && DATA.settings) ? DATA.settings : {};
-        console.log('[computeVisibleSlotMap]', context,
-            'listShowFutureSlots=', settings.listShowFutureSlots, 'type=', typeof settings.listShowFutureSlots,
-            'mode=', settings.visibilityMode);
-        var mode = settings.visibilityMode || 'allAfterStart';
-        var showOptional = !!settings.showOptionalSlots;
-      
-        var listShowFuture = !!settings.listShowFutureSlots;
-        var mapShowFuture  = !!settings.mapShowFutureLocations;
-      
+    function computeVisibleSlotMap(kind){
         var slots = DATA.slots || [];
-        var slotOrder = DATA.slotOrder || slots.map(function(s){ return s.id; });
+        var settings = DATA.settings || {};
       
-        function slotObj(id){
-          for (var j=0;j<slots.length;j++){
-            if (slots[j] && slots[j].id === id) return slots[j];
+        var showOptional = (settings.showOptionalSlots !== false);
+      
+        // "future" betekent: ook slots tonen die nog niet "aan de beurt" zijn
+        // voor lijst/kaart apart regelbaar
+        var showFuture =
+          (kind === 'list') ? !!settings.listShowFutureSlots :
+          (kind === 'map')  ? !!settings.mapShowFutureLocations :
+          false;
+      
+        // visibilityMode beïnvloedt vooral "nextOnly" gedrag
+        var visibilityMode = settings.visibilityMode || 'nextOnly';
+      
+        // Helper: is slot optional?
+        function isOptional(slotId){
+          for(var i=0;i<slots.length;i++){
+            if(slots[i] && slots[i].id === slotId) return slots[i].required === false;
           }
-          return null;
-        }
-        function isOptional(id){
-          var o = slotObj(id);
-          return o ? (o.required === false) : false;
-        }
-        function allowByOptional(id){
-          return showOptional || !isOptional(id);
+          return false;
         }
       
-        var visible = {};
-        var startSid = DATA.startSlot || (DATA.meta && DATA.meta.startSlot) || 'start';
+        // Helper: bepaal volgende required slot (eerste required dat niet complete is)
+        var nextRequired = null;
+        for(var i=0;i<slots.length;i++){
+          var sl = slots[i];
+          if(!sl || sl.required === false) continue;
+          if(!isSlotCompleted(sl.id)){ nextRequired = sl.id; break; }
+        }
       
-        // -------- CONTEXT OVERRIDES --------
-        // Lijst: als we future slots willen tonen, tonen we ALLE slots (behalve optional indien uit)
-        if (context === 'list' && listShowFuture) {
-          for (var a=0;a<slotOrder.length;a++){
-            var sidA = slotOrder[a];
-            if (sidA && allowByOptional(sidA)) visible[sidA] = true;
+        // Als alles complete is: toon alles wat je wil tonen
+        if(!nextRequired){
+          var allDone = {};
+          for(var z=0;z<slots.length;z++){
+            var sid0 = slots[z].id;
+            if(!showOptional && isOptional(sid0)) continue;
+            allDone[sid0] = true;
           }
-          return visible;
+          return allDone;
         }
       
-        // Kaart: als future locations mogen, toon alle slots
-        if (context === 'map' && mapShowFuture) {
-          for (var b0=0;b0<slotOrder.length;b0++){
-            var sidB0 = slotOrder[b0];
-            if (sidB0 && allowByOptional(sidB0)) visible[sidB0] = true;
+        // Bepaal “tot waar” je mag tonen bij nextOnly zonder future
+        // We tonen: alle completed required slots + nextRequired.
+        // Optionele slots: enkel als showOptional én (showFuture of al complete)
+        var map = {};
+      
+        for(var j=0;j<slots.length;j++){
+          var sid = slots[j].id;
+          if(!sid) continue;
+      
+          if(!showOptional && isOptional(sid)) continue;
+      
+          if(showFuture){
+            // future aan: toon alles (behalve optioneel als uit)
+            map[sid] = true;
+            continue;
           }
-          return visible;
-        }
       
-        // -------- DEFAULT BY MODE --------
-        // Niet-nextOnly: toon alles
-        if (mode !== 'nextOnly') {
-          for (var b=0;b<slotOrder.length;b++){
-            var sidB = slotOrder[b];
-            if (sidB && allowByOptional(sidB)) visible[sidB] = true;
+          // future uit:
+          if(visibilityMode === 'all'){
+            // all: toon alles unlocked? (maar future=false => nog steeds geen toekomst)
+            // hier interpreteer ik: toon tot nextRequired (incl) + completed.
+            // (zelfde als nextOnly)
           }
-          return visible;
+      
+          // nextOnly gedrag:
+          if(isSlotCompleted(sid) || sid === nextRequired){
+            map[sid] = true;
+          } else {
+            // optioneel: toon optional slots die al compleet zijn (bij any/random kan dat)
+            if(isOptional(sid) && isSlotCompleted(sid)) map[sid] = true;
+          }
         }
       
-       // nextOnly:
- // nextOnly:
-        // 1) toon unlocked slots
-        //    - op MAP: ja
-        //    - in LIST: alleen als listShowFutureSlots true is
-        if (context === 'map' || listShowFuture) {
-            for (var c=0;c<slotOrder.length;c++){
-            var sidC = slotOrder[c];
-            if (sidC && allowByOptional(sidC) && unlockedMap[sidC]) {
-                visible[sidC] = true;
-            }
-            }
-        }
-  
-
-  // 2) toon start altijd
-  if (allowByOptional(startSid)) visible[startSid] = true;
-
-  function prereqOkFor(slotId){
-    var o = slotObj(slotId);
-    var prereq = o && o.unlockAfterSlot ? o.unlockAfterSlot : null;
-    return (!prereq) || !!unlockedMap[prereq] || (prereq === startSid && !!unlockedMap[startSid]);
-  }
-
-  // 3) bepaal NEXT REQUIRED (optionals mogen deze niet kapen)
-  var nextRequired = null;
-  for (var d=0;d<slotOrder.length;d++){
-    var cand = slotOrder[d];
-    if(!cand) continue;
-    if(!allowByOptional(cand)) continue;
-    if(unlockedMap[cand]) continue;
-
-    var o2 = slotObj(cand);
-    var isOpt = o2 ? (o2.required === false) : false;
-
-    if(isOpt) continue;              // ✅ skip optionals voor "next"
-    if(!prereqOkFor(cand)) continue;
-
-    nextRequired = cand;
-    break;
-  }
-  if(nextRequired) visible[nextRequired] = true;
-
-  // 4) toon ook beschikbare OPTIONALS (als extra keuzes) wanneer showOptionalSlots=true
-  if (showOptional) {
-    for (var e=0;e<slotOrder.length;e++){
-      var cand2 = slotOrder[e];
-      if(!cand2) continue;
-      if(unlockedMap[cand2]) continue;
-
-      var o3 = slotObj(cand2);
-      var isOpt2 = o3 ? (o3.required === false) : false;
-      if(!isOpt2) continue;
-
-      if(prereqOkFor(cand2)) visible[cand2] = true;
-    }
-  }
-
-  return visible;
-
+        return map;
       }
+      
       function rebuildVisibleSlotMap(){
         window.visibleSlotMap = computeVisibleSlotMap() || {};
         return window.visibleSlotMap;
@@ -2054,7 +2007,11 @@ document.addEventListener('click', function(e){
       function rebuildVisibleSlotMaps(){
         window.visibleSlotMapMap  = computeVisibleSlotMap('map')  || {};
         window.visibleSlotMapList = computeVisibleSlotMap('list') || {};
+      
+        // backward compat: als je elders nog visibleSlotMap gebruikt
+        window.visibleSlotMap = window.visibleSlotMapMap;
       }
+      
       
       function isSlotVisibleOnMap(slotId){
         if(!window.visibleSlotMapMap) return true;   // fallback als map nog niet bestaat
