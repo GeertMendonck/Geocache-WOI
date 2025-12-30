@@ -1320,19 +1320,115 @@ document.addEventListener('click', function(e){
       return './data/' + name + '.json';
     }
   
+    // function loadScenario(){
+    //     return Promise.all([
+    //       fetchJSON('./data/meta.json'),          // defaults (kan leeg zijn)
+    //       fetchJSON(stopsFileFromQuery()),        // scenario (stops.json of stops_thuis.json)
+    //       fetchJSON('./data/personages.json')
+    //     ]).then(function(arr){
+    //       var metaDefaults = arr[0] || {};
+    //       var stopsRaw = arr[1];
+    //       var personages = arr[2] || [];
+      
+    //       // ---------------------------
+    //       // 1) Extract scenario-structuur
+    //       // ---------------------------
+    //       var isScenarioObject =
+    //         stopsRaw &&
+    //         typeof stopsRaw === 'object' &&
+    //         !Array.isArray(stopsRaw) &&
+    //         stopsRaw.locaties &&
+    //         stopsRaw.slots;
+      
+    //       var slots = null, locaties = null;
+    //       var scenarioMeta = {};
+    //       var scenarioSettings = {};
+    //       var scenarioPrestart = {};
+      
+    //       if (isScenarioObject) {
+    //         slots = stopsRaw.slots || [];
+    //         locaties = stopsRaw.locaties || [];
+      
+    //         scenarioMeta = stopsRaw.meta || {};
+    //         scenarioSettings = stopsRaw.settings || {};
+    //         scenarioPrestart = stopsRaw.prestart || {};
+    //       } else {
+    //         // Backward compat: stopsRaw is array of locaties
+    //         locaties = Array.isArray(stopsRaw) ? stopsRaw : [];
+    //         slots = [];
+      
+    //         var seen = {};
+    //         locaties.forEach(function(l){
+    //           var s = l && l.slot ? l.slot : null;
+    //           if (s && !seen[s]) { seen[s] = true; slots.push({ id:s, label:s, required:true }); }
+    //         });
+      
+    //         if (!slots.length) {
+    //           slots = [
+    //             { id:'start', label:'Start', required:true },
+    //             { id:'end', label:'Einde', required:true }
+    //           ];
+    //         }
+
+    //       }
+      
+    //       // ---------------------------
+    //       // 2) Merge: defaults + scenario override
+    //       //    (scenario wint)
+    //       // ---------------------------
+    //       var meta = Object.assign({}, metaDefaults, scenarioMeta);
+      
+    //       // settings/prestart bestaan enkel in scenario (of later ook defaults, maar nu ok)
+    //       var settings = Object.assign({}, scenarioSettings);
+    //       var prestart = Object.assign({}, scenarioPrestart);
+      
+    //       // ---------------------------
+    //       // 3) start/end slots bepalen
+    //       //    (ook scenario-override mogelijk)
+    //       // ---------------------------
+    //       var startSlot = meta.startSlot || 'start';
+    //       var endSlot   = meta.endSlot   || 'end';
+      
+    //       // ---------------------------
+    //       // 4) afgeleide data
+    //       // ---------------------------
+    //       var slotOrder = (slots || []).map(function(s){ return s.id; });
+    //       var requiredSlots = (slots || [])
+    //         .filter(function(s){ return !!s.required; })
+    //         .map(function(s){ return s.id; });
+      
+    //       return {
+    //         meta: meta,
+    //         settings: settings,
+    //         prestart: prestart,
+      
+    //         // compat: je gebruikt nu soms "stops", soms "locaties"
+    //         stops: locaties,
+    //         locaties: locaties,
+      
+    //         slots: slots,
+    //         startSlot: startSlot,
+    //         endSlot: endSlot,
+    //         slotOrder: slotOrder,
+    //         requiredSlots: requiredSlots,
+    //         personages: personages
+    //       };
+    //     });
+    //   }
+      
+  
+    // ---------- Personage ----------
+    
     function loadScenario(){
         return Promise.all([
-          fetchJSON('./data/meta.json'),          // defaults (kan leeg zijn)
-          fetchJSON(stopsFileFromQuery()),        // scenario (stops.json of stops_thuis.json)
+          fetchJSON('./data/meta.json'),
+          fetchJSON(stopsFileFromQuery()),
           fetchJSON('./data/personages.json')
         ]).then(function(arr){
           var metaDefaults = arr[0] || {};
           var stopsRaw = arr[1];
           var personages = arr[2] || [];
       
-          // ---------------------------
-          // 1) Extract scenario-structuur
-          // ---------------------------
           var isScenarioObject =
             stopsRaw &&
             typeof stopsRaw === 'object' &&
@@ -1353,7 +1449,6 @@ document.addEventListener('click', function(e){
             scenarioSettings = stopsRaw.settings || {};
             scenarioPrestart = stopsRaw.prestart || {};
           } else {
-            // Backward compat: stopsRaw is array of locaties
             locaties = Array.isArray(stopsRaw) ? stopsRaw : [];
             slots = [];
       
@@ -1369,29 +1464,49 @@ document.addEventListener('click', function(e){
                 { id:'end', label:'Einde', required:true }
               ];
             }
-
           }
       
-          // ---------------------------
-          // 2) Merge: defaults + scenario override
-          //    (scenario wint)
-          // ---------------------------
+          // 2) Merge meta
           var meta = Object.assign({}, metaDefaults, scenarioMeta);
       
-          // settings/prestart bestaan enkel in scenario (of later ook defaults, maar nu ok)
-          var settings = Object.assign({}, scenarioSettings);
+          // 2b) Settings defaults + override
+          var settingsDefaults = {
+            visibilityMode: 'nextOnly',
+            multiLocationSlotMode: 'all',
+            showOptionalSlots: true,
+            listShowFutureSlots: true,
+            mapShowFutureLocations: false
+          };
+          var settings = Object.assign({}, settingsDefaults, scenarioSettings);
+      
           var prestart = Object.assign({}, scenarioPrestart);
       
-          // ---------------------------
-          // 3) start/end slots bepalen
-          //    (ook scenario-override mogelijk)
-          // ---------------------------
+          // 3) start/end slots
           var startSlot = meta.startSlot || 'start';
           var endSlot   = meta.endSlot   || 'end';
       
-          // ---------------------------
-          // 4) afgeleide data
-          // ---------------------------
+          // 3b) Normaliseer slots: completeMode altijd gezet & gevalideerd
+          var allowedModes = { any:1, all:1, nearest:1, random:1 };
+          slots = (slots || []).map(function(s){
+            var slot = Object.assign({ required:true }, s || {});
+            var cm = slot.completeMode || settings.multiLocationSlotMode || 'all';
+            cm = (cm + '').toLowerCase();
+            if(!allowedModes[cm]) cm = 'all';
+            slot.completeMode = cm;
+            return slot;
+          });
+      
+          // 3c) Normaliseer locaties: id/slot/radius defaults
+          var defaultRadius = (meta && meta.radiusDefaultMeters != null) ? meta.radiusDefaultMeters : 200;
+          locaties = (locaties || []).map(function(l, idx){
+            var loc = Object.assign({}, l || {});
+            if(!loc.id)   loc.id = 'loc_' + (idx+1);
+            if(!loc.slot) loc.slot = startSlot;
+            if(loc.radius == null) loc.radius = defaultRadius;
+            return loc;
+          });
+      
+          // 4) derived
           var slotOrder = (slots || []).map(function(s){ return s.id; });
           var requiredSlots = (slots || [])
             .filter(function(s){ return !!s.required; })
@@ -1402,7 +1517,6 @@ document.addEventListener('click', function(e){
             settings: settings,
             prestart: prestart,
       
-            // compat: je gebruikt nu soms "stops", soms "locaties"
             stops: locaties,
             locaties: locaties,
       
@@ -1416,8 +1530,6 @@ document.addEventListener('click', function(e){
         });
       }
       
-  
-    // ---------- Personage ----------
     function ensureCharacter(){
       var st = store.get();
       if(st.pcId){
