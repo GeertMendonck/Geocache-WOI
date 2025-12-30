@@ -436,6 +436,9 @@
         // 3) kaart overlays
         addStopMarkers();
         addStopCircles();
+        // 4) verbergen personages als er geen zijn
+        // ✅ nu DOM/panels zijn aanwezig → personage/story correct verbergen
+  try { applyPcUiState(); } catch(e) {}
       }
       
  
