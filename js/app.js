@@ -1439,42 +1439,71 @@ document.addEventListener('click', function(e){
         return !!st.pcId && (!!st.pcConfirmed || !!st.lockedPc);
       }
       
-      function setStoryVisible(visible){
-        var el = document.querySelector('section[data-panel="story"]');
-        if(!el) return;
-        el.style.display = visible ? '' : 'none';
-      }
-      
-      function setVisibleById(id, visible){
-        var el = document.getElementById(id);
-        if(!el) return;
-        el.style.display = visible ? '' : 'none';
-      }
-      
-      function setPanelVisible(name, visible){
-        var el = document.querySelector('section[data-panel="'+name+'"]');
-        if(!el) return;
-        el.style.display = visible ? '' : 'none';
-      }
-      function applyCharacterVisibility(){
-        var chars = hasCharacters();
-        var active = chars && isPcActive();
-      
-        // story: alleen als personage actief is
-        setPanelVisible('story', active);
-      
-        // pcCard: als er geen personages zijn => weg
-        if(!chars){
-          setVisibleById('pcCard', false);
-          return;
-        }
-      
-        // Variant A (aanrader): pcCard tonen zolang je nog moet kiezen/bevestigen
-        setVisibleById('pcCard', !active);
-      
-        // Variant B: pcCard altijd tonen zodra er personages zijn (ook als gekozen)
-        // setVisibleById('pcCard', true);
-      }
+// ---------- Characters: single source of truth ----------
+
+function charactersEnabled(){
+    // DATA.characters komt uit loadScenario()
+    if(window.DATA && DATA.characters){
+      return DATA.characters.enabled !== false;
+    }
+    // backward compat
+    return !!(window.DATA && Array.isArray(DATA.personages) && DATA.personages.length > 0);
+  }
+  
+  function getPcState(){
+    // disabled = scenario heeft geen personages (of expliciet uitgeschakeld)
+    if(!charactersEnabled()) return 'disabled';
+  
+    var st = store.get();
+    var chosen = !!st.pcId;
+    var active = chosen && (!!st.pcConfirmed || !!st.lockedPc);
+  
+    return active ? 'active' : 'choose';
+  }
+  
+  function setPanelVisible(name, visible){
+    var el = document.querySelector('section[data-panel="'+name+'"]');
+    if(!el) return;
+    el.style.display = visible ? '' : 'none';
+  }
+  
+  function setVisibleById(id, visible){
+    var el = document.getElementById(id);
+    if(!el) return;
+    el.style.display = visible ? '' : 'none';
+  }
+  
+  // ---------- UI: apply state everywhere ----------
+  
+  function applyPcUiState(){
+    var state = getPcState();
+  
+    // pcCard is jouw "Jouw personage" kaart
+    // story panel is "Personage + Verhaal" (data-panel="story")
+    if(state === 'disabled'){
+      setVisibleById('pcCard', false);
+      setPanelVisible('story', false);
+  
+      // ook chooser inhoud leeg maken (voor zekerheid)
+      var el = qs('pcChooser');
+      if(el) el.innerHTML = '';
+  
+      return;
+    }
+  
+    // characters bestaan -> pcCard mag bestaan
+    // Kies: tonen in choose, of altijd tonen. Ik neem choose = tonen, active = verbergen.
+    setVisibleById('pcCard', state === 'choose');
+  
+    // story: alleen tonen wanneer personage actief is
+    setPanelVisible('story', state === 'active');
+  
+    // chooser (select + pill) opnieuw tekenen zolang pcCard zichtbaar is
+    if(state === 'choose'){
+      renderCharacterChooser();
+    }
+  }
+  
       
     function setPcId(newId){
       var st = store.get();
@@ -1486,10 +1515,10 @@ document.addEventListener('click', function(e){
     }
   
     function renderCharacterChooser(){
-        var st = store.get();
-        var el = qs('pcChooser'); if(!el) return;
+        var el = qs('pcChooser');
+        if(!el) return;
       
-        // als scenario geen personages heeft: kiesblok weg
+        // Als scenario geen personages wil: niets tonen
         if(!charactersEnabled()){
           el.innerHTML = '';
           return;
@@ -1497,10 +1526,12 @@ document.addEventListener('click', function(e){
       
         var pcs = DATA.personages || [];
         if(!pcs.length){
+          // duidelijke placeholder, maar geen select/knoppen
           el.innerHTML = '<span class="pill no">ℹ️ Geen personages in dit scenario</span>';
           return;
         }
       
+        var st = store.get();
         var opts = '';
         pcs.forEach(function(p){
           opts += '<option value="'+p.id+'" '+(p.id===st.pcId?'selected':'')+'>'
@@ -1511,8 +1542,6 @@ document.addEventListener('click', function(e){
         var inside = (window.__insideStart === true);
         var locked = !!st.lockedPc;
         var confirmed = !!st.pcConfirmed;
-      
-        // je kan kiezen enkel in startzone en zolang niet bevestigd/vergrendeld
         var canChoose = inside && !locked && !confirmed;
       
         var msg =
@@ -1521,72 +1550,12 @@ document.addEventListener('click', function(e){
             (inside ? '🟢 Kies je personage en bevestig'
                     : '🔐 Kiesbaar enkel aan de start'));
       
-        // Extra: geef een duidelijke “call to action”
-        var showConfirm = (!locked && !confirmed);
-      
         el.innerHTML =
-            '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
-          +   '<select id="pcSelect" '+(canChoose?'':'disabled')+'>'+opts+'</select>'
-          +   (showConfirm ? '<button id="pcConfirmBtn" '+(canChoose?'':'disabled')+'>Bevestig</button>' : '')
-          +   '<span id="pcPill" class="pill '+((locked||confirmed)?'ok':'')+'">'+escapeHtml(msg)+'</span>'
-          + '</div>';
-      
-        // bind confirm (idempotent)
-        var btn = qs('pcConfirmBtn');
-        if(btn){
-          btn.onclick = function(){
-            var st2 = store.get();
-            var sel = qs('pcSelect');
-            if(sel && sel.value) st2.pcId = sel.value;
-      
-            // bevestigen = actief
-            st2.pcConfirmed = true;
-            // als jij liever lockt bij verlaten startzone: laat lockedPc hier nog false
-            store.set(st2);
-      
-            applyPcUiState();
-          };
-        }
-      
-        // bij wijzigen select: pcId opslaan maar nog niet bevestigen
-        var sel = qs('pcSelect');
-        if(sel){
-          sel.onchange = function(){
-            var st3 = store.get();
-            st3.pcId = sel.value;
-            store.set(st3);
-            // nog niet active; pas na confirm/lock
-          };
-        }
+            '<select id="pcSelect" '+(canChoose?'':'disabled')+'>'+opts+'</select>'
+          + '<span id="pcPill" class="pill '+((locked||confirmed)?'ok':'')+'">'+escapeHtml(msg)+'</span>';
       }
       
-
-    function renderCharacterChooser(){
-        var st=store.get();
-        var el=qs('pcChooser'); if(!el) return;
-    
-        var opts='';
-        (DATA.personages||[]).forEach(function(p){
-          opts += '<option value="'+p.id+'" '+(p.id===st.pcId?'selected':'')+'>'+p.naam+' ('+p.leeftijd+') — '+p.rol+'</option>';
-        });
-        if(!opts) opts = '<option>Demo</option>';
-    
-          var inside = window.__insideStart===true;
-          var locked = !!st.lockedPc;
-          var confirmed = !!st.pcConfirmed;
-          var canChoose = inside && !locked && !confirmed;
-  
-    
-          el.innerHTML =
-          '<select id="pcSelect" '+(canChoose?'':'disabled')+'>'+opts+'</select>'
-        + '<span class="pill '+(locked?'ok':'')+'">'
-        + (locked ? '🔒 Keuze vergrendeld'
-                  : (confirmed ? '✅ Keuze bevestigd'
-                               : (inside ? '🟢 Je kan hier je personage kiezen'
-                                         : '🔐 Kiesbaar enkel aan de start')))
-        + '</span>';
-        
-      }
+      
   
     function renderProfile(){
       var pc=currentPc();
