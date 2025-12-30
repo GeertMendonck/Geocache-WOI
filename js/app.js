@@ -2489,6 +2489,7 @@ function charactersEnabled(){
          initVoices();
       loadScenario().then(function(data){
         DATA = data;
+        applyPcUiState();
         //TEST
         console.log('characters cfg:', DATA && DATA.characters);
 
