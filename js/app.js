@@ -19,6 +19,84 @@
 
   
     // ---------- Mini helpers ----------
+    //speak
+    function handleReadStory(slotId, locId){
+        var pc = currentPc();
+        if(!pc) return;
+      
+        var verhaal = getStoryFor(pc, slotId, locId);
+        if(!verhaal) return;
+      
+        speakText(verhaal);   // of wat jij ook gebruikt voor TTS
+      }
+      function speakText(text){
+        text = (text == null) ? '' : String(text).trim();
+        if(!text) return;
+      
+        // TTS beschikbaar?
+        if(!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined'){
+          console.log('[TTS] speechSynthesis niet beschikbaar');
+          return;
+        }
+      
+        try{
+          // Stop lopende spraak (belangrijk bij herhaald klikken)
+          window.speechSynthesis.cancel();
+        }catch(e){}
+      
+        var u = new SpeechSynthesisUtterance(text);
+      
+        // Taal: probeer NL-BE, anders NL
+        // (Sommige browsers negeren dit als er geen voice matcht)
+        u.lang = 'nl-BE';
+      
+        // (optioneel) tempo/hoogte/volume — mild houden
+        u.rate = 1.0;   // 0.1–10 (realistisch: 0.8–1.2)
+        u.pitch = 1.0;  // 0–2
+        u.volume = 1.0; // 0–1
+      
+        // (optioneel) kies een Nederlandstalige voice als beschikbaar
+        // Voice-lijst kan pas later laden, dus dit is best-effort.
+        var voices = [];
+        try { voices = window.speechSynthesis.getVoices() || []; } catch(e){ voices = []; }
+      
+        var v = pickDutchVoice(voices);
+        if(v) u.voice = v;
+      
+        u.onerror = function(ev){
+          console.log('[TTS] error', ev && (ev.error || ev.message || ev));
+        };
+      
+        try{
+          window.speechSynthesis.speak(u);
+        }catch(e){
+          console.log('[TTS] speak failed', e);
+        }
+      }
+      
+      function pickDutchVoice(voices){
+        if(!voices || !voices.length) return null;
+      
+        // voorkeur: nl-BE, dan nl-NL, dan eender welke nl
+        var i, v, lang;
+        for(i=0;i<voices.length;i++){
+          v = voices[i]; lang = (v.lang || '').toLowerCase();
+          if(lang === 'nl-be') return v;
+        }
+        for(i=0;i<voices.length;i++){
+          v = voices[i]; lang = (v.lang || '').toLowerCase();
+          if(lang === 'nl-nl') return v;
+        }
+        for(i=0;i<voices.length;i++){
+          v = voices[i]; lang = (v.lang || '').toLowerCase();
+          if(lang.indexOf('nl') === 0) return v;
+        }
+        return null;
+      }
+      
+      
+    //----------
+    
     //slotconfig
     function getSlotConfig(slotId){
         var slots = DATA.slots || [];
@@ -139,51 +217,6 @@
         return chosen;
       }
       
-
-
-    //-----------------
-    //kaart draaien, volgende locatie ligt boven huidige locatie
-    //     function toRad(d){ return d * Math.PI / 180; }
-    //     function toDeg(r){ return r * 180 / Math.PI; }
-
-    //     function bearingDeg(lat1, lng1, lat2, lng2){
-    //     var φ1 = toRad(lat1), φ2 = toRad(lat2);
-    //     var Δλ = toRad(lng2 - lng1);
-    //     var y = Math.sin(Δλ) * Math.cos(φ2);
-    //     var x = Math.cos(φ1)*Math.sin(φ2) - Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);
-    //     var θ = Math.atan2(y, x);
-    //     return (toDeg(θ) + 360) % 360; // 0..360
-    //     }
-
-
-    //     function rotateMapToNext(myLat, myLng){
-    //         if(!window.LMAP) return;
-          
-    //         var next = getNextRequiredLoc(myLat, myLng);
-    //         if(!next) return;
-          
-    //         var b = bearingDeg(myLat, myLng, next.lat, next.lng);
-          
-    //         // “richting naar next” moet bovenaan staan => kaart roteren met -bearing
-    //         if (LMAP.setBearing) {
-    //           LMAP.setBearing(-b);
-    //         } else if (LMAP.setRotationAngle) {
-    //           LMAP.setRotationAngle(-b);
-    //         }
-    //       }
-          
-    // function haversineMeters(lat1,lng1,lat2,lng2){
-    //     var R = 6371000;
-    //     var φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
-    //     var dφ = (lat2-lat1) * Math.PI/180;
-    //     var dλ = (lng2-lng1) * Math.PI/180;
-    //     var a = Math.sin(dφ/2)*Math.sin(dφ/2) +
-    //             Math.cos(φ1)*Math.cos(φ2) *
-    //             Math.sin(dλ/2)*Math.sin(dλ/2);
-    //     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    //     return R * c;
-    //   }
-      
       function getUnlockedLocIds(){
         var st = store.get();
         return st.unlockedLocs || [];
@@ -276,8 +309,6 @@
         }, 120);
       }
       
-      
-
     //-------------------------
     // GPS aanhouden 
     window.__geoWatchId = null;   // id van watchPosition
@@ -335,8 +366,6 @@
 
   // anders: alles ok, niets doen
 }
-
-      
 
     //----------------
     function refreshRouteUI(){
@@ -1063,6 +1092,20 @@
  
       
     function bindCoreListeners(){
+        document.addEventListener('click', function(e){
+            var btn = e.target && e.target.closest
+                      ? e.target.closest('.readBtn')
+                      : null;
+            if(!btn) return;
+          
+            var slotId = btn.getAttribute('data-slot');
+            var locId  = btn.getAttribute('data-loc');
+          
+            if(!slotId || !locId) return;
+          
+            handleReadStory(slotId, locId);
+          });
+          
         document.addEventListener('visibilitychange', function(){
             if(!document.hidden) ensureGpsAwake();
           });
