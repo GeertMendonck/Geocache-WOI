@@ -648,6 +648,9 @@
       }
       
       function buildStoryTimelineHtml(pc, hasRealLoc){
+        var st = store.get();
+console.log('unlockedLocs=', st.unlockedLocs, 'unlockedSlots=', st.unlockedSlots, 'visibleSlotMap=', st.visibleSlotMap);
+
  
         if(!pc || !pc.verhalen) {
           return '<div class="muted">(Geen verhaal beschikbaar)</div>';
