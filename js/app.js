@@ -2025,11 +2025,11 @@ document.addEventListener('click', function(e){
 //       }
 // //--------------      
 
-
+        var hasRealLoc = hasLoc && locId && slotId;
         var verhaal = hasRealLoc ? getStoryFor(pc, slotId, locId) : null;
         var verhaalText = (verhaal == null) ? '' : String(verhaal);
 
-        var hasRealLoc = hasLoc && locId && slotId;
+        
 
         if(!hasRealLoc){
           verhaal = null;            // geen readBtn tonen
