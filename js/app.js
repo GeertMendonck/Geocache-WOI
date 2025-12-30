@@ -16,18 +16,17 @@
     window.__lastGeoAt  = 0;
     window.__lastFix    = null; 
     window.__pendingRecenter = false; // alleen als je dat gebruikt
-    initVoices();
+   
   
     // ---------- Mini helpers ----------
     //speak
-    (function initVoices(){
+    function initVoices(){
         if(!('speechSynthesis' in window)) return;
-        // forceer dat voices geladen raken
         try { window.speechSynthesis.getVoices(); } catch(e){}
         window.speechSynthesis.onvoiceschanged = function(){
           try { window.speechSynthesis.getVoices(); } catch(e){}
         };
-      })();
+      }
       
     function handleReadStory(slotId, locId){
         var pc = currentPc();
@@ -74,10 +73,10 @@
         var v = pickDutchVoice(voices);
         if(v) u.voice = v;
        // 👉 EINDE: visuele status opruimen
-        u.onend = function(){
-            document.body.classList.remove('reading');
-        };
-                u.onerror = function(ev){
+            u.onend = function(){
+                document.body.classList.remove('reading');
+            };
+            u.onerror = function(ev){
           console.log('[TTS] error', ev && (ev.error || ev.message || ev));
         };
       
@@ -2341,7 +2340,7 @@ document.addEventListener('click', function(e){
     // ---------- DOM Ready ----------
     document.addEventListener('DOMContentLoaded', function(){
          bindCoreListeners();
-  
+         initVoices();
       loadScenario().then(function(data){
         DATA = data;
         applyMeta();
