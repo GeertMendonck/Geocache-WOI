@@ -28,7 +28,7 @@
 
     { "id": "stop05", "label": "Keuze",  "required": false, "unlockAfterSlot": "start" },
 
-    { "id": "stop01", "label": "Stop 1", "required": true,  "unlockAfterSlot": "start" },
+    { "id": "stop01", "label": "Stop 1", "required": true,  "unlockAfterSlot": "start", "completeMode": "random" },
     { "id": "stop02", "label": "Stop 2", "required": true,  "unlockAfterSlot": "stop01" },
     { "id": "stop03", "label": "Stop 3", "required": true,  "unlockAfterSlot": "stop02" },
     { "id": "stop04", "label": "Stop 4", "required": true,  "unlockAfterSlot": "stop03" },
