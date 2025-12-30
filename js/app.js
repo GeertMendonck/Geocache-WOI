@@ -2507,6 +2507,23 @@ function charactersEnabled(){
          initVoices();
       loadScenario().then(function(data){
         DATA = data;
+        //TEST
+        console.log('characters cfg:', DATA && DATA.characters);
+
+        if(DATA && DATA.characters && DATA.characters.enabled === false){
+          console.log('HIDING character UI (enabled=false)');
+        
+          var pcCard = document.getElementById('pcCard');
+          if(pcCard) pcCard.style.display = 'none';
+        
+          var story = document.querySelector('section[data-panel="story"]');
+          if(story) story.style.display = 'none';
+        
+          var chooser = qs('pcChooser');
+          if(chooser) chooser.innerHTML = '';
+        }
+        
+        //-------------
         applyMeta();
         var st=store.get();
         if(!st.pcId) ensureCharacter();
