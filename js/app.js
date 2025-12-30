@@ -2043,8 +2043,8 @@ document.addEventListener('click', function(e){
         + '</div>';
 
         var hasRealLoc = hasLoc && locId && slotId;
-       // var verhaal = hasRealLoc ? getStoryFor(pc, slotId, locId) : null;
-       // var verhaalText = (verhaal == null) ? '' : String(verhaal);
+        var verhaal = hasRealLoc ? getStoryFor(pc, slotId, locId) : null;
+        var verhaalText = (verhaal == null) ? '' : String(verhaal);
 
         
 
