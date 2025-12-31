@@ -773,40 +773,110 @@
 }
             applyPcUiState();}
       
-        var st = store.get();
-        var msg = qs('prestartMsg');        
-        var msgRow = qs('prestartMsgRow');
-        var startLoc = getStartLocation();
-        var startNaam = startLoc ? (startLoc.naam || 'Start') : 'Start';
-        var routeHint =  startLoc ? (startLoc.routeHint || '') : '';
+    //     var st = store.get();
+    //     var msg = qs('prestartMsg');        
+    //     var msgRow = qs('prestartMsgRow');
+    //     var startLoc = getStartLocation();
+    //     var startNaam = startLoc ? (startLoc.naam || 'Start') : 'Start';
+    //    // var routeHint =  startLoc ? (startLoc.routeHint || '') : '';
         
-        // UI: naam startpunt
-        var cl = qs('closest');
-        if (cl) cl.textContent = startNaam;
+    //     // UI: naam startpunt
+    //     var cl = qs('closest');
+    //     if (cl) cl.textContent = startNaam;
         
-        // UI: afstand & straal (zoals het was)
-        if (best) {
-          var di = qs('dist');   if (di) di.textContent = String(best.d);
-          var ra = qs('radius'); if (ra) ra.textContent = String(best.radius);
-        }
+    //     // UI: afstand & straal (zoals het was)
+    //     if (best) {
+    //       var di = qs('dist');   if (di) di.textContent = String(best.d);
+    //       var ra = qs('radius'); if (ra) ra.textContent = String(best.radius);
+    //     }
         
-        // UI: boodschap
-        var msgRow = qs('prestartMsgRow');
-        var msgEl  = qs('prestartMsg');
+    //     // // UI: boodschap
+    //     // var msgRow = qs('prestartMsgRow');
+    //     // var msgEl  = qs('prestartMsg');
        
         
-        if (msgRow && msgEl) {
-          var teVerMsg = (DATA && DATA.prestart && DATA.prestart.message) ? DATA.prestart.message : '';
+    //     if (msgRow && msgEl) {
+    //       var teVerMsg = (DATA && DATA.prestart && DATA.prestart.message) ? DATA.prestart.message : '';
         
-          // we bepalen "te ver" op basis van afstand vs straal (zoals jij het wou laten)
-          var inside = best ? (Number(best.d) <= Number(best.radius)) : true;
+    //       // we bepalen "te ver" op basis van afstand vs straal (zoals jij het wou laten)
+    //       var inside = best ? (Number(best.d) <= Number(best.radius)) : true;
         
-         var text = (inside  ? '🚶 '  : '🧭 ') + teVerMsg;
+    //      var text = inside  ? '🚶 Je bent op de startlocatie'  : '🧭 ' + teVerMsg;
          
-          msgEl.textContent = text || '';
-          msgRow.style.display = text ? '' : 'none';
+    //       msgEl.textContent = text || '';
+    //       msgRow.style.display = text ? '' : 'none';
+    //     }
+    var st = store.get();
+
+    var arr = DATA.locaties || DATA.stops || [];
+    var ps  = (DATA && DATA.prestart) ? DATA.prestart : null;
+    
+    // 1) locatie zoeken via useLocationId
+    var startLoc = null;
+    if(ps && ps.useLocationId){
+      for(var i=0;i<arr.length;i++){
+        if(arr[i] && arr[i].id === ps.useLocationId){
+          startLoc = arr[i];
+          break;
         }
-  
+      }
+    }
+    
+    // 2) meetingPoint + label bepalen
+    var mp = (ps && ps.meetingPoint) ? ps.meetingPoint : null;
+    
+    var startLabel =
+      (mp && mp.label) ? mp.label :
+      (startLoc && startLoc.naam) ? startLoc.naam :
+      'Start';
+    
+    // UI: naam startpunt
+    var cl = qs('closest');
+    if(cl) cl.textContent = startLabel;
+    
+    // UI: afstand & straal (zoals het was)
+    if(best){
+      var di = qs('dist');   if(di) di.textContent = String(best.d);
+      var ra = qs('radius'); if(ra) ra.textContent = String(best.radius);
+    }
+    
+    // UI: boodschap
+    var msgRow = qs('prestartMsgRow');
+    var msgEl  = qs('prestartMsg');
+    
+    if(msgRow && msgEl){
+      var teVerMsg = (ps && ps.message) ? String(ps.message) : '';
+      var inside = best ? (Number(best.d) <= Number(best.radius)) : true;
+    
+      var text = inside
+        ? '🚶 Je bent op de startlocatie'
+        : (teVerMsg ? ('🧭 ' + teVerMsg) : '');
+    
+      msgEl.textContent = text;
+      msgRow.style.display = text ? '' : 'none';
+    }
+    
+    // 3) Maps knop label + link
+    var mapsBtn = qs('openInMaps');
+    if(mapsBtn){
+      var mapsLabel = (ps && ps.maps && ps.maps.label) ? String(ps.maps.label) : '';
+      if(mapsLabel){
+        // we zetten zelf het 🗺️-icoon, dus geen dubbel icoon als het al in de label zit
+        mapsBtn.textContent = '🗺️ ' + mapsLabel.replace(/^🗺️\s*/,'');
+      }
+    
+      // bestemming coördinaten: meetingPoint > startLoc
+      var dLat = (mp && mp.lat != null) ? mp.lat : (startLoc ? startLoc.lat : null);
+      var dLng = (mp && mp.lng != null) ? mp.lng : (startLoc ? startLoc.lng : null);
+    
+      if(dLat != null && dLng != null){
+        mapsBtn.href = 'https://www.google.com/maps/dir/?api=1&destination='
+          + encodeURIComponent(dLat + ',' + dLng);
+      }else{
+        mapsBtn.removeAttribute('href');
+      }
+    }
+    
       
         // ✅ unlock pas als “route echt gestart” is
         if(best && st.geoOn === true){
