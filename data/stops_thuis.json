@@ -25,10 +25,14 @@
     "maps": {
       "label": "Route naar startpunt"
     },
-    "images": [
+    "images": [ {
+      "file": "Binen.jpg"
+     
+    },
       {
-        "file": "prestart_1.jpg",
-        "credit": "© Privécollectie"
+        
+        "file": "voor.png",
+        "credit": "© Google Maps"
       }
     ]
   },
@@ -55,15 +59,16 @@
       "radius": 50,
       "images": [
           {
-            "file": "stop01_1.jpg",
-            "credit": "© Archief Stad Antwerpen"
-          },
-          {
-            "file": "stop01_2.jpg",
+            "file": "Achter.jpg",
             "credit": "Foto: privécollectie"
           },
           {
-            "file": "stop01_3.webp"
+            "file": "Binen.jpg"
+           
+          },
+          {
+            "file": "voor.png",
+            "credit": "© Google Maps"
           }
         ],
       "routeHint": "Wandel eerst naar het Krugerpark en daarna naar het Vinçotteplein.",
