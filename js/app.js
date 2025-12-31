@@ -1010,6 +1010,16 @@
     function autoFocusNewStory(){
         var st = store.get();
         if(!st.lastUnlockedLocId) return;
+         // ✅ bestaat de story chunk wel?
+            var chunkId = 'storyChunk_' + safeDomId(st.lastUnlockedLocId);
+            var el = document.getElementById(chunkId);
+
+            // als er geen story is, niets doen (en flag opruimen)
+            if(!el){
+                st.lastUnlockedLocId = null;
+                store.set(st);
+                return;
+            }
       
         // als focus niet op story staat, spring er naartoe
         if(st.focus !== 'story'){
