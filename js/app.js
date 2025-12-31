@@ -45,7 +45,7 @@
         var startX = null;
       
         function urlOf(file){
-          return 'images/' + String(file || '');
+          return 'data/images/' + String(file || '');
         }
       
         function clampIndex(){
