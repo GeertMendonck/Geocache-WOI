@@ -19,6 +19,115 @@
    
   
     // ---------- Mini helpers ----------
+    // Afbeelding
+    function renderGallery(hostId, images){
+        var host = (typeof hostId === 'string') ? document.getElementById(hostId) : hostId;
+        if(!host) return;
+      
+        images = images || [];
+        if(!images.length){
+          host.innerHTML = '';
+          host.className = 'hidden';
+          return;
+        }
+      
+        host.className = 'gal';
+      
+        var idx = 0;
+        var startX = null;
+      
+        function urlOf(file){
+          return 'images/' + String(file || '');
+        }
+      
+        function safeItem(i){
+          if(i < 0) i = images.length - 1;
+          if(i >= images.length) i = 0;
+          return i;
+        }
+      
+        function draw(){
+          var it = images[idx];
+          if(!it || !it.file){
+            host.innerHTML = '';
+            host.className = 'hidden';
+            return;
+          }
+      
+          var credit = it.credit ? String(it.credit) : '';
+          var counter = (idx+1) + ' / ' + images.length;
+      
+          host.innerHTML =
+              '<div class="galStage" id="'+host.id+'_stage">'
+            + '  <img class="galImg" id="'+host.id+'_img" draggable="false" src="'+escapeHtml(urlOf(it.file))+'" alt="" />'
+            + '</div>'
+            + '<div class="galNav">'
+            + '  <button type="button" class="galBtn btn" id="'+host.id+'_prev">◀</button>'
+            + '  <div class="galCount muted small">'+escapeHtml(counter)+'</div>'
+            + '  <button type="button" class="galBtn btn" id="'+host.id+'_next">▶</button>'
+            + '</div>'
+            + (credit ? '<div class="galCredit">'+escapeHtml(credit)+'</div>' : '');
+      
+          var img = document.getElementById(host.id + '_img');
+          var prev = document.getElementById(host.id + '_prev');
+          var next = document.getElementById(host.id + '_next');
+          var stage = document.getElementById(host.id + '_stage');
+      
+          if(prev) prev.onclick = function(){ idx = safeItem(idx - 1); draw(); };
+          if(next) next.onclick = function(){ idx = safeItem(idx + 1); draw(); };
+      
+          // Swipe (touch)
+          if(stage){
+            stage.ontouchstart = function(e){
+              if(!e || !e.touches || !e.touches.length) return;
+              startX = e.touches[0].clientX;
+            };
+            stage.ontouchend = function(e){
+              if(startX == null) return;
+              var endX = (e && e.changedTouches && e.changedTouches.length) ? e.changedTouches[0].clientX : startX;
+              var dx = endX - startX;
+              startX = null;
+      
+              if(Math.abs(dx) > 40){
+                if(dx < 0) idx = safeItem(idx + 1);
+                else idx = safeItem(idx - 1);
+                draw();
+              }
+            };
+          }
+      
+          // Als image faalt: probeer volgende (tot max N pogingen)
+          if(img){
+            img.onerror = function(){
+              // als er maar 1 is: verbergen
+              if(images.length <= 1){
+                host.innerHTML = '';
+                host.className = 'hidden';
+                return;
+              }
+      
+              // probeer volgende (max 3 stappen om loops te vermijden)
+              var tries = 0;
+              while(tries < 3){
+                idx = safeItem(idx + 1);
+                var nxt = images[idx];
+                if(nxt && nxt.file){
+                  img.src = urlOf(nxt.file);
+                  return;
+                }
+                tries++;
+              }
+      
+              host.innerHTML = '';
+              host.className = 'hidden';
+            };
+          }
+        }
+      
+        draw();
+      }
+      
+    //---------------
     function enableGps(){
         var st = store.get();
         st.gpsOn = true;          // optioneel vlaggetje
@@ -772,40 +881,7 @@
   }
 }
             applyPcUiState();}
-      
-    //     var st = store.get();
-    //     var msg = qs('prestartMsg');        
-    //     var msgRow = qs('prestartMsgRow');
-    //     var startLoc = getStartLocation();
-    //     var startNaam = startLoc ? (startLoc.naam || 'Start') : 'Start';
-    //    // var routeHint =  startLoc ? (startLoc.routeHint || '') : '';
-        
-    //     // UI: naam startpunt
-    //     var cl = qs('closest');
-    //     if (cl) cl.textContent = startNaam;
-        
-    //     // UI: afstand & straal (zoals het was)
-    //     if (best) {
-    //       var di = qs('dist');   if (di) di.textContent = String(best.d);
-    //       var ra = qs('radius'); if (ra) ra.textContent = String(best.radius);
-    //     }
-        
-    //     // // UI: boodschap
-    //     // var msgRow = qs('prestartMsgRow');
-    //     // var msgEl  = qs('prestartMsg');
-       
-        
-    //     if (msgRow && msgEl) {
-    //       var teVerMsg = (DATA && DATA.prestart && DATA.prestart.message) ? DATA.prestart.message : '';
-        
-    //       // we bepalen "te ver" op basis van afstand vs straal (zoals jij het wou laten)
-    //       var inside = best ? (Number(best.d) <= Number(best.radius)) : true;
-        
-    //      var text = inside  ? '🚶 Je bent op de startlocatie'  : '🧭 ' + teVerMsg;
-         
-    //       msgEl.textContent = text || '';
-    //       msgRow.style.display = text ? '' : 'none';
-    //     }
+
     var st = store.get();
 
     var arr = DATA.locaties || DATA.stops || [];
@@ -839,7 +915,11 @@
       var di = qs('dist');   if(di) di.textContent = String(best.d);
       var ra = qs('radius'); if(ra) ra.textContent = String(best.radius);
     }
-    
+    //UI Afbeelding
+    var ps = (DATA && DATA.prestart) ? DATA.prestart : null;
+    var psImages = (ps && ps.images) ? ps.images : [];
+    renderGallery('gal_prestart', psImages);
+
     // UI: boodschap
     var msgRow = qs('prestartMsgRow');
     var msgEl  = qs('prestartMsg');
@@ -1408,6 +1488,7 @@
               : '📍 GPS staat aan. Ga naar het startpunt om te beginnen.';
           }
         }
+
       });
       
 
