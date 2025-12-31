@@ -778,7 +778,7 @@
         var msgRow = qs('prestartMsgRow');
         var startLoc = getStartLocation();
         var startNaam = startLoc ? (startLoc.naam || 'Start') : 'Start';
-        var routeHint = startLoc ? (startLoc.routeHint || '') : '';
+        var routeHint =  startLoc ? (startLoc.routeHint || '') : '';
         
         // UI: naam startpunt
         var cl = qs('closest');
@@ -793,6 +793,7 @@
         // UI: boodschap
         var msgRow = qs('prestartMsgRow');
         var msgEl  = qs('prestartMsg');
+       
         
         if (msgRow && msgEl) {
           var teVerMsg = (DATA && DATA.prestart && DATA.prestart.message) ? DATA.prestart.message : '';
@@ -800,8 +801,8 @@
           // we bepalen "te ver" op basis van afstand vs straal (zoals jij het wou laten)
           var inside = best ? (Number(best.d) <= Number(best.radius)) : true;
         
-          var text = inside  ? '🚶 ' + routeHint    : '🧭 ' + teVerMsg;
-        
+         var text = (inside  ? '🚶 '  : '🧭 ') + teVerMsg;
+         
           msgEl.textContent = text || '';
           msgRow.style.display = text ? '' : 'none';
         }
