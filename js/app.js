@@ -1736,7 +1736,7 @@ function charactersEnabled(){
       if(img){
         img.style.display = 'block';
         img.alt = 'Portret van ' + (pc.naam || 'personage');
-        img.src = './data/Personages/' + pc.id + '.png';
+        img.src = './data/personages/' + pc.id + '.png';
         img.onerror = function(){ img.onerror=null; img.style.display='none'; };
       }
   
