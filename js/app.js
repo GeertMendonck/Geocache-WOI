@@ -2653,7 +2653,14 @@ function charactersEnabled(){
         if(oneMap && oneMap.parentElement !== park) park.appendChild(oneMap);
       
         cont.innerHTML = html;
-      
+      // ✅ gallery bij Informatie (uitleg)
+        // host div bestaat pas na cont.innerHTML
+        if(loc && loc.images && loc.images.length){
+            renderGallery('gal_uitleg', loc.images);
+        } else {
+            renderGallery('gal_uitleg', []); // verbergt panel netjes
+        }
+  
         autoFocusNewStory();
       
         // stops render plannen (host bestaat nu)
