@@ -2313,6 +2313,15 @@ function charactersEnabled(){
         var loc = currentLoc;
         var locId = loc.id;
         var slotId = loc.slot;
+
+        // ✅ routehint voor de net-vrijgekomen locatie (currentLoc)
+            var huidigeRouteHint = '';
+            if(hasRealLoc && loc && loc.routeHint){
+            huidigeRouteHint = String(loc.routeHint);
+            }
+            var routeHintHtml = huidigeRouteHint
+            ? ('<div id="routeHintBox" class="routeHintBox">🧭 ' + escapeHtml(huidigeRouteHint) + '</div>')
+            : '<div id="routeHintBox" class="routeHintBox hidden"></div>';
       
         // ✅ bepaal END + downloadHtml VOOR je qaBody bouwt
         var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
@@ -2422,7 +2431,7 @@ function charactersEnabled(){
             // --- Exportblok (altijd klaarzetten) ---
             var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
             var isEnd = (loc && loc.slot === endSlot);
-
+           
             downloadHtml =
             '<div class="card mt-10">'
             + '  <div class="cardHead">📄 Verslag</div>'
@@ -2443,6 +2452,7 @@ function charactersEnabled(){
       
           var mapBody =
           '<div id="statusWrapMap"></div>'
+          + routeHintHtml
         + '<div id="mapPanelWrap" style="height:68vh; min-height:320px; border-radius:12px; overflow:hidden;"></div>'
         + '<div id="mapControlsWrap" class="row small mt-8">'
         + '  <button id="recenterBtn" type="button" class="primary">🎯 Centreer</button>'
