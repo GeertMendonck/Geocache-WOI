@@ -24,7 +24,13 @@
     "message": "Nog niet aan het startpunt (Thuis). Ga naar de startlocatie om te beginnen.",
     "maps": {
       "label": "Route naar startpunt"
-    }
+    },
+    "images": [
+      {
+        "file": "prestart_1.jpg",
+        "credit": "© Privécollectie"
+      }
+    ]
   },
 
   "slots": [
@@ -47,7 +53,19 @@
       "lat": 51.220418,
       "lng": 4.440854,
       "radius": 50,
-
+      "images": [
+          {
+            "file": "stop01_1.jpg",
+            "credit": "© Archief Stad Antwerpen"
+          },
+          {
+            "file": "stop01_2.jpg",
+            "credit": "Foto: privécollectie"
+          },
+          {
+            "file": "stop01_3.webp"
+          }
+        ],
       "routeHint": "Wandel eerst naar het Krugerpark en daarna naar het Vinçotteplein.",
 
       "uitleg": {
