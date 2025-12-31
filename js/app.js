@@ -2551,6 +2551,19 @@ function charactersEnabled(){
         // ---- vragen ---------------------------------------------------
         var qsArr = hasRealLoc ? (loc.vragen || []) : [];
         var qaHtml = '';
+        // ---- panel bodies ---------------------------------------------------
+
+        // Info-panel: enkel info/uitleg (met eventueel gallery in uitlegHtml)
+        var infoBody = ''
+        + '<div id="statusWrapInfo"></div>'
+        + (uitlegHtml || '<div class="muted">(Geen extra informatie)</div>');
+
+        // Vragen-panel: enkel vragen + exportblok
+        var vragenBody = ''
+        + '<div id="statusWrapVragen"></div>'
+        + '<div style="margin-top:10px">' + qaHtml + '</div>'
+        + downloadHtml;
+
       
         if(!hasRealLoc){
           qaHtml = '<div class="muted">Nog geen vragen: wandel eerst een cirkel binnen 🙂</div>';
@@ -2615,11 +2628,11 @@ function charactersEnabled(){
           +   '</div>'
           + '</div>';
       
-        var qaBody = ''
-          + '<div id="statusWrapQa"></div>'
-          + (uitlegHtml || '<div class="muted">(Geen uitleg)</div>')
-          + '<div style="margin-top:10px">' + qaHtml + '</div>'
-          + downloadHtml;
+        // var qaBody = ''
+        //   + '<div id="statusWrapQa"></div>'
+        //   + (uitlegHtml || '<div class="muted">(Geen uitleg)</div>')
+        //   + '<div style="margin-top:10px">' + qaHtml + '</div>'
+        //   + downloadHtml;
       
         var mapBody =
             '<div id="statusWrapMap"></div>'
@@ -2634,12 +2647,14 @@ function charactersEnabled(){
           + '  <div id="stopsListHost" class="stopsPills"></div>'
           + '</div>';
       
-        var html =
-            '<div class="stack">'
-          + panelHtml('story','Personage + Verhaal', storyBody, focus==='story')
-          + panelHtml('qa','Uitleg en vragen', qaBody, focus==='qa')
-          + panelHtml('map','Kaart', mapBody, focus==='map')
-          + '</div>';
+          var html =
+          '<div class="stack">'
+        + panelHtml('story','Verhaal', storyBody, focus==='story')
+        + panelHtml('vragen','Vragen', vragenBody, focus==='vragen')
+        + panelHtml('info','Informatie', infoBody, focus==='info')
+        + panelHtml('map','Kaart', mapBody, focus==='map')
+        + '</div>';
+        
       
         // ---- Park oneMap vóór innerHTML -------------------------------
         var oneMap = document.getElementById('oneMap');
