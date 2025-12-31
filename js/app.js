@@ -2516,7 +2516,8 @@ function charactersEnabled(){
         // ---- verhaal --------------------------------------------------
         var verhaal = hasRealLoc ? getStoryFor(pc, slotId, locId) : null;
         var verhaalText = (verhaal == null) ? '' : String(verhaal); // (niet per se nodig, maar safe)
-      
+        var hasStory = !!(verhaalText && verhaalText.trim());
+
         // ---- uitleg ---------------------------------------------------
         var uitleg = loc.uitleg || null;
         var uitlegKort = '', uitlegLang = '';
@@ -2575,6 +2576,18 @@ function charactersEnabled(){
         }else{
           qaHtml = '<div class="muted">Geen vragen bij deze stop.</div>';
         }
+        // ✅ zijn er nog onbeantwoorde vragen?
+            var hasUnanswered = false;
+            if(hasRealLoc && qsArr && qsArr.length){
+            for(var i=0;i<qsArr.length;i++){
+                var a = getAns(locId, i);
+                if(!a || !String(a).trim()){
+                hasUnanswered = true;
+                break;
+                }
+            }
+            }
+
              // ---- panel bodies ---------------------------------------------------
               // Info-panel: enkel info/uitleg (met eventueel gallery in uitlegHtml)
               var infoBody = ''
@@ -2612,7 +2625,20 @@ function charactersEnabled(){
             store.set(st);
           }
         }
-      
+      // focus bepalen; verhaal, vragen, huidig
+      var isNewUnlock = !!(st.lastUnlockedLocId && hasRealLoc && st.lastUnlockedLocId === locId);
+
+        if(isNewUnlock){
+        if(hasStory){
+            focus = 'story';
+            st.focus = 'story';
+            store.set(st);
+        }else if(hasUnanswered){
+            focus = 'vragen';
+            st.focus = 'vragen';
+            store.set(st);
+        }
+        }
         // ---- panels bouwen -------------------------------------------
         var storyBody = ''
           + pcCard
@@ -2625,13 +2651,7 @@ function charactersEnabled(){
           +     buildStoryTimelineHtml(pc, hasRealLoc)
           +   '</div>'
           + '</div>';
-      
-        // var qaBody = ''
-        //   + '<div id="statusWrapQa"></div>'
-        //   + (uitlegHtml || '<div class="muted">(Geen uitleg)</div>')
-        //   + '<div style="margin-top:10px">' + qaHtml + '</div>'
-        //   + downloadHtml;
-      
+       
         var mapBody =
             '<div id="statusWrapMap"></div>'
           + routeHintHtml
@@ -2652,8 +2672,7 @@ function charactersEnabled(){
         + panelHtml('info','Informatie', infoBody, focus==='info')
         + panelHtml('map','Kaart', mapBody, focus==='map')
         + '</div>';
-        
-      
+       
         // ---- Park oneMap vóór innerHTML -------------------------------
         var oneMap = document.getElementById('oneMap');
         var park = document.getElementById('mapPark');
