@@ -25,7 +25,15 @@
         if(!host) return;
       
         images = images || [];
-        if(!images.length){
+      
+        // werk met een kopie zodat we originele data niet vervuilen
+        var items = [];
+        for(var i=0;i<images.length;i++){
+          var it = images[i];
+          if(it && it.file) items.push({ file:String(it.file), credit: it.credit ? String(it.credit) : '' });
+        }
+      
+        if(!items.length){
           host.innerHTML = '';
           host.className = 'hidden';
           return;
@@ -40,22 +48,27 @@
           return 'images/' + String(file || '');
         }
       
-        function safeItem(i){
-          if(i < 0) i = images.length - 1;
-          if(i >= images.length) i = 0;
-          return i;
+        function clampIndex(){
+          if(!items.length) idx = 0;
+          else if(idx < 0) idx = items.length - 1;
+          else if(idx >= items.length) idx = 0;
+        }
+      
+        function hideAll(){
+          host.innerHTML = '';
+          host.className = 'hidden';
         }
       
         function draw(){
-          var it = images[idx];
-          if(!it || !it.file){
-            host.innerHTML = '';
-            host.className = 'hidden';
+          if(!items.length){
+            hideAll();
             return;
           }
+          clampIndex();
       
-          var credit = it.credit ? String(it.credit) : '';
-          var counter = (idx+1) + ' / ' + images.length;
+          var it = items[idx];
+          var credit = it.credit || '';
+          var counter = (idx+1) + ' / ' + items.length;
       
           host.innerHTML =
               '<div class="galStage" id="'+host.id+'_stage">'
@@ -68,15 +81,15 @@
             + '</div>'
             + (credit ? '<div class="galCredit">'+escapeHtml(credit)+'</div>' : '');
       
-          var img = document.getElementById(host.id + '_img');
+          var img  = document.getElementById(host.id + '_img');
           var prev = document.getElementById(host.id + '_prev');
           var next = document.getElementById(host.id + '_next');
-          var stage = document.getElementById(host.id + '_stage');
+          var stage= document.getElementById(host.id + '_stage');
       
-          if(prev) prev.onclick = function(){ idx = safeItem(idx - 1); draw(); };
-          if(next) next.onclick = function(){ idx = safeItem(idx + 1); draw(); };
+          if(prev) prev.onclick = function(){ idx--; clampIndex(); draw(); };
+          if(next) next.onclick = function(){ idx++; clampIndex(); draw(); };
       
-          // Swipe (touch)
+          // swipe
           if(stage){
             stage.ontouchstart = function(e){
               if(!e || !e.touches || !e.touches.length) return;
@@ -87,45 +100,37 @@
               var endX = (e && e.changedTouches && e.changedTouches.length) ? e.changedTouches[0].clientX : startX;
               var dx = endX - startX;
               startX = null;
-      
               if(Math.abs(dx) > 40){
-                if(dx < 0) idx = safeItem(idx + 1);
-                else idx = safeItem(idx - 1);
+                if(dx < 0) idx++;
+                else idx--;
+                clampIndex();
                 draw();
               }
             };
           }
       
-          // Als image faalt: probeer volgende (tot max N pogingen)
+          // ✅ als image faalt: verwijder uit lijst en probeer opnieuw
           if(img){
             img.onerror = function(){
-              // als er maar 1 is: verbergen
-              if(images.length <= 1){
-                host.innerHTML = '';
-                host.className = 'hidden';
+              // verwijder deze kapotte entry
+              items.splice(idx, 1);
+      
+              // als niks meer overblijft: panel weg
+              if(!items.length){
+                hideAll();
                 return;
               }
       
-              // probeer volgende (max 3 stappen om loops te vermijden)
-              var tries = 0;
-              while(tries < 3){
-                idx = safeItem(idx + 1);
-                var nxt = images[idx];
-                if(nxt && nxt.file){
-                  img.src = urlOf(nxt.file);
-                  return;
-                }
-                tries++;
-              }
-      
-              host.innerHTML = '';
-              host.className = 'hidden';
+              // idx blijft geldig (zelfde idx wijst nu naar "volgende")
+              clampIndex();
+              draw();
             };
           }
         }
       
         draw();
       }
+      
       
     //---------------
     function enableGps(){
