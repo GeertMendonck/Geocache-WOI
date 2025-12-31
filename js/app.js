@@ -2639,6 +2639,15 @@ function charactersEnabled(){
             store.set(st);
         }
         }
+        // symbool voor paneltitel als nieuw:
+        var hasInfo = !!(hasImages || (uitlegKort && uitlegKort.trim()) || (uitlegLang && uitlegLang.trim()));
+
+        var badge = ' <span class="tabNew" title="Nieuwe inhoud">✨</span>';
+
+        var storyTitle  = 'Verhaal'     + (isNewUnlock && hasStory      ? badge : '');
+        var vragenTitle = 'Vragen'      + (isNewUnlock && hasUnanswered ? badge : '');
+        var infoTitle   = 'Informatie'  + (isNewUnlock && hasInfo       ? badge : '');
+
         // ---- panels bouwen -------------------------------------------
         var storyBody = ''
           + pcCard
@@ -2667,10 +2676,10 @@ function charactersEnabled(){
       
           var html =
           '<div class="stack">'
-        + panelHtml('story','Verhaal', storyBody, focus==='story')
-        + panelHtml('vragen','Vragen', vragenBody, focus==='vragen')
-        + panelHtml('info','Informatie', infoBody, focus==='info')
-        + panelHtml('map','Kaart', mapBody, focus==='map')
+        + panelHtml('story',  storyTitle,  storyBody,  focus==='story')
+        + panelHtml('vragen', vragenTitle, vragenBody, focus==='vragen')
+        + panelHtml('info',   infoTitle,   infoBody,   focus==='info')
+        + panelHtml('map',    'Kaart',      mapBody,    focus==='map')
         + '</div>';
        
         // ---- Park oneMap vóór innerHTML -------------------------------
