@@ -157,6 +157,12 @@
       
         st.geoOn = true;
         st.startedAt = Date.now();
+          // ✅ force "nieuw" voor de eerste panel-render
+                var startLoc = getStartLocation();
+                if(startLoc && startLoc.id){
+                    st.currentLocId = startLoc.id;          // als je dat gebruikt
+                    st.lastUnlockedLocId = startLoc.id;     // 🔥 dit triggert badges 1x
+                }
         store.set(st);
       
         scheduleStopsRender('beginRoute');
@@ -2044,17 +2050,7 @@ function charactersEnabled(){
   
       window.LMAP = L.map(el, { zoomControl:true }).setView([first.lat, first.lng], 13);
 
-    //   window.LMAP = L.map(el, {
-    //     zoomControl: true,
-    //     rotate: true,
-    //     touchRotate: true,
-    //     bearing: 0
-    //   }).setView([first.lat, first.lng], 13);
-    //   setTimeout(function(){
-    //     try { window.LMAP.invalidateSize(true); } catch(e){}
-    //   }, 120);
-  
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom:19,
         attribution:'&copy; OpenStreetMap'
       }).addTo(window.LMAP);
