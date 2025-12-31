@@ -2426,265 +2426,7 @@ function charactersEnabled(){
     }
   
     // ---------- renderUnlocked ----------
-    //oude versie
-    // function renderUnlocked(){
-    //     var old = document.getElementById('mapSection');
-    //     if(old) old.style.display = 'none';
-
-    //     applyRouteModeUI();
-    //     var downloadHtml = '';
-    //     var st = store.get();
-    //     var pc = currentPc();
-    //     var cont = qs('unlockList'); if(!cont) return;
-      
-    //     var arr = DATA.locaties || DATA.stops || [];
-      
-    //     function findLocById(id){
-    //       for(var i=0;i<arr.length;i++){
-    //         if(arr[i] && arr[i].id === id) return arr[i];
-    //       }
-    //       return null;
-    //     }
-      
-    //     var currentLoc = st.currentLocId ? findLocById(st.currentLocId) : null;
-    //     if(!currentLoc){
-    //         var ul = st.unlockedLocs || [];
-    //         if(ul.length){
-    //           currentLoc = findLocById(ul[ul.length-1]);
-    //         } else if((st.unlockedSlots||[]).length){
-    //           var lastSlot = (st.unlockedSlots[st.unlockedSlots.length-1]||'').toString().trim().toLowerCase();
-    //           for(var i=0;i<arr.length;i++){
-    //             var L = arr[i];
-    //             if(L && (L.slot||'').toString().trim().toLowerCase() === lastSlot){
-    //               currentLoc = L;
-    //               break;
-    //             }
-    //           }
-    //         }
-    //       }
-          
-    //     var hasRealLoc = !!currentLoc;
-    //     var loc = currentLoc || {};     // ← voorkomt crashes
-    //     var locId = hasRealLoc ? loc.id  : '';
-    //     var slotId= hasRealLoc ? loc.slot: '';
-        
-
-    //     var hasLoc = !!currentLoc;
-
-    //     if(!hasLoc){
-    //     // geen return meer: we bouwen toch de panel-layout
-    //     // placeholder values zodat de rest niet "undefined" wordt
-    //     currentLoc = { id:'', slot:'', naam:'Nog geen stop', vragen:[], uitleg:null };
-    //     }
-
-      
-    //     var loc = currentLoc;
-    //     var locId = loc.id;
-    //     var slotId = loc.slot;
-
-    //     // ✅ routehint voor de net-vrijgekomen locatie (currentLoc)
-    //         var huidigeRouteHint = '';
-    //         if(hasRealLoc && loc && loc.routeHint){
-    //         huidigeRouteHint = String(loc.routeHint);
-    //         }
-    //         var routeHintHtml = huidigeRouteHint
-    //         ? ('<div id="routeHintBox" class="routeHintBox">🧭 ' + escapeHtml(huidigeRouteHint) + '</div>')
-    //         : '<div id="routeHintBox" class="routeHintBox hidden"></div>';
-      
-    //     // ✅ bepaal END + downloadHtml VOOR je qaBody bouwt
-    //     var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
-    //     var isEnd = (loc && loc.slot === endSlot);
-        
-    //     downloadHtml =
-    //       '<div class="card mt-10">'
-    //     + '  <div class="cardHead">📄 Verslag</div>'
-    //     + '  <div class="cardBody">'
-    //     + (isEnd
-    //         ? '<div class="muted" style="margin-bottom:10px">Je bent aan het eindpunt. Download nu je verslag.</div>'
-    //         : '<div class="muted" style="margin-bottom:10px">Je kan tussendoor al downloaden. (Handig voor tips onderweg.)</div>'
-    //       )
-    //     + '    <button id="exportBtn" type="button" class="primary">⬇️ Download verslag</button>'
-    //     + '  </div>'
-    //     + '</div>';
-
-    //     var hasRealLoc = hasLoc && locId && slotId;
-    //     var verhaal = hasRealLoc ? getStoryFor(pc, slotId, locId) : null;
-    //     var verhaalText = (verhaal == null) ? '' : String(verhaal);
-
-        
-
-    //     if(!hasRealLoc){
-    //       verhaal = null;            // geen readBtn tonen
-    //       uitlegHtml = '';           // of laat je uitlegHtml zoals je wil
-    //       qaHtml = '<div class="muted">Nog geen vragen: wandel eerst een cirkel binnen 🙂</div>';
-    //     }
-        
-    //     var uitleg = loc.uitleg || null;
-    //     var uitlegKort = '', uitlegLang = '';
-    //     if(uitleg){
-    //       if(typeof uitleg === 'string') uitlegKort = uitleg;
-    //       else { uitlegKort = uitleg.kort || ''; uitlegLang = uitleg.uitgebreid || ''; }
-    //     }
-      
-    //     var uitlegHtml = '';
-    //     if(uitlegKort || uitlegLang){
-    //       var moreId = 'more_' + locId;
-    //       uitlegHtml =
-    //         '<div class="uitlegBox">'
-    //       + '  <div class="uitlegTitle">'
-    //       + '    <span class="uitlegTitleText">ℹ️ Uitleg</span>'
-    //       + (uitlegLang ? ' <button class="uitlegToggleIcon" type="button" data-toggle="'+moreId+'">+</button>' : '')
-    //       + '  </div>'
-    //       + (uitlegKort ? ('<div class="uitlegKort">'+escapeHtml(uitlegKort)+'</div>') : '')
-    //       + (uitlegLang ? ('<div id="'+moreId+'" class="uitlegLang hidden">'+escapeHtml(uitlegLang)+'</div>') : '')
-    //       + '</div>';
-    //     }
-      
-    //     var qsArr   = hasRealLoc ? (loc.vragen || []) : [];
-    //     var qaHtml = '';
-    //     if(qsArr.length){
-    //       qaHtml = qsArr.map(function(q,qi){
-    //         var val = getAns(locId, qi);
-    //         return ''
-    //           + '<div class="qa">'
-    //           + '  <div class="q"><b>Vraag '+(qi+1)+':</b> '+escapeHtml(q)+'</div>'
-    //           + '  <div class="controls">'
-    //           + '    <textarea class="ans" data-stop="'+locId+'" data-q="'+qi+'" placeholder="Jouw antwoord...">'+escapeHtml(val)+'</textarea>'
-    //           + '    <div class="btnRow">'
-    //           + (MIC_OK ? '      <button class="micBtn" data-stop="'+locId+'" data-q="'+qi+'">🎙️</button>' : '')
-    //           + '      <button class="clearAns" data-stop="'+locId+'" data-q="'+qi+'">✖</button>'
-    //           + '      <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+qi+'"></span>'
-    //           + '    </div>'
-    //           + '  </div>'
-    //           + '</div>';
-    //       }).join('');
-    //     } else {
-    //       qaHtml = '<div class="muted">Geen vragen bij deze stop.</div>';
-    //     }
-      
-    //     var pcCard =
-    //       '<div class="pcMini">'
-    //     + ' <img class="pcMiniImg" src="'+escapeHtml(qs("pcImg") ? qs("pcImg").src : "")+'" alt=""/>'
-    //     + ' <div class="pcMiniMeta">'
-    //     + '   <div class="pcMiniName">'+escapeHtml(pc && pc.naam ? pc.naam : '—')+'</div>'
-    //     + '   <div class="pcMiniSub muted">'+escapeHtml(pc && pc.herkomst ? pc.herkomst : '—')+' — '+escapeHtml(pc && pc.rol ? pc.rol : '—')+'</div>'
-    //     + (pc && pc.bio ? ('<div class="pcMiniBio">'+escapeHtml(pc.bio)+'</div>') : '')
-    //     + ' </div>'
-    //     + '</div>';
-      
-    //     var focus = (st.focus || 'story');
-    //     if(!st.focus){
-    //       var routeMode = (st.geoOn === true) || (st.lockedPc === true) ||
-    //                       ((st.unlockedSlots||[]).length > 0) || (st.currentLocId);
-    //       if(routeMode){
-    //         focus = 'map';
-    //         st.focus = 'map';
-    //         store.set(st);
-    //       }
-    //     }
-      
-    //     var storyBody = ''
-    //     + pcCard
-    //     + '<div style="margin-top:10px">'
-    //     +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
-    //     +     '<div style="font-weight:800">📘 Verhaal</div>'
-    //     //+     (hasRealLoc ? '<button class="readBtn" data-slot="'+slotId+'" data-loc="'+locId+'" title="Lees voor">🔊</button>' : '')
-    //     +   '</div>'
-    //     +   '<div style="margin-top:6px">'
-    //     +     buildStoryTimelineHtml(pc, hasRealLoc)
-    //     +   '</div>'
-    //     + '</div>';
-        
-      
-    //         // --- Exportblok (altijd klaarzetten) ---
-    //         var endSlot = DATA.endSlot || (DATA.meta && DATA.meta.endSlot) || 'end';
-    //         var isEnd = (loc && loc.slot === endSlot);
-           
-    //         downloadHtml =
-    //         '<div class="card mt-10">'
-    //         + '  <div class="cardHead">📄 Verslag</div>'
-    //         + '  <div class="cardBody">'
-    //         + (isEnd
-    //             ? '    <div class="muted small" style="margin-bottom:8px">Je bent aan het eindpunt — je kan nu je definitieve verslag downloaden.</div>'
-    //             : '    <div class="muted small" style="margin-bottom:8px">Je kan onderweg al exporteren (handig voor tips). Definitieve export op het eindpunt.</div>')
-    //         + '    <button id="exportBtn" type="button" class="primary">⬇️ Download verslag</button>'
-    //         + '  </div>'
-    //         + '</div>';
-
-      
-    //     var qaBody = ''
-    //       + '<div id="statusWrapQa"></div>'
-    //       + (uitlegHtml || '<div class="muted">(Geen uitleg)</div>')
-    //       + '<div style="margin-top:10px">' + qaHtml + '</div>'
-    //       + downloadHtml;
-      
-    //       var mapBody =
-    //       '<div id="statusWrapMap"></div>'
-    //       + routeHintHtml
-    //     + '<div id="mapPanelWrap" style="height:68vh; min-height:320px; border-radius:12px; overflow:hidden;"></div>'
-    //     + '<div id="mapControlsWrap" class="row small mt-8">'
-    //     + '  <button id="recenterBtn" type="button" class="primary">🎯 Centreer</button>'
-    //     + '  <a id="openInMaps" class="btn" target="_blank" rel="noopener">🗺️ Open in Maps</a>'
-    //     + '</div>'
-    //     + '<div class="mt-10">'
-    //     + '  <div class="muted small" style="margin-bottom:6px">Stops</div>'
-    //     + '  <div id="stopsListHost" class="stopsPills"></div>'
-    //     + '</div>';
-        
-      
-    //     var html =
-    //       '<div class="stack">'
-    //       + panelHtml('story','Personage + Verhaal', storyBody, focus==='story')
-    //       + panelHtml('qa','Uitleg en vragen', qaBody, focus==='qa')
-    //       + panelHtml('map','Kaart', mapBody, focus==='map')
-    //       + '</div>';
-      
-    //     // Park oneMap vóór innerHTML
-    //     var oneMap = document.getElementById('oneMap');
-    //     var park = document.getElementById('mapPark');
-    //     if(!park){
-    //       park = document.createElement('div');
-    //       park.id = 'mapPark';
-    //       park.style.display = 'none';
-    //       document.body.appendChild(park);
-    //     }
-    //     if(oneMap && oneMap.parentElement !== park) park.appendChild(oneMap);
-      
-    //     cont.innerHTML = html;
-    //     autoFocusNewStory();
-    //     // stops render plannen (host bestaat nu)
-    //     scheduleStopsRender('after renderUnlocked move');
-      
-    //     // oneMap terug naar wrap
-    //     var wrap = document.getElementById('mapPanelWrap');
-    //     oneMap = document.getElementById('oneMap');
-    //     if(wrap && oneMap && oneMap.parentElement !== wrap) wrap.appendChild(oneMap);
-    //     if(oneMap){
-    //       oneMap.style.height = '100%';
-    //       oneMap.style.minHeight = '260px';
-    //     }
-      
-    //     // controls verhuizen
-    //     var ctrl = document.getElementById('mapControlsWrap');
-    //     if(ctrl){
-    //       var btn = document.getElementById('recenterBtn');
-    //       var link = document.getElementById('openInMaps');
-    //       if(btn) ctrl.appendChild(btn);
-    //       if(link) ctrl.appendChild(link);
-    //     }
-      
-    //     // Leaflet init + invalidate als map focus
-    //     if(focus === 'map'){
-    //       ensureLeafletMap();
-    //       setTimeout(function(){
-    //         if(window.LMAP) window.LMAP.invalidateSize(true);
-    //         scheduleStopsRender('panel map opened');
-    //       }, 200);
-    //     }
-      
-    //     renderProgress();
-    //     try { applyPcUiState(); } catch(e) {}
-    //   }
+ 
     function renderUnlocked(){
         var old = document.getElementById('mapSection');
         if(old) old.style.display = 'none';
@@ -2788,18 +2530,23 @@ function charactersEnabled(){
         }
       
         var uitlegHtml = '';
-        if(uitlegKort || uitlegLang){
+        var hasImages = !!(loc && loc.images && loc.images.length);
+        
+        if(uitlegKort || uitlegLang || hasImages){
           var moreId = 'more_' + locId;
+        
           uitlegHtml =
               '<div class="uitlegBox">'
             + '  <div class="uitlegTitle">'
-            + '    <span class="uitlegTitleText">ℹ️ Uitleg</span>'
+            + '    <span class="uitlegTitleText">ℹ️ Informatie</span>'
             + (uitlegLang ? ' <button class="uitlegToggleIcon" type="button" data-toggle="'+moreId+'">+</button>' : '')
             + '  </div>'
+            + (hasImages ? '<div id="gal_uitleg" class="hidden"></div>' : '')
             + (uitlegKort ? ('<div class="uitlegKort">'+escapeHtml(uitlegKort)+'</div>') : '')
             + (uitlegLang ? ('<div id="'+moreId+'" class="uitlegLang hidden">'+escapeHtml(uitlegLang)+'</div>') : '')
             + '</div>';
         }
+        
       
         // ---- vragen ---------------------------------------------------
         var qsArr = hasRealLoc ? (loc.vragen || []) : [];
