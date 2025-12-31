@@ -26,12 +26,11 @@
       "label": "Route naar startpunt"
     },
     "images": [ {
-      "file": "Binen.jpg"
-     
-    },
+      "file": "Binnen.jpg"
+     },
       {
         
-        "file": "voor.png",
+        "file": "Voor.png",
         "credit": "© Google Maps"
       }
     ]
