@@ -2551,20 +2551,7 @@ function charactersEnabled(){
         // ---- vragen ---------------------------------------------------
         var qsArr = hasRealLoc ? (loc.vragen || []) : [];
         var qaHtml = '';
-        // ---- panel bodies ---------------------------------------------------
-
-        // Info-panel: enkel info/uitleg (met eventueel gallery in uitlegHtml)
-        var infoBody = ''
-        + '<div id="statusWrapInfo"></div>'
-        + (uitlegHtml || '<div class="muted">(Geen extra informatie)</div>');
-
-        // Vragen-panel: enkel vragen + exportblok
-        var vragenBody = ''
-        + '<div id="statusWrapVragen"></div>'
-        + '<div style="margin-top:10px">' + qaHtml + '</div>'
-        + downloadHtml;
-
-      
+ 
         if(!hasRealLoc){
           qaHtml = '<div class="muted">Nog geen vragen: wandel eerst een cirkel binnen 🙂</div>';
           // (uitlegHtml mag je hier leeg maken als je wilt; ik laat hem gewoon staan als er per ongeluk toch iets is)
@@ -2588,7 +2575,18 @@ function charactersEnabled(){
         }else{
           qaHtml = '<div class="muted">Geen vragen bij deze stop.</div>';
         }
+             // ---- panel bodies ---------------------------------------------------
+              // Info-panel: enkel info/uitleg (met eventueel gallery in uitlegHtml)
+              var infoBody = ''
+              + '<div id="statusWrapInfo"></div>'
+              + (uitlegHtml || '<div class="muted">(Geen extra informatie)</div>');
       
+              // Vragen-panel: enkel vragen + exportblok
+              var vragenBody = ''
+              + '<div id="statusWrapVragen"></div>'
+              + '<div style="margin-top:10px">' + qaHtml + '</div>'
+              + downloadHtml;
+       
         // ---- pc card --------------------------------------------------
         var pcImgEl = qs("pcImg");
         var pcImgSrc = pcImgEl ? pcImgEl.src : "";
