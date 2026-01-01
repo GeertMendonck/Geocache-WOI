@@ -164,7 +164,7 @@
                     st.lastUnlockedLocId = startLoc.id;     // 🔥 dit triggert badges 1x
                 }
         store.set(st);
-        renderUnlocked();                 // ✅ nodig voor badges
+        //renderUnlocked();                 // ✅ nodig voor badges
         scheduleStopsRender('beginRoute');
         applyPcUiState();
       }
@@ -1107,8 +1107,8 @@
 
             // als er geen story is, niets doen (en flag opruimen)
             if(!el){
-                st.lastUnlockedLocId = null;
-                store.set(st);
+               // st.lastUnlockedLocId = null;
+               // store.set(st);
                 return;
             }
       
