@@ -3160,9 +3160,7 @@ function charactersEnabled(){
           });
         });
       }
-      
-      
-
+  
     // Globale errors
     window.addEventListener('error', function(e){ showDiag('JS error: '+e.message); });
     window.addEventListener('unhandledrejection', function(e){
