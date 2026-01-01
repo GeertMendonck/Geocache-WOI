@@ -20,7 +20,14 @@
     "message": "Nog niet aan het startpunt. Ga naar de Menenpoort om te beginnen.",
     "maps": {
       "label": "Route naar startpunt"
-    }
+    },
+    "images": [ 
+      {
+        
+        "file": "menenpoort.jpg",
+        "credit": "© Wikipedia"
+      }
+    ]
   },
 
   "slots": [

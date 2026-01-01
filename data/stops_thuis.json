@@ -25,9 +25,7 @@
     "maps": {
       "label": "Route naar startpunt"
     },
-    "images": [ {
-      "file": "Binnen.jpg"
-     },
+    "images": [ 
       {
         
         "file": "Voor.png",

@@ -164,7 +164,7 @@
                     st.lastUnlockedLocId = startLoc.id;     // 🔥 dit triggert badges 1x
                 }
         store.set(st);
-      
+        renderUnlocked();                 // ✅ nodig voor badges
         scheduleStopsRender('beginRoute');
         applyPcUiState();
       }
