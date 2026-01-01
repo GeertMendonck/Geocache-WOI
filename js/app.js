@@ -19,7 +19,7 @@
    
   
     // ---------- Mini helpers ----------
-    // Afbeelding
+    // Afbeeldingen
     function renderGallery(hostId, images){
         var host = (typeof hostId === 'string') ? document.getElementById(hostId) : hostId;
         if(!host) return;
@@ -68,17 +68,20 @@
       
           var it = items[idx];
           var credit = it.credit || '';
+          var many = items.length > 1;
           var counter = (idx+1) + ' / ' + items.length;
       
           host.innerHTML =
               '<div class="galStage" id="'+host.id+'_stage">'
             + '  <img class="galImg" id="'+host.id+'_img" draggable="false" src="'+escapeHtml(urlOf(it.file))+'" alt="" />'
             + '</div>'
-            + '<div class="galNav">'
-            + '  <button type="button" class="galBtn btn" id="'+host.id+'_prev">◀</button>'
-            + '  <div class="galCount muted small">'+escapeHtml(counter)+'</div>'
-            + '  <button type="button" class="galBtn btn" id="'+host.id+'_next">▶</button>'
-            + '</div>'
+            + (many
+                ? '<div class="galNav">'
+                  + '  <button type="button" class="galBtn btn" id="'+host.id+'_prev">◀</button>'
+                  + '  <div class="galCount muted small">'+escapeHtml(counter)+'</div>'
+                  + '  <button type="button" class="galBtn btn" id="'+host.id+'_next">▶</button>'
+                  + '</div>'
+                : '')
             + (credit ? '<div class="galCredit">'+escapeHtml(credit)+'</div>' : '');
       
           var img  = document.getElementById(host.id + '_img');
@@ -89,8 +92,8 @@
           if(prev) prev.onclick = function(){ idx--; clampIndex(); draw(); };
           if(next) next.onclick = function(){ idx++; clampIndex(); draw(); };
       
-          // swipe
-          if(stage){
+          // swipe alleen zinvol als er meer dan 1 is
+          if(stage && many){
             stage.ontouchstart = function(e){
               if(!e || !e.touches || !e.touches.length) return;
               startX = e.touches[0].clientX;
@@ -107,21 +110,22 @@
                 draw();
               }
             };
+          } else if(stage) {
+            // opruimen (voor het geval je van 2->1 gaat door onerror)
+            stage.ontouchstart = null;
+            stage.ontouchend = null;
           }
       
           // ✅ als image faalt: verwijder uit lijst en probeer opnieuw
           if(img){
             img.onerror = function(){
-              // verwijder deze kapotte entry
               items.splice(idx, 1);
       
-              // als niks meer overblijft: panel weg
               if(!items.length){
                 hideAll();
                 return;
               }
       
-              // idx blijft geldig (zelfde idx wijst nu naar "volgende")
               clampIndex();
               draw();
             };
@@ -130,6 +134,7 @@
       
         draw();
       }
+      
       
       
     //---------------
@@ -1107,8 +1112,8 @@
 
             // als er geen story is, niets doen (en flag opruimen)
             if(!el){
-               // st.lastUnlockedLocId = null;
-               // store.set(st);
+                st.lastUnlockedLocId = null;
+                store.set(st);
                 return;
             }
       
