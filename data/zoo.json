@@ -1,0 +1,439 @@
+{
+  "meta": {
+    "title": "Wandeling door Zoo",
+    "subtitle": "standaardtour",
+    "version": "1.0",
+    "assetsBase": "https://geertmendonck.github.io/Geo-afbeeldingen/zoo/"
+  },
+  "settings": {
+    "visibilityMode": "nextOnly",
+    "multiLocationSlotMode": "any",
+    "showOptionalSlots": true,
+    "listShowFutureSlots": true,
+    "mapShowFutureLocations": false
+  },
+  "prestart": {
+    "useLocationId": "startloc",
+    "meetingPoint": {
+      "lat": 51.2174991357974,
+      "lng": 4.42177176475525,
+      "label": "Poort op Astridplein"
+    },
+    "message": "Nog niet aan het startpunt. Ga naar de startlocatie om te beginnen.",
+    "maps": {
+      "label": "Route naar startpunt"
+    },
+    "images": [
+      {
+        "file": "Ingang_Zoo_Antwerpen.jpg",
+        "credit": ""
+      }
+    ]
+  },
+  "slots": [
+    {
+      "id": "start",
+      "label": "Start",
+      "required": true
+    },
+    {
+      "id": "stop01",
+      "label": "stop01",
+      "required": true,
+      "unlockAfterSlot": "start"
+    },
+    {
+      "id": "stop02",
+      "label": "stop02",
+      "required": true,
+      "unlockAfterSlot": "stop01",
+      "completeMode": "any"
+    },
+    {
+      "id": "stop03",
+      "label": "stop03",
+      "required": true,
+      "unlockAfterSlot": "stop02"
+    },
+    {
+      "id": "stop04",
+      "label": "stop04",
+      "required": true,
+      "unlockAfterSlot": "stop03"
+    },
+    {
+      "id": "stop05",
+      "label": "stop05",
+      "required": false,
+      "unlockAfterSlot": "stop04"
+    },
+    {
+      "id": "stop06",
+      "label": "stop06",
+      "required": false,
+      "unlockAfterSlot": "stop05"
+    },
+    {
+      "id": "stop07",
+      "label": "stop07",
+      "required": true,
+      "unlockAfterSlot": "stop04"
+    },
+    {
+      "id": "stop08",
+      "label": "stop08",
+      "required": false,
+      "unlockAfterSlot": "stop07"
+    },
+    {
+      "id": "stop09",
+      "label": "stop09",
+      "required": true,
+      "unlockAfterSlot": "stop07"
+    },
+    {
+      "id": "stop10",
+      "label": "stop10",
+      "required": false,
+      "unlockAfterSlot": "stop09"
+    },
+    {
+      "id": "stop11",
+      "label": "stop11",
+      "required": true,
+      "unlockAfterSlot": "stop09"
+    },
+    {
+      "id": "stop12",
+      "label": "stop12",
+      "required": true,
+      "unlockAfterSlot": "stop11"
+    },
+    {
+      "id": "end",
+      "label": "Einde",
+      "required": true,
+      "unlockAfterSlot": "stop12"
+    }
+  ],
+  "locaties": [
+    {
+      "id": "startloc",
+      "slot": "start",
+      "naam": "Start: Poort op Astridplein",
+      "lat": 51.2174991357974,
+      "lng": 4.42177176475525,
+      "radius": 30,
+      "images": [
+        {
+          "file": "Ingang_Zoo_Antwerpen.jpg",
+          "credit": ""
+        }
+      ],
+      "routeHint": "We starten aan de ingang van de Zoo op het Astridplein",
+      "uitleg": {
+        "kort": "ZOO Antwerpen is een dierentuin die behoort tot de KMDA.",
+        "uitgebreid": "De dierentuin werd geopend op 21 juli 1843 en is daarmee de oudste dierentuin van België en een van de oudste dierentuinen ter wereld."
+      },
+      "vragen": [
+        "Hoe heten de twee dieren die op de poort afgebeeld worden?"
+      ]
+    },
+    {
+      "id": "ingang",
+      "slot": "stop01",
+      "naam": "Ingang Zoo",
+      "lat": 51.21770410069504,
+      "lng": 4.423134326934815,
+      "radius": 30,
+      "images": [
+        {
+          "file": "inkom-zoo.jpg",
+          "credit": ""
+        }
+      ],
+      "routeHint": "",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "vogels",
+      "slot": "stop02",
+      "naam": "Vogels",
+      "lat": 51.21740505324372,
+      "lng": 4.424416422843934,
+      "radius": 30,
+      "images": [
+        {
+          "file": "Voliere.jpg",
+          "credit": ""
+        }
+      ],
+      "routeHint": "",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "okapi",
+      "slot": "stop02",
+      "naam": "Okapi's",
+      "lat": 51.21724040831218,
+      "lng": 4.423783421516419,
+      "radius": 30,
+      "images": [
+        {
+          "file": "okapi.jpg",
+          "credit": ""
+        }
+      ],
+      "routeHint": "",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "pinguins",
+      "slot": "stop03",
+      "naam": "Pinguins",
+      "lat": 51.216769990977575,
+      "lng": 4.423638582229615,
+      "radius": 30,
+      "images": [
+        {
+          "file": "zwartvoetpinguins.jpg",
+          "credit": ""
+        }
+      ],
+      "routeHint": "",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "gorilla",
+      "slot": "stop04",
+      "naam": "Gorilla's",
+      "lat": 51.21648101794596,
+      "lng": 4.424040913581849,
+      "radius": 30,
+      "images": [
+        {
+          "file": "gorilla1.jpg",
+          "credit": ""
+        },
+        {
+          "file": "Gorilla2.jpg",
+          "credit": ""
+        }
+      ],
+      "routeHint": "",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "cave",
+      "slot": "stop05",
+      "naam": "Kitum Cave",
+      "lat": 51.216689347523285,
+      "lng": 4.4248026609420785,
+      "radius": 30,
+      "images": [
+        {
+          "file": "cave.jpg",
+          "credit": ""
+        }
+      ],
+      "routeHint": "",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "giraf",
+      "slot": "stop06",
+      "naam": "Giraffen",
+      "lat": 51.21552336179469,
+      "lng": 4.425129890441895,
+      "radius": 30,
+      "images": [
+        {
+          "file": "giraf.jpg",
+          "credit": ""
+        },
+        {
+          "file": "giraf2.jpg",
+          "credit": ""
+        }
+      ],
+      "routeHint": "",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "tempel",
+      "slot": "stop07",
+      "naam": "Egyptische tempel",
+      "lat": 51.21586946438658,
+      "lng": 4.424539804458619,
+      "radius": 30,
+      "images": [
+        {
+          "file": "Antwerpen_-_Zoo_-_Egyptische_tempel.jpg",
+          "credit": ""
+        }
+      ],
+      "routeHint": "",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "dwergnijlpaard",
+      "slot": "stop08",
+      "naam": "Dwergnijlpaarden",
+      "lat": 51.21576193764633,
+      "lng": 4.423107504844666,
+      "radius": 30,
+      "images": [
+        {
+          "file": "dwergnijlpaard.webp",
+          "credit": ""
+        },
+        {
+          "file": "dwergnijlpaardverblijf.jpg",
+          "credit": ""
+        }
+      ],
+      "routeHint": "",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "neushoorn",
+      "slot": "stop09",
+      "naam": "Witte neushoorn",
+      "lat": 51.21498908181176,
+      "lng": 4.423906803131104,
+      "radius": 35,
+      "images": [
+        {
+          "file": "neushoorn.jpg",
+          "credit": ""
+        }
+      ],
+      "routeHint": "",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "berggeit",
+      "slot": "stop10",
+      "naam": "Berggeiten",
+      "lat": 51.21455560481717,
+      "lng": 4.421836137771607,
+      "radius": 30,
+      "images": [
+        {
+          "file": "berggeit.jpg",
+          "credit": ""
+        }
+      ],
+      "routeHint": "",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "leeuw",
+      "slot": "stop11",
+      "naam": "Leeuwen",
+      "lat": 51.215136933496666,
+      "lng": 4.422179460525514,
+      "radius": 40,
+      "images": [
+        {
+          "file": "leeuw.webp",
+          "credit": ""
+        },
+        {
+          "file": "leeuw2.jpg",
+          "credit": ""
+        }
+      ],
+      "routeHint": "",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "flamingo",
+      "slot": "stop12",
+      "naam": "Grand café Flamingo",
+      "lat": 51.21697831924732,
+      "lng": 4.422495961189271,
+      "radius": 30,
+      "images": [
+        {
+          "file": "flamingo.jpg",
+          "credit": ""
+        }
+      ],
+      "routeHint": "",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "winkel",
+      "slot": "end",
+      "naam": "Winkel",
+      "lat": 51.21737145228511,
+      "lng": 4.422254562377931,
+      "radius": 25,
+      "images": [
+        {
+          "file": "winkel.jpg",
+          "credit": ""
+        }
+      ],
+      "routeHint": "",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    }
+  ]
+}
