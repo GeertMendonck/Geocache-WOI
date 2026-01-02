@@ -19,6 +19,33 @@
    
   
     // ---------- Mini helpers ----------
+    //nieuw systeem voor afbeelingen in andere repos
+    function joinUrl(base, path){
+  var b = String(base || '').replace(/\/+$/, '') + '/';
+  var p = String(path || '').replace(/^\/+/, '');
+  return b + p;
+}
+function isAbsoluteUrl(s){
+  return /^https?:\/\//i.test(String(s || ''));
+}
+function getAssetsBase(data){
+  var base = data && data.meta && data.meta.assetsBase;
+  if(!base) throw new Error('meta.assetsBase ontbreekt in je route-JSON.');
+  return base;
+}
+
+function resolveImageFile(file, data){
+  if(!file) return '';
+  if(isAbsoluteUrl(file)) return file; // laat externe URLs toe (handig)
+  return joinUrl(getAssetsBase(data), 'images/' + String(file).replace(/^\/+/, ''));
+}
+
+function resolveCharacterFile(file, data){
+  if(!file) return '';
+  if(isAbsoluteUrl(file)) return file;
+  return joinUrl(getAssetsBase(data), 'personages/' + String(file).replace(/^\/+/, ''));
+}
+
     // Afbeeldingen
     function renderGallery(hostId, images){
         var host = (typeof hostId === 'string') ? document.getElementById(hostId) : hostId;
@@ -44,9 +71,13 @@
         var idx = 0;
         var startX = null;
       
-        function urlOf(file){
-          return 'data/images/' + String(file || '');
-        }
+        // function urlOf(file){
+        //   return 'data/images/' + String(file || '');
+        // }
+     function urlOf(file){
+       return resolveImageFile(file, DATA);
+      }
+
       
         function clampIndex(){
           if(!items.length) idx = 0;
@@ -1833,9 +1864,15 @@ function charactersEnabled(){
       if(img){
         img.style.display = 'block';
         img.alt = 'Portret van ' + (pc.naam || 'personage');
-        img.src = './data/personages/' + pc.id + '.png';
-        img.onerror = function(){ img.onerror=null; img.style.display='none'; };
+
+        img.src = resolveCharacterFile(pc.id + '.png', DATA);
+
+        img.onerror = function(){
+          img.onerror = null;
+          img.style.display = 'none';
+        };
       }
+
   
       renderCharacterChooser();
     }
@@ -2603,7 +2640,10 @@ function charactersEnabled(){
        
         // ---- pc card --------------------------------------------------
         var pcImgEl = qs("pcImg");
-        var pcImgSrc = pcImgEl ? pcImgEl.src : "";
+       // var pcImgSrc = pcImgEl ? pcImgEl.src : "";
+       var pcImgSrc = pc
+        ? resolveCharacterFile(pc.id + '.png', DATA)
+        : '';
       
         var pcCard =
             '<div class="pcMini">'
