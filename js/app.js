@@ -3070,14 +3070,18 @@ function charactersEnabled(){
         function getCharacterConfig(meta){
           var m = meta || {};
           var ch = m.characters;
-      
-          // backward compat: niets vermeld => probeer personages.json naast scenario
+
+          // Nieuw beleid: niet vermeld => geen personages
           if(!ch){
-            return { enabled:true, source:'personages.json', implicit:true };
+            return { enabled:false, implicit:true }; // implicit: niet geconfigureerd
           }
-          if(ch.enabled === false){
-            return { enabled:false };
+
+          // Expliciet aanzetten vereist
+          if(ch.enabled !== true){
+            return { enabled:false, implicit:false }; // wél characters-object, maar niet enabled:true
           }
+
+          // Enabled:true => volledig config toepassen
           return {
             enabled: true,
             source: ch.source || 'personages.json',
@@ -3085,6 +3089,7 @@ function charactersEnabled(){
             lockAtStartExit: (ch.lockAtStartExit !== false)
           };
         }
+
       
         var scenarioUrl = stopsFileFromQuery();
       
