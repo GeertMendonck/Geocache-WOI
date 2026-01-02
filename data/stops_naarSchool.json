@@ -5,7 +5,8 @@
     "version": "1.0",
     "characters": {
       "enabled": true,
-      "source": "personages.json"}
+      "source": "personages.json"},
+    "assetsBase": "https://geertmendonck.github.io/Geo-afbeeldingen/naarSchool/"
   },
 
   "settings": {
