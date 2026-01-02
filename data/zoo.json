@@ -3,6 +3,9 @@
     "title": "Wandeling door Zoo",
     "subtitle": "standaardtour",
     "version": "1.0",
+        "characters": {
+      "enabled": false
+     },
     "assetsBase": "https://geertmendonck.github.io/Geo-afbeeldingen/zoo/"
   },
   "settings": {
