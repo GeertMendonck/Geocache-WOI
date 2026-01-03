@@ -7,7 +7,7 @@
       "enabled": true,
       "source": "personages.json"
     },
-    "assetsBase": "https://geertmendonck.github.io/Geo-afbeeldingen/wo1/"
+    "assetsBase": "https://geertmendonck.github.io/Geo-afbeeldingen/thuis/"
   },
 
   "settings": {
