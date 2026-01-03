@@ -2715,7 +2715,8 @@ function charactersEnabled(){
         var inRangeThisLoc = !!hasRealLoc;
 
         // “routeEnded”: pak je eigen signaal (hier uit store)
-        var routeEnded = !!prog.ended;
+       var routeEnded = !!st.routeEnded;
+
 
         if(!hasRealLoc){
           qaHtml = '<div class="muted">Nog geen vragen: wandel eerst een cirkel binnen 🙂</div>';
