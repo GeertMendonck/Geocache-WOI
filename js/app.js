@@ -3043,169 +3043,489 @@ function charactersEnabled(){
       
         setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
       }
- 
-      function loadScenario(){
-        function safeFetchJSON(url, fallback){
-          if(!url) return Promise.resolve(fallback);
-          return fetchJSON(url).catch(function(err){
-            console.warn('safeFetchJSON fallback for', url, err);
-            return fallback;
-          });
-        }
-      
-        function resolveRelative(baseFile, relPath){
-          if(!relPath) return null;
-          if(/^https?:\/\//i.test(relPath)) return relPath;
-      
-          relPath = String(relPath).replace(/\\/g, '/');
-          if(relPath.charAt(0) === '/') return relPath;
-      
-          baseFile = String(baseFile || '').replace(/\\/g, '/');
-          var baseDir = baseFile.split('/').slice(0, -1).join('/');
-          if(!baseDir) return relPath;
-      
-          return baseDir + '/' + relPath;
-        }
-      
-        function getCharacterConfig(meta){
-          var m = meta || {};
-          var ch = m.characters;
+ function loadScenario(){
+  function safeFetchJSON(url, fallback){
+    if(!url) return Promise.resolve(fallback);
+    return fetchJSON(url).catch(function(err){
+      console.warn('safeFetchJSON fallback for', url, err);
+      return fallback;
+    });
+  }
 
-          // Nieuw beleid: niet vermeld => geen personages
-          if(!ch){
-            return { enabled:false, implicit:true }; // implicit: niet geconfigureerd
-          }
+  function resolveRelative(baseFile, relPath){
+    if(!relPath) return null;
+    if(/^https?:\/\//i.test(relPath)) return relPath;
 
-          // Expliciet aanzetten vereist
-          if(ch.enabled !== true){
-            return { enabled:false, implicit:false }; // wél characters-object, maar niet enabled:true
-          }
+    relPath = String(relPath).replace(/\\/g, '/');
+    if(relPath.charAt(0) === '/') return relPath;
 
-          // Enabled:true => volledig config toepassen
-          return {
-            enabled: true,
-            source: ch.source || 'personages.json',
-            required: (ch.required === true),
-            lockAtStartExit: (ch.lockAtStartExit !== false)
-          };
-        }
+    baseFile = String(baseFile || '').replace(/\\/g, '/');
+    var baseDir = baseFile.split('/').slice(0, -1).join('/');
+    if(!baseDir) return relPath;
 
-      
-        var scenarioUrl = stopsFileFromQuery();
-      
-        return Promise.all([
-          safeFetchJSON('./data/meta.json', {}),
-          fetchJSON(scenarioUrl)
-        ]).then(function(arr){
-          var metaDefaults = arr[0] || {};
-          var stopsRaw = arr[1];
-      
-          var isScenarioObject =
-            stopsRaw &&
-            typeof stopsRaw === 'object' &&
-            !Array.isArray(stopsRaw) &&
-            stopsRaw.locaties &&
-            stopsRaw.slots;
-      
-          var slots = null, locaties = null;
-          var scenarioMeta = {};
-          var scenarioSettings = {};
-          var scenarioPrestart = {};
-      
-          if(isScenarioObject){
-            slots = stopsRaw.slots || [];
-            locaties = stopsRaw.locaties || [];
-            scenarioMeta = stopsRaw.meta || {};
-            scenarioSettings = stopsRaw.settings || {};
-            scenarioPrestart = stopsRaw.prestart || {};
-          } else {
-            locaties = Array.isArray(stopsRaw) ? stopsRaw : [];
-            slots = [];
-      
-            var seen = {};
-            locaties.forEach(function(l){
-              var s = l && l.slot ? l.slot : null;
-              if(s && !seen[s]){ seen[s] = true; slots.push({ id:s, label:s, required:true }); }
-            });
-      
-            if(!slots.length){
-              slots = [
-                { id:'start', label:'Start', required:true },
-                { id:'end', label:'Einde', required:true }
-              ];
-            }
-          }
-      
-          // meta + settings
-          var meta = Object.assign({}, metaDefaults, scenarioMeta);
-      
-          var settingsDefaults = {
-            visibilityMode: 'nextOnly',
-            multiLocationSlotMode: 'all',
-            showOptionalSlots: true,
-            listShowFutureSlots: true,
-            mapShowFutureLocations: false
-          };
-          var settings = Object.assign({}, settingsDefaults, scenarioSettings);
-          var prestart = Object.assign({}, scenarioPrestart);
-      
-          // start/end
-          var startSlot = meta.startSlot || 'start';
-          var endSlot   = meta.endSlot   || 'end';
-      
-          // slots: completeMode normaliseren
-          var allowedModes = { any:1, all:1, nearest:1, random:1 };
-          slots = (slots || []).map(function(s){
-            var slot = Object.assign({ required:true }, s || {});
-            var cm = slot.completeMode || settings.multiLocationSlotMode || 'all';
-            cm = (cm + '').toLowerCase();
-            if(!allowedModes[cm]) cm = 'all';
-            slot.completeMode = cm;
-            return slot;
-          });
-      
-          // locaties normaliseren
-          var defaultRadius = (meta && meta.radiusDefaultMeters != null) ? meta.radiusDefaultMeters : 200;
-          locaties = (locaties || []).map(function(l, idx){
-            var loc = Object.assign({}, l || {});
-            if(!loc.id)   loc.id = 'loc_' + (idx+1);
-            if(!loc.slot) loc.slot = startSlot;
-            if(loc.radius == null) loc.radius = defaultRadius;
-            return loc;
-          });
-      
-          // personages config + laden
-          var pcCfg = getCharacterConfig(meta);
-          var pcUrl = pcCfg.enabled ? resolveRelative(scenarioUrl, pcCfg.source) : null;
-      
-          return safeFetchJSON(pcUrl, []).then(function(personages){
-            // ✅ hard safety
-            if(pcCfg && pcCfg.enabled === false) personages = [];
-      
-            var slotOrder = (slots || []).map(function(s){ return s.id; });
-            var requiredSlots = (slots || []).filter(function(s){ return !!s.required; }).map(function(s){ return s.id; });
-      
-            return {
-              meta: meta,
-              settings: settings,
-              prestart: prestart,
-      
-              stops: locaties,
-              locaties: locaties,
-      
-              slots: slots,
-              startSlot: startSlot,
-              endSlot: endSlot,
-              slotOrder: slotOrder,
-              requiredSlots: requiredSlots,
-      
-              personages: Array.isArray(personages) ? personages : [],
-              characters: pcCfg
-            };
-          });
-        });
+    return baseDir + '/' + relPath;
+  }
+
+  function getCharacterConfig(meta){
+    var m = meta || {};
+    var ch = m.characters;
+
+    // Nieuw beleid: niet vermeld => geen personages
+    if(!ch){
+      return { enabled:false, implicit:true }; // implicit: niet geconfigureerd
+    }
+
+    // Expliciet aanzetten vereist
+    if(ch.enabled !== true){
+      return { enabled:false, implicit:false }; // wél characters-object, maar niet enabled:true
+    }
+
+    // Enabled:true => volledig config toepassen
+    return {
+      enabled: true,
+      source: ch.source || 'personages.json',
+      required: (ch.required === true),
+      lockAtStartExit: (ch.lockAtStartExit !== false)
+    };
+  }
+
+  // ---------------- Vragen normalisatie ----------------
+
+  function safeArr(a){ return Array.isArray(a) ? a : []; }
+
+  function isObj(x){
+    return x && typeof x === 'object' && !Array.isArray(x);
+  }
+
+  function safeDomId(s){
+    // simpel & stabiel: genoeg voor ids
+    return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+  }
+
+  function genVraagId(locId, type, n){
+    var lid = safeDomId(locId || 'loc');
+    var t = safeDomId(type || 'open') || 'open';
+    var nn = String(n);
+    if(nn.length < 2) nn = '0' + nn;
+    return 'q_' + lid + '_' + t + '_' + nn;
+  }
+
+  function genOptId(vraagId, n){
+    var nn = String(n);
+    if(nn.length < 2) nn = '0' + nn;
+    return 'o_' + safeDomId(vraagId) + '_' + nn;
+  }
+
+  function normalizePolicy(p){
+    p = isObj(p) ? p : {};
+    // jouw policy-keys: showUntil / closeWhen
+    return {
+      showUntil: p.showUntil || 'nextLocation',
+      closeWhen: p.closeWhen || 'nextLocation'
+    };
+  }
+
+  function normalizeMedia(m, qType){
+    m = isObj(m) ? m : {};
+
+    // voor niet-media types willen we gewoon een object (jij gebruikt vaak {})
+    if(qType !== 'photo' && qType !== 'audio'){
+      return m;
+    }
+
+    // media types: zet defaults slim
+    if(qType === 'photo'){
+      return {
+        mode: 'photo',
+        minCount: (m.minCount != null ? m.minCount : 0),
+        maxCount: (m.maxCount != null ? m.maxCount : 1)
+      };
+    }
+
+    // audio
+    return {
+      mode: 'audio',
+      minSeconds: (m.minSeconds != null ? m.minSeconds : 0),
+      maxSeconds: (m.maxSeconds != null ? m.maxSeconds : 30)
+    };
+  }
+
+  function normalizeOpties(opties, vraagId){
+    var arr = safeArr(opties);
+    var used = Object.create(null);
+
+    return arr.map(function(o, idx){
+      // opties kunnen ook per ongeluk string zijn => maak object
+      var opt = isObj(o) ? Object.assign({}, o) : { tekst: String(o) };
+
+      if(!opt.tekst) opt.tekst = '';
+      if(opt.correct !== true) opt.correct = false;
+
+      if(!opt.id){
+        opt.id = genOptId(vraagId, idx+1);
       }
+
+      // vermijd dubbele ids
+      if(used[opt.id]){
+        opt.id = genOptId(vraagId, idx+1) + '_' + (idx+1);
+      }
+      used[opt.id] = true;
+
+      return opt;
+    });
+  }
+
+  function normalizeVragen(vragenArr, locId){
+    var arr = safeArr(vragenArr);
+    var out = [];
+    var usedQ = Object.create(null);
+
+    for(var i=0;i<arr.length;i++){
+      var raw = arr[i];
+      var q;
+
+      // oude stijl: string => open vraag
+      if(typeof raw === 'string'){
+        q = {
+          id: '',
+          type: 'open',
+          vraag: raw
+        };
+      } else if(isObj(raw)){
+        q = Object.assign({}, raw);
+      } else {
+        // rommel negeren
+        continue;
+      }
+
+      // type normaliseren
+      var t = (q.type || 'open') + '';
+      t = t.toLowerCase();
+      var allowed = { mc:1, checkbox:1, open:1, photo:1, audio:1 };
+      if(!allowed[t]) t = 'open';
+      q.type = t;
+
+      // vraagtekst
+      if(q.vraag == null) q.vraag = '';
+      q.vraag = String(q.vraag);
+
+      // id
+      if(!q.id){
+        q.id = genVraagId(locId, q.type, out.length+1);
+      }
+      if(usedQ[q.id]){
+        // maak hem uniek
+        q.id = q.id + '_' + (out.length+1);
+      }
+      usedQ[q.id] = true;
+
+      // opties / shuffle enkel zinvol voor mc/checkbox
+      if(q.type === 'mc' || q.type === 'checkbox'){
+        q.opties = normalizeOpties(q.opties, q.id);
+        q.shuffle = (q.shuffle === true); // default false
+      } else {
+        // hou het consistent: geen opties nodig
+        if(q.opties != null) q.opties = safeArr(q.opties); // laat bestaan, maar proper
+        q.shuffle = false;
+      }
+
+      // policy + media defaults
+      q.policy = normalizePolicy(q.policy);
+      q.media = normalizeMedia(q.media, q.type);
+
+      out.push(q);
+    }
+
+    return out;
+  }
+
+  // ---------------- Load scenario ----------------
+
+  var scenarioUrl = stopsFileFromQuery();
+
+  return Promise.all([
+    safeFetchJSON('./data/meta.json', {}),
+    fetchJSON(scenarioUrl)
+  ]).then(function(arr){
+    var metaDefaults = arr[0] || {};
+    var stopsRaw = arr[1];
+
+    var isScenarioObject =
+      stopsRaw &&
+      typeof stopsRaw === 'object' &&
+      !Array.isArray(stopsRaw) &&
+      stopsRaw.locaties &&
+      stopsRaw.slots;
+
+    var slots = null, locaties = null;
+    var scenarioMeta = {};
+    var scenarioSettings = {};
+    var scenarioPrestart = {};
+
+    if(isScenarioObject){
+      slots = stopsRaw.slots || [];
+      locaties = stopsRaw.locaties || [];
+      scenarioMeta = stopsRaw.meta || {};
+      scenarioSettings = stopsRaw.settings || {};
+      scenarioPrestart = stopsRaw.prestart || {};
+    } else {
+      locaties = Array.isArray(stopsRaw) ? stopsRaw : [];
+      slots = [];
+
+      var seen = {};
+      locaties.forEach(function(l){
+        var s = l && l.slot ? l.slot : null;
+        if(s && !seen[s]){ seen[s] = true; slots.push({ id:s, label:s, required:true }); }
+      });
+
+      if(!slots.length){
+        slots = [
+          { id:'start', label:'Start', required:true },
+          { id:'end', label:'Einde', required:true }
+        ];
+      }
+    }
+
+    // meta + settings
+    var meta = Object.assign({}, metaDefaults, scenarioMeta);
+
+    var settingsDefaults = {
+      visibilityMode: 'nextOnly',
+      multiLocationSlotMode: 'all',
+      showOptionalSlots: true,
+      listShowFutureSlots: true,
+      mapShowFutureLocations: false
+    };
+    var settings = Object.assign({}, settingsDefaults, scenarioSettings);
+    var prestart = Object.assign({}, scenarioPrestart);
+
+    // start/end
+    var startSlot = meta.startSlot || 'start';
+    var endSlot   = meta.endSlot   || 'end';
+
+    // slots: completeMode normaliseren
+    var allowedModes = { any:1, all:1, nearest:1, random:1 };
+    slots = (slots || []).map(function(s){
+      var slot = Object.assign({ required:true }, s || {});
+      var cm = slot.completeMode || settings.multiLocationSlotMode || 'all';
+      cm = (cm + '').toLowerCase();
+      if(!allowedModes[cm]) cm = 'all';
+      slot.completeMode = cm;
+      return slot;
+    });
+
+    // locaties normaliseren + ✅ vragen normaliseren
+    var defaultRadius = (meta && meta.radiusDefaultMeters != null) ? meta.radiusDefaultMeters : 200;
+    locaties = (locaties || []).map(function(l, idx){
+      var loc = Object.assign({}, l || {});
+      if(!loc.id)   loc.id = 'loc_' + (idx+1);
+      if(!loc.slot) loc.slot = startSlot;
+      if(loc.radius == null) loc.radius = defaultRadius;
+
+      // ✅ NIEUW: vragen altijd als objecten met defaults
+      loc.vragen = normalizeVragen(loc.vragen, loc.id);
+
+      return loc;
+    });
+
+    // personages config + laden
+    var pcCfg = getCharacterConfig(meta);
+    var pcUrl = pcCfg.enabled ? resolveRelative(scenarioUrl, pcCfg.source) : null;
+
+    return safeFetchJSON(pcUrl, []).then(function(personages){
+      // ✅ hard safety
+      if(pcCfg && pcCfg.enabled === false) personages = [];
+
+      var slotOrder = (slots || []).map(function(s){ return s.id; });
+      var requiredSlots = (slots || []).filter(function(s){ return !!s.required; }).map(function(s){ return s.id; });
+
+      return {
+        meta: meta,
+        settings: settings,
+        prestart: prestart,
+
+        stops: locaties,
+        locaties: locaties,
+
+        slots: slots,
+        startSlot: startSlot,
+        endSlot: endSlot,
+        slotOrder: slotOrder,
+        requiredSlots: requiredSlots,
+
+        personages: Array.isArray(personages) ? personages : [],
+        characters: pcCfg
+      };
+    });
+  });
+}
+
+
+      // function loadScenario(){
+      //   function safeFetchJSON(url, fallback){
+      //     if(!url) return Promise.resolve(fallback);
+      //     return fetchJSON(url).catch(function(err){
+      //       console.warn('safeFetchJSON fallback for', url, err);
+      //       return fallback;
+      //     });
+      //   }
+      
+      //   function resolveRelative(baseFile, relPath){
+      //     if(!relPath) return null;
+      //     if(/^https?:\/\//i.test(relPath)) return relPath;
+      
+      //     relPath = String(relPath).replace(/\\/g, '/');
+      //     if(relPath.charAt(0) === '/') return relPath;
+      
+      //     baseFile = String(baseFile || '').replace(/\\/g, '/');
+      //     var baseDir = baseFile.split('/').slice(0, -1).join('/');
+      //     if(!baseDir) return relPath;
+      
+      //     return baseDir + '/' + relPath;
+      //   }
+      
+      //   function getCharacterConfig(meta){
+      //     var m = meta || {};
+      //     var ch = m.characters;
+
+      //     // Nieuw beleid: niet vermeld => geen personages
+      //     if(!ch){
+      //       return { enabled:false, implicit:true }; // implicit: niet geconfigureerd
+      //     }
+
+      //     // Expliciet aanzetten vereist
+      //     if(ch.enabled !== true){
+      //       return { enabled:false, implicit:false }; // wél characters-object, maar niet enabled:true
+      //     }
+
+      //     // Enabled:true => volledig config toepassen
+      //     return {
+      //       enabled: true,
+      //       source: ch.source || 'personages.json',
+      //       required: (ch.required === true),
+      //       lockAtStartExit: (ch.lockAtStartExit !== false)
+      //     };
+      //   }
+
+      
+      //   var scenarioUrl = stopsFileFromQuery();
+      
+      //   return Promise.all([
+      //     safeFetchJSON('./data/meta.json', {}),
+      //     fetchJSON(scenarioUrl)
+      //   ]).then(function(arr){
+      //     var metaDefaults = arr[0] || {};
+      //     var stopsRaw = arr[1];
+      
+      //     var isScenarioObject =
+      //       stopsRaw &&
+      //       typeof stopsRaw === 'object' &&
+      //       !Array.isArray(stopsRaw) &&
+      //       stopsRaw.locaties &&
+      //       stopsRaw.slots;
+      
+      //     var slots = null, locaties = null;
+      //     var scenarioMeta = {};
+      //     var scenarioSettings = {};
+      //     var scenarioPrestart = {};
+      
+      //     if(isScenarioObject){
+      //       slots = stopsRaw.slots || [];
+      //       locaties = stopsRaw.locaties || [];
+      //       scenarioMeta = stopsRaw.meta || {};
+      //       scenarioSettings = stopsRaw.settings || {};
+      //       scenarioPrestart = stopsRaw.prestart || {};
+      //     } else {
+      //       locaties = Array.isArray(stopsRaw) ? stopsRaw : [];
+      //       slots = [];
+      
+      //       var seen = {};
+      //       locaties.forEach(function(l){
+      //         var s = l && l.slot ? l.slot : null;
+      //         if(s && !seen[s]){ seen[s] = true; slots.push({ id:s, label:s, required:true }); }
+      //       });
+      
+      //       if(!slots.length){
+      //         slots = [
+      //           { id:'start', label:'Start', required:true },
+      //           { id:'end', label:'Einde', required:true }
+      //         ];
+      //       }
+      //     }
+      
+      //     // meta + settings
+      //     var meta = Object.assign({}, metaDefaults, scenarioMeta);
+      
+      //     var settingsDefaults = {
+      //       visibilityMode: 'nextOnly',
+      //       multiLocationSlotMode: 'all',
+      //       showOptionalSlots: true,
+      //       listShowFutureSlots: true,
+      //       mapShowFutureLocations: false
+      //     };
+      //     var settings = Object.assign({}, settingsDefaults, scenarioSettings);
+      //     var prestart = Object.assign({}, scenarioPrestart);
+      
+      //     // start/end
+      //     var startSlot = meta.startSlot || 'start';
+      //     var endSlot   = meta.endSlot   || 'end';
+      
+      //     // slots: completeMode normaliseren
+      //     var allowedModes = { any:1, all:1, nearest:1, random:1 };
+      //     slots = (slots || []).map(function(s){
+      //       var slot = Object.assign({ required:true }, s || {});
+      //       var cm = slot.completeMode || settings.multiLocationSlotMode || 'all';
+      //       cm = (cm + '').toLowerCase();
+      //       if(!allowedModes[cm]) cm = 'all';
+      //       slot.completeMode = cm;
+      //       return slot;
+      //     });
+      
+      //     // locaties normaliseren
+      //     var defaultRadius = (meta && meta.radiusDefaultMeters != null) ? meta.radiusDefaultMeters : 200;
+      //     locaties = (locaties || []).map(function(l, idx){
+      //       var loc = Object.assign({}, l || {});
+      //       if(!loc.id)   loc.id = 'loc_' + (idx+1);
+      //       if(!loc.slot) loc.slot = startSlot;
+      //       if(loc.radius == null) loc.radius = defaultRadius;
+      //       return loc;
+      //     });
+      
+      //     // personages config + laden
+      //     var pcCfg = getCharacterConfig(meta);
+      //     var pcUrl = pcCfg.enabled ? resolveRelative(scenarioUrl, pcCfg.source) : null;
+      
+      //     return safeFetchJSON(pcUrl, []).then(function(personages){
+      //       // ✅ hard safety
+      //       if(pcCfg && pcCfg.enabled === false) personages = [];
+      
+      //       var slotOrder = (slots || []).map(function(s){ return s.id; });
+      //       var requiredSlots = (slots || []).filter(function(s){ return !!s.required; }).map(function(s){ return s.id; });
+      
+      //       return {
+      //         meta: meta,
+      //         settings: settings,
+      //         prestart: prestart,
+      
+      //         stops: locaties,
+      //         locaties: locaties,
+      
+      //         slots: slots,
+      //         startSlot: startSlot,
+      //         endSlot: endSlot,
+      //         slotOrder: slotOrder,
+      //         requiredSlots: requiredSlots,
+      
+      //         personages: Array.isArray(personages) ? personages : [],
+      //         characters: pcCfg
+      //       };
+      //     });
+      //   });
+      // }
   
+  
+
+
     // Globale errors
     window.addEventListener('error', function(e){ showDiag('JS error: '+e.message); });
     window.addEventListener('unhandledrejection', function(e){
