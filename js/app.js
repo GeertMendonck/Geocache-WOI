@@ -33,6 +33,48 @@ function getAssetsBase(data){
   if(!base) throw new Error('meta.assetsBase ontbreekt in je route-JSON.');
   return base;
 }
+function isObj(x){ return x && typeof x === 'object' && !Array.isArray(x); }
+
+// “Waar sta ik in de route?”
+// Ik ga uit van je store met unlocked locs + lastUnlockedLocId.
+// Pas eventueel de veldnamen aan als jij andere gebruikt.
+function getProgressContext(){
+  var st = (window.store && store.get) ? (store.get() || {}) : {};
+  var unlocked = st.unlockedLocIds || st.unlockedLocs || st.unlocked || [];
+  if(!Array.isArray(unlocked)) unlocked = [];
+
+  var currentId = st.lastUnlockedLocId || st.currentLocId || window.currentLocId || null;
+
+  // “route is voorbij” flag: kies wat jij al hebt
+  var ended = !!(st.routeEnded || st.ended || st.finished || st.hasEnded);
+
+  return { st: st, unlocked: unlocked, currentId: currentId, ended: ended };
+}
+
+// showUntil: bepaalt of de vraag nog getoond wordt
+function shouldShowQuestion(showUntil, ctx){
+  showUntil = (showUntil || 'nextLocation').toLowerCase();
+
+  if(showUntil === 'inrange') return !!ctx.inRangeThisLoc;
+  if(showUntil === 'nextlocation') return !ctx.passedThisLoc;    // weg zodra je verder bent
+  if(showUntil === 'beforeend') return !ctx.routeEnded;          // weg na einde
+  if(showUntil === 'afterend') return true;                      // blijft altijd zichtbaar
+
+  // fallback
+  return !ctx.passedThisLoc;
+}
+
+// closeWhen: bepaalt of de controls dicht/readonly worden
+function shouldCloseQuestion(closeWhen, ctx){
+  closeWhen = (closeWhen || 'nextLocation').toLowerCase();
+
+  if(closeWhen === 'inrange') return !ctx.inRangeThisLoc;        // zodra je weg bent
+  if(closeWhen === 'nextlocation') return !!ctx.passedThisLoc;
+  if(closeWhen === 'beforeend') return !!ctx.routeEnded;
+  if(closeWhen === 'afterend') return !!ctx.routeEnded;          // “sluit op het einde”
+
+  return false;
+}
 
 function resolveImageFile(file, data){
   if(!file) return '';
@@ -2588,43 +2630,110 @@ function charactersEnabled(){
         
       
         // ---- vragen ---------------------------------------------------
-        var qsArr = hasRealLoc ? (loc.vragen || []) : [];
-        var qaHtml = '';
- 
-        if(!hasRealLoc){
-          qaHtml = '<div class="muted">Nog geen vragen: wandel eerst een cirkel binnen 🙂</div>';
-          // (uitlegHtml mag je hier leeg maken als je wilt; ik laat hem gewoon staan als er per ongeluk toch iets is)
-          // uitlegHtml = '';
-        }else if(qsArr.length){
-          qaHtml = qsArr.map(function(q, qi){
-            var val = getAns(locId, qi);
-            return ''
-              + '<div class="qa">'
-              + '  <div class="q"><b>Vraag '+(qi+1)+':</b> '+escapeHtml(q)+'</div>'
-              + '  <div class="controls">'
-              + '    <textarea class="ans" data-stop="'+locId+'" data-q="'+qi+'" placeholder="Jouw antwoord...">'+escapeHtml(val)+'</textarea>'
-              + '    <div class="btnRow">'
-              + (MIC_OK ? '      <button class="micBtn" data-stop="'+locId+'" data-q="'+qi+'">🎙️</button>' : '')
-              + '      <button class="clearAns" data-stop="'+locId+'" data-q="'+qi+'">✖</button>'
-              + '      <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+qi+'"></span>'
-              + '    </div>'
-              + '  </div>'
-              + '</div>';
-          }).join('');
-        }else{
-          qaHtml = '<div class="muted">Geen vragen bij deze stop.</div>';
-        }
-        // ✅ zijn er nog onbeantwoorde vragen?
-            var hasUnanswered = false;
-            if(hasRealLoc && qsArr && qsArr.length){
-            for(var i=0;i<qsArr.length;i++){
-                var a = getAns(locId, i);
-                if(!a || !String(a).trim()){
-                hasUnanswered = true;
-                break;
-                }
-            }
-            }
+var qsArr = hasRealLoc ? (loc.vragen || []) : [];
+var qaHtml = '';
+
+// progress context voor policy
+var prog = getProgressContext();
+var unlocked = prog.unlocked;
+var curId = prog.currentId;
+
+// positie bepalen in unlocked-lijst (simpel en werkt goed)
+var locPos = unlocked.indexOf(locId);
+var curPos = unlocked.indexOf(curId);
+
+// “passedThisLoc”: je bent al verder dan deze locatie
+var passedThisLoc = (locPos >= 0 && curPos >= 0 && curPos > locPos);
+
+// “inRangeThisLoc”: enkel waar je nu effectief in de cirkel zit
+// (jij gebruikt hasRealLoc als “ik sta in de cirkel van deze loc”)
+var inRangeThisLoc = !!hasRealLoc;
+
+// “routeEnded”: pak je eigen signaal (hier uit store)
+var routeEnded = !!prog.ended;
+
+if(!hasRealLoc){
+  qaHtml = '<div class="muted">Nog geen vragen: wandel eerst een cirkel binnen 🙂</div>';
+} else if(qsArr.length){
+
+  qaHtml = qsArr.map(function(q, qi){
+    // q is nu een object (door normalizeVragen in loadScenario)
+    q = isObj(q) ? q : { type:'open', vraag:String(q||'') };
+
+    var qid = q.id || (locId + '__q' + qi);     // fallback
+    var qText = q.vraag != null ? String(q.vraag) : '';
+
+    var pol = isObj(q.policy) ? q.policy : {};
+    var showUntil = pol.showUntil || 'nextLocation';
+    var closeWhen = pol.closeWhen || showUntil;
+
+    var ctx = {
+      inRangeThisLoc: inRangeThisLoc,
+      passedThisLoc: passedThisLoc,
+      routeEnded: routeEnded
+    };
+
+    var show = shouldShowQuestion(showUntil, ctx);
+    if(!show) return ''; // niet tonen => weg uit HTML
+
+    var closed = shouldCloseQuestion(closeWhen, ctx);
+
+    // ✅ antwoorden voortaan op ID (maar jij kan in getAns compat houden)
+    var val = getAns(locId, qid);
+
+    // Voorlopig: render alles als “open” textarea (minst brekend).
+    // Later breiden we uit naar mc/checkbox/photo/audio.
+    return ''
+      + '<div class="qa' + (closed ? ' isClosed' : '') + '">'
+      + '  <div class="q"><b>Vraag ' + (qi+1) + ':</b> ' + escapeHtml(qText) + '</div>'
+      + '  <div class="controls">'
+      + '    <textarea class="ans" data-stop="'+locId+'" data-q="'+escapeHtml(qid)+'"'
+      + (closed ? ' readonly' : '')
+      + ' placeholder="Jouw antwoord...">'+escapeHtml(val)+'</textarea>'
+      + '    <div class="btnRow">'
+      + (MIC_OK && !closed ? '      <button class="micBtn" data-stop="'+locId+'" data-q="'+escapeHtml(qid)+'">🎙️</button>' : '')
+      + (!closed ? '      <button class="clearAns" data-stop="'+locId+'" data-q="'+escapeHtml(qid)+'">✖</button>' : '')
+      + '      <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+escapeHtml(qid)+'">'
+      + (closed ? 'gesloten' : '')
+      + '</span>'
+      + '    </div>'
+      + '  </div>'
+      + '</div>';
+  }).join('');
+
+  if(!qaHtml){
+    qaHtml = '<div class="muted">Geen vragen (meer) zichtbaar door policy.</div>';
+  }
+
+} else {
+  qaHtml = '<div class="muted">Geen vragen bij deze stop.</div>';
+}
+
+// ✅ zijn er nog onbeantwoorde (en niet-gesloten) vragen?
+var hasUnanswered = false;
+if(hasRealLoc && qsArr && qsArr.length){
+  for(var i=0;i<qsArr.length;i++){
+    var qx = qsArr[i];
+    qx = isObj(qx) ? qx : { type:'open', vraag:String(qx||'') };
+
+    var qid2 = qx.id || (locId + '__q' + i);
+
+    var pol2 = isObj(qx.policy) ? qx.policy : {};
+    var showUntil2 = pol2.showUntil || 'nextLocation';
+    var closeWhen2 = pol2.closeWhen || showUntil2;
+
+    var ctx2 = { inRangeThisLoc: inRangeThisLoc, passedThisLoc: passedThisLoc, routeEnded: routeEnded };
+
+    if(!shouldShowQuestion(showUntil2, ctx2)) continue;
+    if(shouldCloseQuestion(closeWhen2, ctx2)) continue;
+
+    var a = getAns(locId, qid2);
+    if(!a || !String(a).trim()){
+      hasUnanswered = true;
+      break;
+    }
+  }
+}
 
              // ---- panel bodies ---------------------------------------------------
               // Info-panel: enkel info/uitleg (met eventueel gallery in uitlegHtml)
