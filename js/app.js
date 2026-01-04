@@ -19,6 +19,120 @@
    
   
     // ---------- Mini helpers ----------
+    //inhoud MC en chkbox juist om weg te schrijven (niet object)
+ function findVraagById(stopId, qId){
+  var locs = DATA.locaties || DATA.stops || [];
+  for(var i=0;i<locs.length;i++){
+    var loc = locs[i];
+    if(!loc || loc.id !== stopId) continue;
+    var qs = loc.vragen || [];
+    for(var j=0;j<qs.length;j++){
+      var q = qs[j];
+      if(q && q.id === qId) return q;
+    }
+  }
+  return null;
+}
+
+function optionTextById(q, optId){
+  if(!q || !q.options) return optId;
+  for(var i=0;i<q.options.length;i++){
+    var o = q.options[i];
+    if(o && o.id === optId){
+      return o.label || o.text || o.title || optId;
+    }
+  }
+  return optId;
+}
+
+// backward compat: oude waarden (string / json-string / array) → objectvorm
+function normalizeStoredAnswer(ans){
+  if(ans == null) return null;
+
+  // oude checkbox: JSON string of array
+  if(typeof ans === 'string'){
+    var s = ans.trim();
+
+    // mogelijk oude checkbox: '["o1","o2"]'
+    if(s && (s[0] === '[' || s[0] === '{')){
+      try{ return JSON.parse(s); }catch(e){}
+    }
+
+    // oude mc: "o_xxx"
+    return { choiceId: ans };
+  }
+
+  // oude checkbox: array
+  if(Array.isArray(ans)){
+    return { choiceIds: ans };
+  }
+
+  // nieuw: object
+  if(typeof ans === 'object'){
+    return ans;
+  }
+
+  return null;
+}
+
+
+
+function saveMcAnswer(locId, q, optId){
+  var st = store.get();
+  st.answers = st.answers || {};
+  st.answers[locId] = st.answers[locId] || {};
+  st.answers[locId][q.id] = {
+    choiceId: optId,
+    choiceText: optionTextById(q, optId)
+  };
+  safeStoreSet(st);
+}
+
+function saveCheckboxAnswer(locId, q, optIds){
+  var st = store.get();
+  st.answers = st.answers || {};
+  st.answers[locId] = st.answers[locId] || {};
+  st.answers[locId][q.id] = {
+    choiceIds: optIds.slice(),
+    choiceTexts: optIds.map(function(id){ return optionTextById(q, id); })
+  };
+  safeStoreSet(st);
+}
+
+    //volgorde opties vastzetten
+    
+function ensureOrder(locId, q){
+  var st = store.get();
+  st.order = st.order || {};
+  st.order[locId] = st.order[locId] || {};
+
+  var qId = q.id;
+  if(st.order[locId][qId] && st.order[locId][qId].length){
+    return st.order[locId][qId];
+  }
+
+  // init
+  var ids = (q.options || []).map(function(o){ return o.id; });
+
+  // shuffle (Fisher-Yates)
+  for(var i=ids.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t = ids[i]; ids[i] = ids[j]; ids[j] = t;
+  }
+
+  st.order[locId][qId] = ids;
+  store.set(st);
+  return ids;
+}
+
+function orderedOptions(locId, q){
+  var order = ensureOrder(locId, q);
+  var map = Object.create(null);
+  (q.options || []).forEach(function(o){ map[o.id]=o; });
+  return order.map(function(id){ return map[id]; }).filter(Boolean);
+}
+
+
     //nieuw systeem voor afbeelingen in andere repos
     function joinUrl(base, path){
   var b = String(base || '').replace(/\/+$/, '') + '/';
@@ -345,6 +459,21 @@ function mimeToExt(mime){
 // ---------------- Media storage (IndexedDB) ----------------
 var MEDIA_DB_NAME = 'geo_media_db_v1';
 var MEDIA_STORE  = 'blobs';
+async function clearMediaForQuestion(stopId, qId){
+  var db = await idbOpen();
+  var keys = await idbGetAllKeys(db);
+
+  // m|<scenario>|<stop>|<vraag>|<item>
+  var pref = 'm|' + getScenarioKey() + '|' + stopId + '|' + qId + '|';
+
+  for(var i=0;i<keys.length;i++){
+    var k = String(keys[i] || '');
+    if(k.indexOf(pref) === 0){
+      await idbDelete(db, k);
+    }
+  }
+}
+
 
 function idbOpen(){
   return new Promise(function(resolve, reject){
@@ -704,9 +833,12 @@ function renderVraagOpen(locId, q, closed){
 }
 
 function renderVraagMC(locId, q, closed){
-  var picked = getAns(locId, q.id); // optie.id
-  var opts = safeArr(q.opties);
+  //var picked = getAns(locId, q.id); // optie.id
+  var pickedObj = normalizeStoredAnswer(getAns(locId, q.id));
+  var pickedId  = pickedObj && pickedObj.choiceId ? String(pickedObj.choiceId) : '';
 
+  //var opts = safeArr(q.opties);
+var opts = (q.randomOrder ? orderedOptions(locId, q) : (q.options||[]));
   // shuffle enkel voor UI, zonder DATA te muteren
   if(q.shuffle && opts.length > 1){
     opts = opts.slice();
@@ -739,7 +871,8 @@ function renderVraagMC(locId, q, closed){
       var oid = (o && o.id) ? String(o.id) : '';
       var txt = (o && o.tekst != null) ? String(o.tekst) : '';
       var rid = 'mc_' + safeDomId(locId) + '_' + safeDomId(q.id) + '_' + safeDomId(oid);
-      var on = (picked && oid && picked === oid);
+      var on = (pickedId && oid && pickedId === oid);
+
 
       return ''
         + '<label class="rbRow' + (closed ? ' isDisabled' : '') + '" for="'+rid+'">'
@@ -769,7 +902,7 @@ function renderVraagMC(locId, q, closed){
   var buttons = opts.map(function(o){
     var oid = (o && o.id) ? String(o.id) : '';
     var txt = (o && o.tekst != null) ? String(o.tekst) : '';
-    var active = (picked && oid && picked === oid);
+    var active = (pickedId && oid && pickedId === oid);
 
     return ''
       + '<button class="optBtn' + (active ? ' isActive' : '') + '"'
@@ -796,11 +929,14 @@ function renderVraagMC(locId, q, closed){
 
 function renderVraagCheckbox(locId, q, closed){
   var raw = getAns(locId, q.id);
-  var picked = parseJsonArray(raw); // array van optie.id
+  var obj = normalizeStoredAnswer(raw) || {};
+  var picked = Array.isArray(obj.choiceIds) ? obj.choiceIds : [];
+
   var map = Object.create(null);
   for(var i=0;i<picked.length;i++) map[picked[i]] = true;
 
-  var opts = safeArr(q.opties);
+  //var opts = safeArr(q.opties);
+  var opts = (q.randomOrder ? orderedOptions(locId, q) : (q.options||[]));
 
   if(q.shuffle && opts.length > 1){
     opts = opts.slice();
@@ -811,7 +947,7 @@ function renderVraagCheckbox(locId, q, closed){
   }
 
   var items = opts.map(function(o){
-    var oid = o.id || '';
+    var oid = (o && o.id != null) ? String(o.id) : '';
     var on = !!map[oid];
     var cid = 'cb_' + safeDomId(locId) + '_' + safeDomId(q.id) + '_' + safeDomId(oid);
     return ''
@@ -2307,45 +2443,93 @@ function resolveCharacterFile(file, data){
     }
   
     // ---------- Answers ----------
-   function ansKey(qi){
+   function ansKey(qid){
   // ondersteunt zowel index (0,1,2) als vraagId ("q_thuis_mc_01")
-  return String(qi);
+  return String(qid);
 }
 
-function getAns(stopId, qi){
-  var st = store.get() || {};
-  var a = (st.answers || {})[stopId] || {};
-  return a[ansKey(qi)] || '';
+function getAns(stopId, qId){
+  var st = store.get();
+  if(!st || !st.answers || !st.answers[stopId]) return null;
+
+  qId = String(qId || '');
+
+  // nieuw: exact id
+  if(st.answers[stopId].hasOwnProperty(qId)) return st.answers[stopId][qId];
+
+  // oud (optioneel): ansKey fallback
+  try{
+    var k = ansKey(qId);
+    if(st.answers[stopId].hasOwnProperty(k)) return st.answers[stopId][k];
+  }catch(e){}
+
+  return null;
 }
 
-function setAns(stopId, qi, val){
+
+
+function setAns(stopId, qId, val){
   var st = store.get() || {};
   st.answers = st.answers || {};
   st.answers[stopId] = st.answers[stopId] || {};
-  st.answers[stopId][ansKey(qi)] = val;
+
+  var key = ansKey(qId); // = String(qId)
+  st.answers[stopId][key] = val;
   store.set(st);
 
-  var key = ansKey(qi);
   var tag = document.querySelector('.saveBadge[data-stop="'+stopId+'"][data-q="'+key+'"]');
   if(tag){
     tag.textContent = '✔';
     setTimeout(function(){ tag.textContent=''; }, 1200);
   }
 }
+
 function clearAns(stopId, qi){
   var st = store.get() || {};
   var key = ansKey(qi);
 
+  // 1) wis antwoord in store
   if(st.answers && st.answers[stopId] && st.answers[stopId].hasOwnProperty(key)){
     delete st.answers[stopId][key];
     store.set(st);
   }
 
+  // 2) reset textarea (open vraag)
   var ta = document.querySelector('.ans[data-stop="'+stopId+'"][data-q="'+key+'"]');
   if(ta) ta.value = '';
 
+  // 3) reset radio buttons
+  var radios = document.querySelectorAll(
+    'input.rbOpt[data-stop="'+stopId+'"][data-q="'+key+'"]'
+  );
+  for(var i=0;i<radios.length;i++){
+    radios[i].checked = false;
+  }
+
+  // 4) reset checkboxes
+  var checks = document.querySelectorAll(
+    'input.cbOpt[data-stop="'+stopId+'"][data-q="'+key+'"]'
+  );
+  for(var j=0;j<checks.length;j++){
+    checks[j].checked = false;
+  }
+
+  // 5) reset MC button-grid
+  var btns = document.querySelectorAll(
+    'button.optBtn[data-stop="'+stopId+'"][data-q="'+key+'"]'
+  );
+  for(var k=0;k<btns.length;k++){
+    btns[k].classList.remove('isActive');
+  }
+
+  // 6) wis save badge
   var tag = document.querySelector('.saveBadge[data-stop="'+stopId+'"][data-q="'+key+'"]');
   if(tag) tag.textContent = '';
+
+  // 7) wis media blobs (indien van toepassing)
+  try{
+    clearMediaForQuestion(stopId, key);
+  }catch(e){}
 }
 
   
@@ -4024,48 +4208,69 @@ if(ul){
   ul.addEventListener('blur', handleSave, true);
 
   // discrete changes (checkbox + radio + textarea fallback)
-  ul.addEventListener('change', function(e){
-    var t = e.target;
-    if(!t || !t.matches) return;
+ ul.addEventListener('change', function(e){
+  var t = e.target;
+  if(!t || !t.matches) return;
 
-    // textarea fallback (voor browsers die change afvuren bij blur)
-    if(t.matches('textarea.ans')){
-      handleSave(e);
-      return;
-    }
+  // textarea fallback (voor browsers die change afvuren bij blur)
+  if(t.matches('textarea.ans')){
+    handleSave(e);
+    return;
+  }
 
-    // checkbox
-    if(t.matches('input.cbOpt')){
-      var sid = t.getAttribute('data-stop');
-      var qid = String(t.getAttribute('data-q')||'');
-      var oid = String(t.getAttribute('data-oid')||'');
-      if(!sid || !qid || !oid) return;
+  // checkbox
+  if(t.matches('input.cbOpt')){
+    var sid = t.getAttribute('data-stop');
+    var qid = String(t.getAttribute('data-q')||'');
+    var oid = String(t.getAttribute('data-oid')||'');
+    if(!sid || !qid || !oid) return;
 
-      var cur = parseJsonArray(getAns(sid, qid));
-      var map = Object.create(null);
-      for(var i=0;i<cur.length;i++) map[cur[i]] = true;
+    var q = findVraagById(sid, qid);
+    if(!q) return; // vraag niet gevonden -> niets doen
 
-      if(t.checked) map[oid] = true;
-      else delete map[oid];
+    // haal bestaand antwoord op (kan oud of nieuw formaat zijn)
+    var curRaw = getAns(sid, qid);
+    var curObj = normalizeStoredAnswer(curRaw) || {};
+    var curIds = Array.isArray(curObj.choiceIds) ? curObj.choiceIds.slice() : [];
 
-      var next = [];
-      for(var k in map) if(map.hasOwnProperty(k)) next.push(k);
+    // toggle oid
+    var map = Object.create(null);
+    for(var i=0;i<curIds.length;i++) map[curIds[i]] = true;
+    if(t.checked) map[oid] = true;
+    else delete map[oid];
 
-      setAns(sid, qid, stringifyJson(next));
-      return;
-    }
+    var nextIds = [];
+    for(var k in map) if(Object.prototype.hasOwnProperty.call(map,k)) nextIds.push(k);
 
-    // radio (MC list)
-    if(t.matches('input.rbOpt')){
-      var sid2 = t.getAttribute('data-stop');
-      var qid2 = String(t.getAttribute('data-q')||'');
-      var oid2 = String(t.getAttribute('data-oid')||'');
-      if(sid2 && qid2 && oid2){
-        setAns(sid2, qid2, oid2);
-      }
-      return;
-    }
-  });
+    // ✅ nieuw: bewaar ids + teksten
+    var nextObj = {
+      choiceIds: nextIds,
+      choiceTexts: nextIds.map(function(id){ return optionTextById(q, id); })
+    };
+
+    setAns(sid, qid, nextObj);
+    return;
+  }
+
+  // radio (MC list)
+  if(t.matches('input.rbOpt')){
+    var sid2 = t.getAttribute('data-stop');
+    var qid2 = String(t.getAttribute('data-q')||'');
+    var oid2 = String(t.getAttribute('data-oid')||'');
+    if(!sid2 || !qid2 || !oid2) return;
+
+    var q2 = findVraagById(sid2, qid2);
+    if(!q2) return;
+
+    // ✅ nieuw: bewaar id + tekst
+    setAns(sid2, qid2, {
+      choiceId: oid2,
+      choiceText: optionTextById(q2, oid2)
+    });
+    return;
+  }
+});
+
 
   // clicks (mc buttons + clear + mic + media placeholder)
   ul.addEventListener('click', function(e){
@@ -4076,21 +4281,29 @@ if(ul){
       var sid = ob.getAttribute('data-stop');
       var qid = String(ob.getAttribute('data-q')||'');
       var oid = String(ob.getAttribute('data-oid')||'');
-      if(sid && qid && oid){
-        setAns(sid, qid, oid);
+    if(sid && qid && oid){
+      var q = findVraagById(sid, qid);
+      var txt = q ? optionTextById(q, oid) : (ob.textContent || '').trim() || oid;
 
-        // UI: active state
-        var wrap = ob.closest('.qaMC');
-        if(wrap){
-          var all = wrap.querySelectorAll('button.optBtn');
-          for(var i=0;i<all.length;i++) all[i].classList.remove('isActive');
-        }
-        ob.classList.add('isActive');
+      setAns(sid, qid, {
+        choiceId: oid,
+        choiceText: txt
+      });
+
+      // UI: active state
+      var wrap = ob.closest('.qaMC');
+      if(wrap){
+        var all = wrap.querySelectorAll('button.optBtn');
+        for(var i=0;i<all.length;i++) all[i].classList.remove('isActive');
       }
+      ob.classList.add('isActive');
+    }
       return;
     }
 
     // clear
+
+
    var clr = e.target && e.target.closest ? e.target.closest('button.clearAns') : null;
 if(clr){
   var sid2 = clr.getAttribute('data-stop');
