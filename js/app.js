@@ -284,6 +284,11 @@ function setMediaBtnState(btn, isRecording){
     btn.classList.remove('isRecording');
   }
 }
+      function flashBtnError(btn){
+        if(!btn) return;
+        btn.classList.add('isError');
+        setTimeout(function(){ btn.classList.remove('isError'); }, 400);
+      }
 
 var __recMap = Object.create(null); // key: stopId|qid -> {rec, chunks, startedAt, stream, btn, cfg, timerId}
 
@@ -303,6 +308,7 @@ function toggleAudioRecord(stopId, qid, btn){
   maxSeconds: parseInt(btn && btn.getAttribute('data-maxs') || '30', 10) || 30,
   maxCount:   parseInt(btn && btn.getAttribute('data-maxcount') || '1', 10) || 1
 };
+console.log('AUDIO cfg', cfg, 'minsAttr=', btn && btn.getAttribute('data-mins'), 'maxsAttr=', btn && btn.getAttribute('data-maxs'));
 
 
   // ✅ enforce maxCount vóór we mic openen
@@ -396,11 +402,6 @@ function toggleAudioRecord(stopId, qid, btn){
           + 'Maximaal '+cfg.maxSeconds+'s toegestaan.'
         );
         return;
-      }
-      function flashBtnError(btn){
-        if(!btn) return;
-        btn.classList.add('isError');
-        setTimeout(function(){ btn.classList.remove('isError'); }, 400);
       }
 
       // ✅ enforce maxCount opnieuw (race condition)
