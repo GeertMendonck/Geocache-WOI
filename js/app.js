@@ -155,11 +155,240 @@ function setRecUi(key, on, sec){
 function cssAttr(s){
   return String(s).replace(/"/g, '\\"');
 }
+// eport to import from Zip
+async function importZip(file, opts){
+  opts = opts || {};
+  var overwrite = (opts.overwrite !== false); // default true
+  if(typeof JSZip === 'undefined') throw new Error('JSZip ontbreekt');
+  if(!file) throw new Error('Geen file');
 
+  var zip = await JSZip.loadAsync(file);
+
+  var pFile = zip.file('progress.json');
+  if(!pFile) throw new Error('progress.json ontbreekt in zip');
+
+  var progress = JSON.parse(await pFile.async('string'));
+  if(progress.exportVersion !== 3){
+    throw new Error('Onbekende exportVersion: ' + progress.exportVersion);
+  }
+
+  var mFile = zip.file('manifest.json');
+  var manifest = mFile ? JSON.parse(await mFile.async('string')) : { items: [] };
+
+  // --- restore store (state + answers)
+  var st = store.get() || {};
+  if(overwrite){
+    // behoud eventueel andere velden van je store als je wil (bv settings flags)
+    // maar voor restore is dit meestal ok:
+    st.unlockedLocs = progress.state.unlockedLocs || [];
+    st.unlockedBySlot = progress.state.unlockedBySlot || null;
+    st.focus = progress.state.focus || null;
+    st.lastUnlockedLocId = progress.state.lastUnlockedLocId || null;
+    st.notes = progress.state.notes || '';
+    st.answers = progress.state.answers || {};
+  } else {
+    // merge: combineer antwoorden (simpel)
+    st.unlockedLocs = st.unlockedLocs || [];
+    (progress.state.unlockedLocs || []).forEach(function(id){
+      if(st.unlockedLocs.indexOf(id) < 0) st.unlockedLocs.push(id);
+    });
+
+    st.unlockedBySlot = Object.assign({}, st.unlockedBySlot || {}, progress.state.unlockedBySlot || {});
+    st.answers = Object.assign({}, st.answers || {}, progress.state.answers || {});
+    if(progress.state.notes) st.notes = (st.notes ? (st.notes + '\n') : '') + progress.state.notes;
+  }
+
+  store.set(st);
+
+  // --- restore media to IndexedDB
+  var db = await idbOpen();
+
+  // (optioneel) bij overwrite: eerst oude media wissen die in manifest zit
+  if(overwrite && Array.isArray(manifest.items)){
+    for(var d=0; d<manifest.items.length; d++){
+      var itDel = manifest.items[d];
+      if(itDel && itDel.key) {
+        try{ await idbDelete(db, itDel.key); }catch(e){}
+      }
+    }
+  }
+
+  // zet alles terug
+  if(Array.isArray(manifest.items)){
+    for(var i=0;i<manifest.items.length;i++){
+      var it = manifest.items[i];
+      if(!it || !it.key || !it.path) continue;
+
+      var zf = zip.file(it.path);
+      if(!zf) continue;
+
+      var blob = await zf.async('blob');
+      // mime terugzetten is niet altijd nodig, maar kan:
+      // blob = blob.slice(0, blob.size, it.mime || blob.type);
+      if(it.mime && blob.type !== it.mime){
+        blob = blob.slice(0, blob.size, it.mime);
+      }
+
+      await idbPut(db, it.key, blob);
+    }
+  }
+
+  // --- UI refresh
+  try{ renderUnlocked(); }catch(e){}
+  try{
+    // als je hydrateMedia apart doet per container, laat je bestaande flow lopen
+    // anders eventueel:
+    // hydrateMedia(document);
+  }catch(e){}
+
+  return { progress: progress, manifest: manifest };
+}
+
+
+async function exportZip(){
+  if(typeof JSZip === 'undefined') throw new Error('JSZip ontbreekt');
+
+  var st = store.get();
+  var pc = (typeof currentPc === 'function') ? (currentPc() || {}) : {};
+
+  var zip = new JSZip();
+
+  // --- progress.json (geen media, enkel state + answers)
+  var progress = {
+    exportVersion: 3,
+    exportedAt: new Date().toISOString(),
+    scenario: {
+      title: (DATA && DATA.meta && DATA.meta.title) ? DATA.meta.title : '',
+      version: (DATA && DATA.meta && DATA.meta.version) ? DATA.meta.version : ''
+    },
+    pc: pc,
+    state: {
+      // neem alles mee dat je route bepaalt
+      unlockedLocs: st.unlockedLocs || [],
+      unlockedBySlot: st.unlockedBySlot || null,
+      focus: st.focus || null,
+      lastUnlockedLocId: st.lastUnlockedLocId || null,
+      notes: st.notes || '',
+      answers: st.answers || {}
+    }
+  };
+
+  zip.file('progress.json', JSON.stringify(progress, null, 2));
+
+  // --- media + manifest
+  var db = await idbOpen();
+  var keys = await idbGetAllKeys(db);
+
+  var manifest = {
+    exportVersion: 3,
+    exportedAt: new Date().toISOString(),
+    db: { name: MEDIA_DB_NAME, store: MEDIA_STORE },
+    items: []
+  };
+
+  // sequentieel: minder RAM spikes op mobiel
+  for(var i=0;i<keys.length;i++){
+    var key = String(keys[i] || '');
+    if(key.indexOf('m|') !== 0) continue;
+
+    var blob = await idbGet(db, key);
+    if(!blob) continue;
+
+    var parts = key.split('|'); // m|loc|q|item
+    var locId  = parts[1] || 'unknownLoc';
+    var qId    = parts[2] || 'unknownQ';
+    var itemId = parts[3] || ('item' + i);
+
+    var ext = mimeToExt(blob.type);
+    var path = 'media/' + locId + '/' + qId + '/' + itemId + ext;
+
+    zip.file(path, blob);
+
+    manifest.items.push({
+      key: key,
+      path: path,
+      mime: blob.type || '',
+      size: blob.size || 0
+    });
+  }
+
+  zip.file('manifest.json', JSON.stringify(manifest, null, 2));
+
+  // --- download zip
+  var outBlob = await zip.generateAsync({ type:'blob' });
+  var url = URL.createObjectURL(outBlob);
+
+  var safeTitle = (progress.scenario.title || 'export').replace(/[^\w\-]+/g,'_').slice(0,40);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = safeTitle + '_' + Date.now() + '.zip';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+}
+
+function mimeToExt(mime){
+  mime = String(mime || '').toLowerCase();
+  if(mime.includes('webm')) return '.webm';
+  if(mime.includes('ogg'))  return '.ogg';
+  if(mime.includes('wav'))  return '.wav';
+  if(mime.includes('mpeg')) return '.mp3';
+  if(mime.includes('mp4'))  return '.mp4';
+  if(mime.includes('jpeg')) return '.jpg';
+  if(mime.includes('png'))  return '.png';
+  if(mime.includes('gif'))  return '.gif';
+  return '';
+}
 
 // ---------------- Media storage (IndexedDB) ----------------
 var MEDIA_DB_NAME = 'geo_media_db_v1';
-var MEDIA_STORE = 'blobs';
+var MEDIA_STORE  = 'blobs';
+
+function idbOpen(){
+  return new Promise(function(resolve, reject){
+    var req = indexedDB.open(MEDIA_DB_NAME, 1);
+    req.onupgradeneeded = function(){
+      var db = req.result;
+      if(!db.objectStoreNames.contains(MEDIA_STORE)){
+        db.createObjectStore(MEDIA_STORE);
+      }
+    };
+    req.onsuccess = function(){ resolve(req.result); };
+    req.onerror   = function(){ reject(req.error); };
+  });
+}
+
+function idbGetAllKeys(db){
+  return new Promise(function(resolve, reject){
+    var tx = db.transaction(MEDIA_STORE, 'readonly');
+    var st = tx.objectStore(MEDIA_STORE);
+    var r  = st.getAllKeys();
+    r.onsuccess = function(){ resolve(r.result || []); };
+    r.onerror   = function(){ reject(r.error); };
+  });
+}
+
+function idbGet(db, key){
+  return new Promise(function(resolve, reject){
+    var tx = db.transaction(MEDIA_STORE, 'readonly');
+    var st = tx.objectStore(MEDIA_STORE);
+    var r  = st.get(key);
+    r.onsuccess = function(){ resolve(r.result || null); };
+    r.onerror   = function(){ reject(r.error); };
+  });
+}
+
+function idbPut(db, key, blob){
+  return new Promise(function(resolve, reject){
+    var tx = db.transaction(MEDIA_STORE, 'readwrite');
+    var st = tx.objectStore(MEDIA_STORE);
+    var r  = st.put(blob, key);
+    r.onsuccess = function(){ resolve(true); };
+    r.onerror   = function(){ reject(r.error); };
+  });
+}
 
 function openMediaDb(){
   return new Promise(function(resolve, reject){
@@ -196,7 +425,7 @@ function mediaGet(key){
     });
   });
 }
-
+// niet in gebruik:
 function mediaDel(key){
   return openMediaDb().then(function(db){
     return new Promise(function(resolve, reject){
@@ -3250,7 +3479,37 @@ function charactersEnabled(){
     }
   
     // ---------- renderUnlocked ----------
- 
+ function bindExportImportUi(){
+  var bExp = document.getElementById('exportZipBtn');
+  var bImp = document.getElementById('importZipBtn');
+  var inp  = document.getElementById('inpZip');
+
+  if(bExp){
+    bExp.addEventListener('click', function(){
+      exportZip().catch(function(err){
+        alert('Export faalde: ' + (err && err.message ? err.message : err));
+      });
+    });
+  }
+
+  if(bImp && inp){
+    bImp.addEventListener('click', function(){
+      inp.click();
+    });
+
+    inp.addEventListener('change', function(){
+      var f = inp.files && inp.files[0];
+      inp.value = '';
+      if(!f) return;
+
+      // restore-mode: overschrijft de huidige voortgang met de zip
+      importZip(f, { overwrite:true }).catch(function(err){
+        alert('Import faalde: ' + (err && err.message ? err.message : err));
+      });
+    });
+  }
+}
+
     function renderUnlocked(){
         var old = document.getElementById('mapSection');
         if(old) old.style.display = 'none';
@@ -3327,15 +3586,21 @@ function charactersEnabled(){
       
         var downloadHtml =
             '<div class="card mt-10">'
-          + '  <div class="cardHead">📄 Verslag</div>'
+          + '  <div class="cardHead">📦 Export / Import</div>'
           + '  <div class="cardBody">'
           + (isEnd
-              ? '<div class="muted small" style="margin-bottom:8px">Je bent aan het eindpunt — je kan nu je definitieve verslag downloaden.</div>'
-              : '<div class="muted small" style="margin-bottom:8px">Je kan onderweg al exporteren (handig voor tips). Definitieve export op het eindpunt.</div>'
+              ? '<div class="muted small" style="margin-bottom:8px">Je bent aan het eindpunt — download je ZIP (antwoorden + foto\'s/audio) en stuur die door.</div>'
+              : '<div class="muted small" style="margin-bottom:8px">Je kan onderweg al exporteren (backup). Op het eindpunt download je je definitieve ZIP.</div>'
             )
-          + '    <button id="exportBtn" type="button" class="primary">⬇️ Download verslag</button>'
+          + '    <div style="display:flex;gap:8px;flex-wrap:wrap">'
+          + '      <button id="exportZipBtn" type="button" class="primary">⬇️ Download ZIP</button>'
+          + '      <button id="importZipBtn" type="button">⬆️ Import ZIP</button>'
+          + '    </div>'
+          + '    <input id="inpZip" type="file" accept=".zip" style="display:none" />'
+          + '    <div class="muted small" style="margin-top:8px">Tip: import is vooral handig om te herstellen als je browserdata weg zijn of je toestel wisselt.</div>'
           + '  </div>'
           + '</div>';
+
       
         // ---- verhaal --------------------------------------------------
         var verhaal = hasRealLoc ? getStoryFor(pc, slotId, locId) : null;
@@ -3606,6 +3871,7 @@ function charactersEnabled(){
         if(oneMap && oneMap.parentElement !== park) park.appendChild(oneMap);
       
         cont.innerHTML = html;
+        bindExportImportUi();
         hydrateMedia(cont);
       // ✅ gallery bij Informatie (uitleg)
         // host div bestaat pas na cont.innerHTML
@@ -4047,7 +4313,7 @@ if(clr){
       
         var a = document.createElement('a');
         a.href = url;
-        a.download = 'woi-verslag.md';
+        a.download = 'verslag.md';
         document.body.appendChild(a);
         a.click();
         a.parentNode.removeChild(a);
