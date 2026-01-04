@@ -3694,6 +3694,10 @@ function charactersEnabled(){
   }
 }
 
+  
+
+
+
     function renderUnlocked(){
         var old = document.getElementById('mapSection');
         if(old) old.style.display = 'none';

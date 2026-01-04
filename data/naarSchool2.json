@@ -1,0 +1,330 @@
+{
+  "meta": {
+    "title": "Testroute – Omgekeerd (Thuis → Kerk → Keuze → Opera → Wapper → Sint-Lodewijk)",
+    "subtitle": "Test met 2 locaties in één slot (stop02) en vaste eindlocatie op school",
+    "version": "1.0",
+    "characters": {
+      "enabled": true,
+      "source": "personages.json"
+    },
+    "assetsBase": "https://geertmendonck.github.io/Geo-afbeeldingen/naarSchool/"
+  },
+  "settings": {
+    "visibilityMode": "nextOnly",
+    "multiLocationSlotMode": "all",
+    "showOptionalSlots": true,
+    "listShowFutureSlots": true
+  },
+  "prestart": {
+    "useLocationId": "thuis",
+    "meetingPoint": {
+      "lat": 51.220418,
+      "lng": 4.440854,
+      "label": "Aan de voordeur"
+    },
+    "message": "Nog niet aan het startpunt (Thuis). Ga naar de startlocatie om te beginnen.",
+    "maps": {
+      "label": "Route naar startpunt"
+    },
+    "images": []
+  },
+  "slots": [
+    {
+      "id": "start",
+      "label": "Start",
+      "required": true
+    },
+    {
+      "id": "stop01",
+      "label": "Stop 1",
+      "required": true,
+      "unlockAfterSlot": "start"
+    },
+    {
+      "id": "stop02",
+      "label": "Stop 2",
+      "required": true,
+      "unlockAfterSlot": "stop01",
+      "completeMode": "random"
+    },
+    {
+      "id": "stop03",
+      "label": "Stop 3",
+      "required": true,
+      "unlockAfterSlot": "stop02"
+    },
+    {
+      "id": "stop04",
+      "label": "Stop 4",
+      "required": true,
+      "unlockAfterSlot": "stop03"
+    },
+    {
+      "id": "end",
+      "label": "Einde",
+      "required": true,
+      "unlockAfterSlot": "stop04"
+    }
+  ],
+  "locaties": [
+    {
+      "id": "thuis",
+      "slot": "start",
+      "naam": "Start: Thuis",
+      "lat": 51.220418,
+      "lng": 4.440854,
+      "radius": 50,
+      "routeHint": "Ga naar je startpunt (Thuis). Start pas wanneer je binnen de radius staat (±50m).",
+      "uitleg": {
+        "kort": "Startpunt voor snelle flowtest.",
+        "uitgebreid": "Gebruik dit startpunt om te testen of uitleg boven vragen verschijnt, refresh stabiel blijft en de ontgrendeling pas gebeurt binnen de radius."
+      },
+      "vragen": [
+        {
+          "id": "q_mk07n8ch_ud2z",
+          "type": "open",
+          "vraag": "Wat wil je vandaag testen?",
+          "media": {},
+          "policy": {
+            "showUntil": "nextLocation",
+            "closeWhen": "nextLocation"
+          }
+        },
+        {
+          "id": "q_mk07n8ch_d2hi",
+          "type": "open",
+          "vraag": "Welke functies wil je zeker uitproberen?",
+          "media": {},
+          "policy": {
+            "showUntil": "nextLocation",
+            "closeWhen": "nextLocation"
+          }
+        }
+      ],
+      "images": []
+    },
+    {
+      "id": "sint_willibrorduskerk",
+      "slot": "stop01",
+      "naam": "Stop 1: Sint-Willibrorduskerk",
+      "lat": 51.2193360072171,
+      "lng": 4.431886670037614,
+      "radius": 50,
+      "routeHint": "Ga naar de Sint-Willibrorduskerk. Test tekstvelden, opslag per locatie-id en de voorleesknop.",
+      "uitleg": {
+        "kort": "Teststop: opslag/voorlezen per locatie.",
+        "uitgebreid": "Controleer of antwoorden correct gekoppeld blijven aan deze locatie en of refresh niets door elkaar haalt."
+      },
+      "vragen": [
+        {
+          "id": "q_mk07nlkx_dau2",
+          "type": "mc",
+          "vraag": "Verspringt MC nog steeds?",
+          "policy": {
+            "showUntil": "beforeEnd",
+            "closeWhen": "beforeEnd"
+          },
+          "opties": [
+            {
+              "id": "o_mk07nlkx_tr92",
+              "tekst": "ja",
+              "correct": false
+            },
+            {
+              "id": "o_mk07nlkx_fmnv",
+              "tekst": "nee",
+              "correct": true
+            }
+          ],
+          "media": {},
+          "shuffle": true
+        },
+        {
+          "id": "q_mk07o6yi_370d",
+          "type": "checkbox",
+          "vraag": "Worden dee antwoorden juist weggeschreven?",
+          "policy": {
+            "showUntil": "beforeEnd",
+            "closeWhen": "beforeEnd"
+          },
+          "opties": [
+            {
+              "id": "o_mk07o6yi_u6xo",
+              "tekst": "ja",
+              "correct": true
+            },
+            {
+              "id": "o_mk07o6yi_5r56",
+              "tekst": "nee",
+              "correct": false
+            },
+            {
+              "id": "o_mk07omze_nr33",
+              "tekst": "afhankelijk van het soort vragen",
+              "correct": false
+            }
+          ],
+          "media": {},
+          "shuffle": true
+        },
+        {
+          "id": "q_mk07oyhu_meht",
+          "type": "open",
+          "vraag": "Te melden problemen:",
+          "policy": {
+            "showUntil": "beforeEnd",
+            "closeWhen": "beforeEnd"
+          },
+          "media": {}
+        }
+      ],
+      "images": []
+    },
+    {
+      "id": "centraal_station",
+      "slot": "stop02",
+      "naam": "Stop 2: Centraal-Station",
+      "lat": 51.217525,
+      "lng": 4.421154,
+      "radius": 50,
+      "routeHint": "Ga naar het Centraal Station. Dit is één van de twee mogelijke locaties in stop02.",
+      "uitleg": {
+        "kort": "Teststop: meerdere locaties binnen één slot.",
+        "uitgebreid": "Omdat stop02 twee locaties bevat, test je hier of je UI dit correct presenteert en of de juiste locatie als ‘behaald’ telt."
+      },
+      "vragen": [
+        {
+          "id": "q_mk07pdd0_c695",
+          "type": "open",
+          "vraag": "Werken de reflectievelden en de voorleesknop goed?",
+          "media": {},
+          "policy": {
+            "showUntil": "nextLocation",
+            "closeWhen": "nextLocation"
+          }
+        },
+        {
+          "id": "q_mk07pdd0_q29f",
+          "type": "open",
+          "vraag": "Voelt de UI vlot aan op jouw toestel?",
+          "media": {},
+          "policy": {
+            "showUntil": "nextLocation",
+            "closeWhen": "nextLocation"
+          }
+        }
+      ],
+      "images": []
+    },
+    {
+      "id": "chinese_poort",
+      "slot": "stop02",
+      "naam": "Stop 2: Chinese Poort",
+      "lat": 51.2192,
+      "lng": 4.420779,
+      "radius": 50,
+      "routeHint": "Ga naar de Chinese Poort. Dit is de tweede mogelijke locatie in stop02.",
+      "uitleg": {
+        "kort": "Tweede kandidaat binnen stop02.",
+        "uitgebreid": "Test of je app correct omgaat met twee locaties die hetzelfde slot delen: beide zichtbaar of correct gekozen afhankelijk van je instelling."
+      },
+      "vragen": [
+        "Werken de reflectievelden en de voorleesknop goed?",
+        "Voelt de UI vlot aan op jouw toestel?"
+      ]
+    },
+    {
+      "id": "metro_opera",
+      "slot": "stop03",
+      "naam": "Stop 3: Metro Opera",
+      "lat": 51.218083,
+      "lng": 4.415521,
+      "radius": 50,
+      "routeHint": "Ga naar Metro Opera. Let op live updates van je positie en of de kaart vlot blijft.",
+      "uitleg": {
+        "kort": "Teststop: live positie updates.",
+        "uitgebreid": "Controleer of je marker correct meebeweegt, afstand logisch blijft en de UI niet hapert tijdens wandelen."
+      },
+      "vragen": [
+        "Werken de reflectievelden en de voorleesknop goed?",
+        "Voelt de UI vlot aan op jouw toestel?"
+      ]
+    },
+    {
+      "id": "wapper",
+      "slot": "stop04",
+      "naam": "Stop 4: De Wapper",
+      "lat": 51.218013,
+      "lng": 4.408981,
+      "radius": 50,
+      "routeHint": "Ga naar De Wapper. Test opnieuw ontgrendeling en stabiliteit van afstand in een drukke omgeving.",
+      "uitleg": {
+        "kort": "Teststop: ontgrendeling + stabiliteit.",
+        "uitgebreid": "Let op mogelijke GPS-sprongen en check of je stop niet constant lock/unlock doet aan de rand van de radius."
+      },
+      "vragen": [
+        "Werken de reflectievelden en de voorleesknop goed?",
+        "Voelt de UI vlot aan op jouw toestel?"
+      ]
+    },
+    {
+      "id": "sint_lodewijk_secretariaat",
+      "slot": "end",
+      "naam": "Einde: Sint-Lodewijk (secretariaat)",
+      "lat": 51.21742931212193,
+      "lng": 4.402670253459137,
+      "radius": 50,
+      "routeHint": "Ga naar Sint-Lodewijk (secretariaat). Eindig de route wanneer je binnen de radius staat (±50m).",
+      "uitleg": {
+        "kort": "Eindpunt: controleer eindstatus.",
+        "uitgebreid": "Check of progress correct is, of alles wat moet voltooid ook echt als voltooid staat, en of antwoorden behouden blijven na herladen."
+      },
+      "vragen": [
+        {
+          "id": "q_mk07pras_x8ah",
+          "type": "open",
+          "vraag": "Wat valt je hier op (UI/UX, snelheid, nauwkeurigheid)?",
+          "media": {},
+          "policy": {
+            "showUntil": "nextLocation",
+            "closeWhen": "nextLocation"
+          }
+        },
+        {
+          "id": "q_mk07pras_0mvb",
+          "type": "open",
+          "vraag": "Werkt het ontgrendelen zoals bedoeld?",
+          "media": {},
+          "policy": {
+            "showUntil": "nextLocation",
+            "closeWhen": "nextLocation"
+          }
+        },
+        {
+          "id": "q_mk07q6vx_dcet",
+          "type": "mc",
+          "vraag": "Werkte alles naar behoren?",
+          "policy": {
+            "showUntil": "beforeEnd",
+            "closeWhen": "beforeEnd"
+          },
+          "opties": [
+            {
+              "id": "o_mk07q6vx_0biw",
+              "tekst": "Ja",
+              "correct": true
+            },
+            {
+              "id": "o_mk07q6vx_iu7d",
+              "tekst": "Nee",
+              "correct": false
+            }
+          ],
+          "media": {},
+          "shuffle": true
+        }
+      ],
+      "images": []
+    }
+  ]
+}
