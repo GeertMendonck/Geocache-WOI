@@ -218,6 +218,13 @@
   .qa button{ height:36px; }
   .saveBadge{ min-width:96px; }
   
+ .optGrid{ display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+.optBtn{ padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:inherit; cursor:pointer; }
+.optBtn.isActive{ outline:2px solid rgba(255,255,255,.35); }
+.cbList{ display:flex; flex-direction:column; gap:6px; margin-top:6px; }
+.cbRow{ display:flex; gap:10px; align-items:flex-start; cursor:pointer; }
+.qa.isClosed{ opacity:.72; }
+
   /* ===============================
      PC HEADER (Jouw personage)
      =============================== */

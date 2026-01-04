@@ -33,7 +33,194 @@ function getAssetsBase(data){
   if(!base) throw new Error('meta.assetsBase ontbreekt in je route-JSON.');
   return base;
 }
+function safeArr(a){ return Array.isArray(a) ? a : []; }
 function isObj(x){ return x && typeof x === 'object' && !Array.isArray(x); }
+
+function parseJsonArray(s){
+  try{
+    var v = JSON.parse(s);
+    return Array.isArray(v) ? v : [];
+  }catch(e){
+    return [];
+  }
+}
+
+function stringifyJson(v){
+  try{ return JSON.stringify(v); }catch(e){ return ''; }
+}
+
+function isQuestionClosed(q, passedThisLoc, routeEnded, hasRealLoc){
+  var pol = isObj(q.policy) ? q.policy : {};
+  var closeWhen = (pol.closeWhen || pol.showUntil || 'nextLocation') + '';
+  closeWhen = closeWhen.toLowerCase();
+
+  if(closeWhen === 'inrange') return !hasRealLoc;       // buiten de cirkel => dicht
+  if(closeWhen === 'nextlocation') return !!passedThisLoc;
+  if(closeWhen === 'beforeend') return !!routeEnded;
+  if(closeWhen === 'afterend') return !!routeEnded;
+
+  return !!passedThisLoc;
+}
+
+function shouldShowQuestion(q, passedThisLoc, routeEnded, hasRealLoc){
+  var pol = isObj(q.policy) ? q.policy : {};
+  var showUntil = (pol.showUntil || 'nextLocation') + '';
+  showUntil = showUntil.toLowerCase();
+
+  if(showUntil === 'inrange') return !!hasRealLoc;
+  if(showUntil === 'nextlocation') return !passedThisLoc;
+  if(showUntil === 'beforeend') return !routeEnded;
+  if(showUntil === 'afterend') return true;
+
+  return !passedThisLoc;
+}
+// ------------- Render per soort vraag -------------------------
+function renderVraagOpen(locId, q, closed){
+  var val = getAns(locId, q.id);
+
+  return ''
+    + '<div class="qa' + (closed ? ' isClosed' : '') + '" data-qwrap="'+escapeHtml(q.id)+'">'
+    + '  <div class="q"><b>Vraag:</b> ' + escapeHtml(q.vraag || '') + '</div>'
+    + '  <div class="controls">'
+    + '    <textarea class="ans ansOpen" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'"'
+    + (closed ? ' readonly' : '')
+    + ' placeholder="Jouw antwoord...">'+escapeHtml(val)+'</textarea>'
+    + '    <div class="btnRow">'
+    +      (MIC_OK && !closed ? '<button class="micBtn" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'">🎙️</button>' : '')
+    +      (!closed ? '<button class="clearAns" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'">✖</button>' : '')
+    + '      <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'"></span>'
+    + '    </div>'
+    + '  </div>'
+    + '</div>';
+}
+
+function renderVraagMC(locId, q, closed){
+  var picked = getAns(locId, q.id); // optie.id
+  var opts = safeArr(q.opties);
+
+  // shuffle enkel voor UI, zonder DATA te muteren
+  if(q.shuffle && opts.length > 1){
+    opts = opts.slice();
+    for(var i=opts.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var tmp = opts[i]; opts[i]=opts[j]; opts[j]=tmp;
+    }
+  }
+
+  var buttons = opts.map(function(o){
+    var oid = o.id || '';
+    var active = (picked && oid && picked === oid);
+    return ''
+      + '<button class="optBtn' + (active?' isActive':'') + '"'
+      + ' data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'" data-oid="'+escapeHtml(oid)+'"'
+      + (closed ? ' disabled' : '')
+      + '>'
+      + escapeHtml(o.tekst || '')
+      + '</button>';
+  }).join('');
+
+  return ''
+    + '<div class="qa qaMC' + (closed ? ' isClosed' : '') + '" data-qwrap="'+escapeHtml(q.id)+'">'
+    + '  <div class="q"><b>Meerkeuze:</b> ' + escapeHtml(q.vraag || '') + '</div>'
+    + '  <div class="controls">'
+    + '    <div class="optGrid">' + buttons + '</div>'
+    + '    <div class="btnRow">'
+    +      (!closed ? '<button class="clearAns" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'">✖</button>' : '')
+    + '      <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'"></span>'
+    + '    </div>'
+    + '  </div>'
+    + '</div>';
+}
+
+function renderVraagCheckbox(locId, q, closed){
+  var raw = getAns(locId, q.id);
+  var picked = parseJsonArray(raw); // array van optie.id
+  var map = Object.create(null);
+  for(var i=0;i<picked.length;i++) map[picked[i]] = true;
+
+  var opts = safeArr(q.opties);
+
+  if(q.shuffle && opts.length > 1){
+    opts = opts.slice();
+    for(var k=opts.length-1;k>0;k--){
+      var j2 = Math.floor(Math.random()*(k+1));
+      var tmp2 = opts[k]; opts[k]=opts[j2]; opts[j2]=tmp2;
+    }
+  }
+
+  var items = opts.map(function(o){
+    var oid = o.id || '';
+    var on = !!map[oid];
+    var cid = 'cb_' + safeDomId(locId) + '_' + safeDomId(q.id) + '_' + safeDomId(oid);
+    return ''
+      + '<label class="cbRow' + (closed?' isDisabled':'') + '" for="'+cid+'">'
+      + '  <input type="checkbox" class="cbOpt" id="'+cid+'"'
+      + ' data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'" data-oid="'+escapeHtml(oid)+'"'
+      + (on ? ' checked' : '')
+      + (closed ? ' disabled' : '')
+      + '>'
+      + '  <span>' + escapeHtml(o.tekst || '') + '</span>'
+      + '</label>';
+  }).join('');
+
+  return ''
+    + '<div class="qa qaCB' + (closed ? ' isClosed' : '') + '" data-qwrap="'+escapeHtml(q.id)+'">'
+    + '  <div class="q"><b>Meerdere antwoorden:</b> ' + escapeHtml(q.vraag || '') + '</div>'
+    + '  <div class="controls">'
+    + '    <div class="cbList">' + items + '</div>'
+    + '    <div class="btnRow">'
+    +      (!closed ? '<button class="clearAns" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'">✖</button>' : '')
+    + '      <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'"></span>'
+    + '    </div>'
+    + '  </div>'
+    + '</div>';
+}
+
+function renderVraagPhoto(locId, q, closed){
+  var media = isObj(q.media) ? q.media : {};
+  var minC = media.minCount != null ? media.minCount : 0;
+  var maxC = media.maxCount != null ? media.maxCount : 1;
+
+  // voorlopig enkel “placeholder UI”
+  return ''
+    + '<div class="qa qaMedia' + (closed ? ' isClosed' : '') + '" data-qwrap="'+escapeHtml(q.id)+'">'
+    + '  <div class="q"><b>Foto:</b> ' + escapeHtml(q.vraag || '') + '</div>'
+    + '  <div class="controls">'
+    + '    <div class="muted small">Min: '+minC+' – Max: '+maxC+' (media-opslag bouwen we als volgende stap)</div>'
+    + '    <button class="mediaBtn" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'" data-mode="photo"'
+    +      (closed ? ' disabled' : '')
+    + '    >📷 Voeg foto toe</button>'
+    + '    <div class="btnRow">'
+    +      (!closed ? '<button class="clearAns" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'">✖</button>' : '')
+    + '      <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'"></span>'
+    + '    </div>'
+    + '  </div>'
+    + '</div>';
+}
+
+function renderVraagAudio(locId, q, closed){
+  var media = isObj(q.media) ? q.media : {};
+  var minS = media.minSeconds != null ? media.minSeconds : 0;
+  var maxS = media.maxSeconds != null ? media.maxSeconds : 30;
+
+  return ''
+    + '<div class="qa qaMedia' + (closed ? ' isClosed' : '') + '" data-qwrap="'+escapeHtml(q.id)+'">'
+    + '  <div class="q"><b>Audio:</b> ' + escapeHtml(q.vraag || '') + '</div>'
+    + '  <div class="controls">'
+    + '    <div class="muted small">Min: '+minS+'s – Max: '+maxS+'s (media-opslag bouwen we als volgende stap)</div>'
+    + '    <button class="mediaBtn" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'" data-mode="audio"'
+    +      (closed ? ' disabled' : '')
+    + '    >🎙️ Neem audio op</button>'
+    + '    <div class="btnRow">'
+    +      (!closed ? '<button class="clearAns" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'">✖</button>' : '')
+    + '      <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'"></span>'
+    + '    </div>'
+    + '  </div>'
+    + '</div>';
+}
+
+
+// --------------------------------------------------------------
 
 // “Waar sta ik in de route?”
 // Ik ga uit van je store met unlocked locs + lastUnlockedLocId.
@@ -2731,52 +2918,81 @@ function charactersEnabled(){
           var passedThisLoc = (locPos >= 0 && curPos >= 0 && curPos > locPos);
 
           function shouldShow(pol){
-            var showUntil = (pol && pol.showUntil ? pol.showUntil : 'nextLocation') + '';
+            var showUntil = ((pol && pol.showUntil) ? pol.showUntil : 'nextLocation') + '';
             showUntil = showUntil.toLowerCase();
-            if(showUntil === 'inrange') return true;                 // je staat hier (hasRealLoc)
-            if(showUntil === 'nextlocation') return !passedThisLoc;  // weg als je voorbij bent
-            if(showUntil === 'beforeend') return true;               // (einde nog niet geïmplementeerd) => voorlopig tonen
-            if(showUntil === 'afterend') return true;
+
+            if(showUntil === 'inrange') return true;
+            if(showUntil === 'nextlocation') return !passedThisLoc;
+
+            // zolang routeEnded niet actief is: gewoon tonen
+            if(showUntil === 'beforeend') return !routeEnded; // wordt pas false op het einde
+            if(showUntil === 'afterend')  return true;        // blijft zichtbaar
+
             return !passedThisLoc;
           }
 
           function shouldClose(pol){
-            var closeWhen = (pol && pol.closeWhen ? pol.closeWhen : 'nextLocation') + '';
+            var closeWhen = ((pol && pol.closeWhen) ? pol.closeWhen : 'nextLocation') + '';
             closeWhen = closeWhen.toLowerCase();
-            if(closeWhen === 'inrange') return false;                // je staat hier
-            if(closeWhen === 'nextlocation') return passedThisLoc;   // readonly zodra je voorbij bent
-            if(closeWhen === 'beforeend') return false;              // voorlopig
-            if(closeWhen === 'afterend') return false;               // voorlopig
+
+            if(closeWhen === 'inrange') return false;
+            if(closeWhen === 'nextlocation') return passedThisLoc;
+
+            if(closeWhen === 'beforeend') return routeEnded; // sluit op het einde
+            if(closeWhen === 'afterend')  return routeEnded; // idem (of pas na einde)
+
             return passedThisLoc;
           }
 
+
+          // qaHtml = qsArr.map(function(q, qi){
+          //   // q is object
+          //   var qObj = (q && typeof q === 'object') ? q : { id: (locId+'__q'+qi), type:'open', vraag:String(q||'') };
+          //   var qid  = qObj.id || (locId+'__q'+qi);
+          //   var qtxt = qObj.vraag != null ? String(qObj.vraag) : '';
+          //   var pol  = qObj.policy || {};
+
+          //   if(!shouldShow(pol)) return '';
+
+          //   var closed = shouldClose(pol);
+          //   var val = getAns(locId, qid);
+
+          //   return ''
+          //     + '<div class="qa'+(closed?' isClosed':'')+'">'
+          //     + '  <div class="q"><b>Vraag '+(qi+1)+':</b> '+escapeHtml(qtxt)+'</div>'
+          //     + '  <div class="controls">'
+          //     + '    <textarea class="ans" data-stop="'+locId+'" data-q="'+escapeHtml(qid)+'" placeholder="Jouw antwoord..."'
+          //     + (closed ? ' readonly' : '')
+          //     + '>'+escapeHtml(val)+'</textarea>'
+          //     + '    <div class="btnRow">'
+          //     + (MIC_OK && !closed ? '      <button class="micBtn" data-stop="'+locId+'" data-q="'+escapeHtml(qid)+'">🎙️</button>' : '')
+          //     + (!closed ? '      <button class="clearAns" data-stop="'+locId+'" data-q="'+escapeHtml(qid)+'">✖</button>' : '')
+          //     + '      <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+escapeHtml(qid)+'"></span>'
+          //     + '    </div>'
+          //     + '  </div>'
+          //     + '</div>';
+          // }).join('');
+          
+          //per type vraag
           qaHtml = qsArr.map(function(q, qi){
-            // q is object
-            var qObj = (q && typeof q === 'object') ? q : { id: (locId+'__q'+qi), type:'open', vraag:String(q||'') };
-            var qid  = qObj.id || (locId+'__q'+qi);
-            var qtxt = qObj.vraag != null ? String(qObj.vraag) : '';
-            var pol  = qObj.policy || {};
+            q = isObj(q) ? q : { id:(locId+'__q'+qi), type:'open', vraag:String(q||'') };
+            if(!q.id) q.id = (locId+'__q'+qi);
 
-            if(!shouldShow(pol)) return '';
+            // policy
+            if(!shouldShowQuestion(q, passedThisLoc, routeEnded, hasRealLoc)) return '';
+            var closed = isQuestionClosed(q, passedThisLoc, routeEnded, hasRealLoc);
 
-            var closed = shouldClose(pol);
-            var val = getAns(locId, qid);
+            // type dispatch
+            var t = (q.type || 'open') + '';
+            t = t.toLowerCase();
 
-            return ''
-              + '<div class="qa'+(closed?' isClosed':'')+'">'
-              + '  <div class="q"><b>Vraag '+(qi+1)+':</b> '+escapeHtml(qtxt)+'</div>'
-              + '  <div class="controls">'
-              + '    <textarea class="ans" data-stop="'+locId+'" data-q="'+escapeHtml(qid)+'" placeholder="Jouw antwoord..."'
-              + (closed ? ' readonly' : '')
-              + '>'+escapeHtml(val)+'</textarea>'
-              + '    <div class="btnRow">'
-              + (MIC_OK && !closed ? '      <button class="micBtn" data-stop="'+locId+'" data-q="'+escapeHtml(qid)+'">🎙️</button>' : '')
-              + (!closed ? '      <button class="clearAns" data-stop="'+locId+'" data-q="'+escapeHtml(qid)+'">✖</button>' : '')
-              + '      <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+escapeHtml(qid)+'"></span>'
-              + '    </div>'
-              + '  </div>'
-              + '</div>';
+            if(t === 'mc') return renderVraagMC(locId, q, closed);
+            if(t === 'checkbox') return renderVraagCheckbox(locId, q, closed);
+            if(t === 'photo') return renderVraagPhoto(locId, q, closed);
+            if(t === 'audio') return renderVraagAudio(locId, q, closed);
+            return renderVraagOpen(locId, q, closed);
           }).join('');
+
 
           if(!qaHtml){
             qaHtml = '<div class="muted">Geen vragen (meer) zichtbaar door policy.</div>';
@@ -3066,7 +3282,7 @@ if(ul){
     var qKey   = readQKey(ta);               // ✅ STRING, geen parseInt
     setAns(stopId, qKey, ta.value);
   }
-
+// -------------------  Eventhandlers ----------------------------------
   ul.addEventListener('input', handleSave);
   ul.addEventListener('change', handleSave);
   ul.addEventListener('blur', handleSave, true);
@@ -3085,7 +3301,6 @@ if(ul){
       if(ta){ ta.value=''; ta.focus(); }
       return;
     }
-  
             var mic = e.target && e.target.closest ? e.target.closest('button.micBtn') : null;
             if(mic){
               if(!MIC_OK){ toast('Spraakherkenning niet beschikbaar (probeer online in Chrome).'); return; }
@@ -3110,7 +3325,92 @@ if(ul){
             }
           });
         }
-  
+ ul.addEventListener('click', function(e){
+  // MC optieknop
+  var ob = e.target && e.target.closest ? e.target.closest('button.optBtn') : null;
+  if(ob){
+    var sid = ob.getAttribute('data-stop');
+    var qid = String(ob.getAttribute('data-q')||'');
+    var oid = String(ob.getAttribute('data-oid')||'');
+    if(sid && qid && oid){
+      setAns(sid, qid, oid);
+
+      // UI: active state
+      var wrap = ob.closest('.qaMC');
+      if(wrap){
+        var all = wrap.querySelectorAll('button.optBtn');
+        for(var i=0;i<all.length;i++) all[i].classList.remove('isActive');
+      }
+      ob.classList.add('isActive');
+    }
+    return;
+  }
+
+  // clear
+  var clr = e.target && e.target.closest ? e.target.closest('button.clearAns') : null;
+  if(clr){
+    var sid2 = clr.getAttribute('data-stop');
+    var qid2 = String(clr.getAttribute('data-q')||'');
+    clearAns(sid2, qid2);
+
+    // als het open vraag is: textarea leegmaken
+    var ta = ul.querySelector('textarea.ans[data-stop="'+sid2+'"][data-q="'+qid2+'"]');
+    if(ta){ ta.value=''; ta.focus(); }
+
+    // als het MC is: active states weg
+    var w1 = ul.querySelector('.qaMC[data-qwrap="'+qid2+'"]');
+    if(w1){
+      var btns = w1.querySelectorAll('button.optBtn');
+      for(var j=0;j<btns.length;j++) btns[j].classList.remove('isActive');
+    }
+
+    // checkbox: uncheck
+    var w2 = ul.querySelector('.qaCB[data-qwrap="'+qid2+'"]');
+    if(w2){
+      var cbs = w2.querySelectorAll('input.cbOpt');
+      for(var k=0;k<cbs.length;k++) cbs[k].checked = false;
+    }
+    return;
+  }
+
+  // media knoppen (placeholder)
+  var mb = e.target && e.target.closest ? e.target.closest('button.mediaBtn') : null;
+  if(mb){
+    var sid3 = mb.getAttribute('data-stop');
+    var qid3 = String(mb.getAttribute('data-q')||'');
+    var mode = String(mb.getAttribute('data-mode')||'');
+    // hier haken we later echte photo/audio flow in
+    alert('Media ('+mode+') voor '+qid3+' — volgende stap 🙂');
+    return;
+  }
+});
+ul.addEventListener('change', function(e){
+  var t = e.target;
+  if(!t || !t.matches) return;
+
+  if(t.matches('input.cbOpt')){
+    var sid = t.getAttribute('data-stop');
+    var qid = String(t.getAttribute('data-q')||'');
+    var oid = String(t.getAttribute('data-oid')||'');
+    if(!sid || !qid || !oid) return;
+
+    var cur = parseJsonArray(getAns(sid, qid));
+    var map = Object.create(null);
+    for(var i=0;i<cur.length;i++) map[cur[i]] = true;
+
+    if(t.checked) map[oid] = true;
+    else delete map[oid];
+
+    var next = [];
+    for(var k in map) if(map.hasOwnProperty(k)) next.push(k);
+
+    setAns(sid, qid, stringifyJson(next));
+    return;
+  }
+});
+
+ 
+        //---------------------------------------------------------------------------------------
         window.__APP_BOUND__ = true;
   
         // SW
@@ -3290,11 +3590,11 @@ if(ul){
 
   // ---------------- Vragen normalisatie ----------------
 
-  function safeArr(a){ return Array.isArray(a) ? a : []; }
+  // function safeArr(a){ return Array.isArray(a) ? a : []; }
 
-  function isObj(x){
-    return x && typeof x === 'object' && !Array.isArray(x);
-  }
+  // function isObj(x){
+  //   return x && typeof x === 'object' && !Array.isArray(x);
+  // }
 
   function safeDomId(s){
     // simpel & stabiel: genoeg voor ids
