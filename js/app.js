@@ -80,7 +80,7 @@ function renderVraagOpen(locId, q, closed){
 
   return ''
     + '<div class="qa' + (closed ? ' isClosed' : '') + '" data-qwrap="'+escapeHtml(q.id)+'">'
-    + '  <div class="q"><b>Vraag:</b> ' + escapeHtml(q.vraag || '') + '</div>'
+    + '  <div class="q" data-qtype="open">' + escapeHtml(q.vraag || '') + '</div>'
     + '  <div class="controls">'
     + '    <textarea class="ans ansOpen" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'"'
     + (closed ? ' readonly' : '')
@@ -145,7 +145,7 @@ function renderVraagMC(locId, q, closed){
 
     return ''
       + '<div class="qa qaMC' + (closed ? ' isClosed' : '') + '" data-qwrap="'+escapeHtml(q.id)+'">'
-      + '  <div class="q"><b>Meerkeuze:</b> ' + escapeHtml(q.vraag || '') + '</div>'
+      + '  <div class="q" data-qtype="mc-radio">' + escapeHtml(q.vraag || '') + '</div>'
       + '  <div class="controls">'
       + '    <div class="rbList">' + items + '</div>'
       + '    <div class="btnRow">'
@@ -173,7 +173,7 @@ function renderVraagMC(locId, q, closed){
 
   return ''
     + '<div class="qa qaMC' + (closed ? ' isClosed' : '') + '" data-qwrap="'+escapeHtml(q.id)+'">'
-    + '  <div class="q"><b>Meerkeuze:</b> ' + escapeHtml(q.vraag || '') + '</div>'
+    + '  <div class="q" data-qtype="mc-buttons">' + escapeHtml(q.vraag || '') + '</div>'
     + '  <div class="controls">'
     + '    <div class="optGrid">' + buttons + '</div>'
     + '    <div class="btnRow">'
@@ -218,7 +218,7 @@ function renderVraagCheckbox(locId, q, closed){
 
   return ''
     + '<div class="qa qaCB' + (closed ? ' isClosed' : '') + '" data-qwrap="'+escapeHtml(q.id)+'">'
-    + '  <div class="q"><b>Meerdere antwoorden:</b> ' + escapeHtml(q.vraag || '') + '</div>'
+    + '  <div class="q" data-qtype="checkbox">' + escapeHtml(q.vraag || '') + '</div>'
     + '  <div class="controls">'
     + '    <div class="cbList">' + items + '</div>'
     + '    <div class="btnRow">'
@@ -237,7 +237,7 @@ function renderVraagPhoto(locId, q, closed){
   // voorlopig enkel “placeholder UI”
   return ''
     + '<div class="qa qaMedia' + (closed ? ' isClosed' : '') + '" data-qwrap="'+escapeHtml(q.id)+'">'
-    + '  <div class="q"><b>Foto:</b> ' + escapeHtml(q.vraag || '') + '</div>'
+    + '  <div class="q" data-qtype="photo">' + escapeHtml(q.vraag || '') + '</div>'
     + '  <div class="controls">'
     + '    <div class="muted small">Min: '+minC+' – Max: '+maxC+' (media-opslag bouwen we als volgende stap)</div>'
     + '    <button class="mediaBtn" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'" data-mode="photo"'
@@ -258,7 +258,7 @@ function renderVraagAudio(locId, q, closed){
 
   return ''
     + '<div class="qa qaMedia' + (closed ? ' isClosed' : '') + '" data-qwrap="'+escapeHtml(q.id)+'">'
-    + '  <div class="q"><b>Audio:</b> ' + escapeHtml(q.vraag || '') + '</div>'
+    + '  <div class="q" data-qtype="audio">' + escapeHtml(q.vraag || '') + '</div>'
     + '  <div class="controls">'
     + '    <div class="muted small">Min: '+minS+'s – Max: '+maxS+'s (media-opslag bouwen we als volgende stap)</div>'
     + '    <button class="mediaBtn" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'" data-mode="audio"'
@@ -1655,7 +1655,7 @@ function setAns(stopId, qi, val){
   var key = ansKey(qi);
   var tag = document.querySelector('.saveBadge[data-stop="'+stopId+'"][data-q="'+key+'"]');
   if(tag){
-    tag.textContent = '✔ opgeslagen';
+    tag.textContent = '✔';
     setTimeout(function(){ tag.textContent=''; }, 1200);
   }
 }
