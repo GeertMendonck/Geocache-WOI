@@ -375,14 +375,27 @@ function toggleAudioRecord(stopId, qid, btn){
       // maak blob
       var blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
 
-      // ✅ validate duration (min/max)
       if(seconds < cfg.minSeconds){
-        toast('🎙️ Te kort: minimaal ' + cfg.minSeconds + 's.');
+          flashBtnError(btn);
+        toast(
+          '🎙️ Opname te kort ('+seconds+'s). '
+          + 'Minimaal '+cfg.minSeconds+'s vereist.'
+        );
         return;
       }
+
       if(seconds > cfg.maxSeconds){
-        toast('🎙️ Te lang: maximaal ' + cfg.maxSeconds + 's.');
+          flashBtnError(btn);
+        toast(
+          '🎙️ Opname te lang ('+seconds+'s). '
+          + 'Maximaal '+cfg.maxSeconds+'s toegestaan.'
+        );
         return;
+      }
+      function flashBtnError(btn){
+        if(!btn) return;
+        btn.classList.add('isError');
+        setTimeout(function(){ btn.classList.remove('isError'); }, 400);
       }
 
       // ✅ enforce maxCount opnieuw (race condition)
