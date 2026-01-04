@@ -128,6 +128,28 @@ function shouldShowQuestion(q, passedThisLoc, routeEnded, hasRealLoc){
 
   return !passedThisLoc;
 }
+function fmtMMSS(sec){
+  sec = Math.max(0, sec|0);
+  var m = Math.floor(sec/60);
+  var s = sec % 60;
+  return (m<10?'0':'')+m+':' + (s<10?'0':'')+s;
+}
+
+function setRecUi(key, on, sec){
+  // key is "stopId|qid"
+  var row = document.querySelector('.recRow[data-rec="'+cssAttr(key)+'"]');
+  if(!row) return;
+  row.style.display = on ? 'flex' : 'none';
+  var t = row.querySelector('.recTime');
+  if(t) t.textContent = fmtMMSS(sec||0);
+}
+
+// kleine helper om quotes veilig te maken in attribute selector
+function cssAttr(s){
+  return String(s).replace(/"/g, '\\"');
+}
+
+
 // ---------------- Media storage (IndexedDB) ----------------
 var MEDIA_DB_NAME = 'geo_media_db_v1';
 var MEDIA_STORE = 'blobs';
@@ -236,49 +258,137 @@ function pickPhotoAndStore(stopId, qid, btn){
 }
 var __recMap = Object.create(null); // key: stopId|qid -> {rec, chunks, startedAt, timer}
 
+function getAudioCfg(stopId, qid){
+  var q = findQuestionById(stopId, qid);
+  var media = (q && isObj(q.media)) ? q.media : {};
+  return {
+    minSeconds: (media.minSeconds != null) ? media.minSeconds : 0,
+    maxSeconds: (media.maxSeconds != null) ? media.maxSeconds : 30,
+    maxCount:   (media.maxCount != null) ? media.maxCount : 1
+  };
+}
+function setMediaBtnState(btn, isRecording){
+  if(!btn) return;
+  if(isRecording){
+    btn.textContent = '⏹️ Stop opname';
+    btn.classList.add('isRecording');
+  }else{
+    btn.textContent = '🎙️ Neem audio op';
+    btn.classList.remove('isRecording');
+  }
+}
+
+var __recMap = Object.create(null); // key: stopId|qid -> {rec, chunks, startedAt, stream, btn, cfg, timerId}
+
 function toggleAudioRecord(stopId, qid, btn){
   var k = stopId + '|' + qid;
   var cur = __recMap[k];
 
+  // stop als we bezig zijn
   if(cur && cur.rec && cur.rec.state === 'recording'){
-    // stop
     try{ cur.rec.stop(); }catch(e){}
     return;
   }
 
-  // start
+  // config (min/max + maxCount)
+  var cfg = getAudioCfg(stopId, qid);
+
+  // ✅ enforce maxCount vóór we mic openen
+  var curArr = parseJsonArray(getAns(stopId, qid));
+  if(curArr.length >= cfg.maxCount){
+    toast('🎙️ Maximaal '+cfg.maxCount+' opname' + (cfg.maxCount===1?'':'s') + ' toegestaan.');
+    return;
+  }
+
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    toast('🎙️ Audio opnemen niet ondersteund in deze browser.');
+    return;
+  }
+
   navigator.mediaDevices.getUserMedia({ audio:true }).then(function(stream){
-    var rec = new MediaRecorder(stream);
+    var rec;
+    try{
+      rec = new MediaRecorder(stream);
+    }catch(e){
+      try{ stream.getTracks().forEach(function(t){ t.stop(); }); }catch(_e){}
+      toast('🎙️ MediaRecorder niet beschikbaar.');
+      return;
+    }
+
     var chunks = [];
     var startedAt = Date.now();
 
-    __recMap[k] = { rec:rec, chunks:chunks, startedAt:startedAt, stream:stream };
+    __recMap[k] = { rec:rec, chunks:chunks, startedAt:startedAt, stream:stream, btn:btn, cfg:cfg, timerId:null };
 
-    btn.textContent = '⏹️ Stop opname';
-    btn.classList.add('isRecording');
+    setMediaBtnState(btn, true);
+    setRecUi(k, true, 0);
+    toast('🎙️ Opname gestart…');
+
+    // timer + auto-stop op maxSeconds
+    var timerId = setInterval(function(){
+      var st = __recMap[k];
+      if(!st) return;
+      var sec = Math.floor((Date.now() - st.startedAt)/1000);
+      setRecUi(k, true, sec);
+
+      if(st.cfg && st.cfg.maxSeconds != null && sec >= st.cfg.maxSeconds){
+        try{ st.rec.stop(); }catch(e){}
+      }
+    }, 250);
+    __recMap[k].timerId = timerId;
 
     rec.ondataavailable = function(ev){
       if(ev.data && ev.data.size) chunks.push(ev.data);
     };
 
-    rec.onstop = function(){
-      // cleanup stream
+    rec.onerror = function(){
+      var st = __recMap[k];
+      if(st && st.timerId) try{ clearInterval(st.timerId); }catch(e){}
+      delete __recMap[k];
+
       try{ stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+      setMediaBtnState(btn, false);
+      setRecUi(k, false, 0);
 
-      btn.textContent = '🎙️ Neem audio op';
-      btn.classList.remove('isRecording');
+      toast('🎙️ Opname mislukt.');
+    };
 
+    rec.onstop = function(){
+      var st = __recMap[k];
+      if(st && st.timerId) try{ clearInterval(st.timerId); }catch(e){}
+      delete __recMap[k];
+
+      try{ stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+      setMediaBtnState(btn, false);
+      setRecUi(k, false, 0);
+
+      var ms = Date.now() - startedAt;
+      var seconds = Math.round(ms / 1000);
+
+      // maak blob
       var blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
-      var seconds = Math.round((Date.now() - startedAt)/1000);
 
-      // enforce min/max if present in question media (we don't have q here; keep simple)
-      // (als je wil, lezen we min/max straks uit DATA via qid)
+      // ✅ validate duration (min/max)
+      if(seconds < cfg.minSeconds){
+        toast('🎙️ Te kort: minimaal ' + cfg.minSeconds + 's.');
+        return;
+      }
+      if(seconds > cfg.maxSeconds){
+        toast('🎙️ Te lang: maximaal ' + cfg.maxSeconds + 's.');
+        return;
+      }
+
+      // ✅ enforce maxCount opnieuw (race condition)
+      var arr = parseJsonArray(getAns(stopId, qid));
+      if(arr.length >= cfg.maxCount){
+        toast('🎙️ Maximaal '+cfg.maxCount+' opname' + (cfg.maxCount===1?'':'s') + ' toegestaan.');
+        return;
+      }
 
       var itemId = 'it_' + Date.now();
       var key = mediaKey(stopId, qid, itemId);
 
       mediaPut(key, blob).then(function(){
-        var arr = parseJsonArray(getAns(stopId, qid));
         arr.push({ id:itemId, kind:'audio', ts:Date.now(), mime: blob.type || 'audio/webm', seconds: seconds });
         setAns(stopId, qid, stringifyJson(arr));
         try{ renderUnlocked(); }catch(e){}
@@ -286,15 +396,27 @@ function toggleAudioRecord(stopId, qid, btn){
         console.warn('audio store failed', err);
         toast('🎙️ Kon audio niet opslaan');
       });
-
-      delete __recMap[k];
     };
 
-    rec.start();
-    toast('🎙️ Opname gestart…');
+    try{
+      rec.start();
+    }catch(e){
+      var st2 = __recMap[k];
+      if(st2 && st2.timerId) try{ clearInterval(st2.timerId); }catch(_e){}
+      delete __recMap[k];
+
+      try{ stream.getTracks().forEach(function(t){ t.stop(); }); }catch(_e){}
+      setMediaBtnState(btn, false);
+      setRecUi(k, false, 0);
+
+      toast('🎙️ Kon opname niet starten.');
+    }
+
   }).catch(function(err){
     console.warn('mic denied', err);
-    toast('🎙️ Microfoon niet beschikbaar');
+    setMediaBtnState(btn, false);
+    setRecUi(k, false, 0);
+    toast('🎙️ Microfoon niet beschikbaar (rechten?).');
   });
 }
 
@@ -516,6 +638,9 @@ function renderVraagAudio(locId, q, closed){
     + '    <button class="mediaBtn" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'" data-mode="audio"'
     +      (closed ? ' disabled' : '')
     + '    >🎙️ Neem audio op</button>'
+    + '    <div class="recRow" data-rec="'+escapeHtml(locId)+'|'+escapeHtml(q.id)+'" style="display:none">'
+    + '      <span class="recDot">●</span> <span class="recText">Opnemen…</span> <span class="recTime">00:00</span>'
+    + '    </div>'
     + '    <div class="btnRow">'
     +      (!closed ? '<button class="clearAns" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'">✖</button>' : '')
     + '      <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'"></span>'
