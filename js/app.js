@@ -45,14 +45,21 @@ function parseJsonArray(s){
   }
 }
 function findQuestionById(stopId, qid){
-  var loc = findLocById(stopId);
-  if(!loc || !loc.vragen) return null;
-  for(var i=0;i<loc.vragen.length;i++){
-    var q = loc.vragen[i];
-    if(q && q.id === qid) return q;
+  var locs = (window.DATA && (DATA.locaties || DATA.stops)) ? (DATA.locaties || DATA.stops) : [];
+  for(var i=0;i<locs.length;i++){
+    var loc = locs[i];
+    if(loc && loc.id === stopId){
+      var vs = loc.vragen || [];
+      for(var j=0;j<vs.length;j++){
+        var q = vs[j];
+        if(q && q.id === qid) return q;
+      }
+      return null;
+    }
   }
   return null;
 }
+
 
 function pickPhotoAndStore(stopId, qid, btn){
 
