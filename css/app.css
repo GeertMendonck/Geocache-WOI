@@ -224,6 +224,9 @@
 .cbList{ display:flex; flex-direction:column; gap:6px; margin-top:6px; }
 .cbRow{ display:flex; gap:10px; align-items:flex-start; cursor:pointer; }
 .qa.isClosed{ opacity:.72; }
+.rbList{ display:flex; flex-direction:column; gap:6px; margin-top:6px; }
+.rbRow{ display:flex; gap:10px; align-items:flex-start; cursor:pointer; }
+.rbRow.isDisabled{ opacity:.7; cursor:default; }
 
   /* ===============================
      PC HEADER (Jouw personage)

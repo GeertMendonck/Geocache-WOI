@@ -107,15 +107,67 @@ function renderVraagMC(locId, q, closed){
     }
   }
 
-  var buttons = opts.map(function(o){
-    var oid = o.id || '';
-    var active = (picked && oid && picked === oid);
+  // ---- Kies UI: buttons vs radio-list (robust: max + longCount + count) ----
+  var maxLen = 0;
+  var longCount = 0;
+  for(var k=0;k<opts.length;k++){
+    var txt = String((opts[k] && opts[k].tekst) ? opts[k].tekst : '');
+    if(txt.indexOf('\n') >= 0) longCount += 2; // newline => vrijwel zeker lang
+    var len = txt.length;
+    if(len > maxLen) maxLen = len;
+    if(len >= 45) longCount++;
+  }
+
+  var useRadioList = (
+    opts.length > 6 ||
+    maxLen >= 70 ||
+    longCount >= 2
+  );
+
+  // ---- RADIO LIST ----
+  if(useRadioList){
+    var items = opts.map(function(o){
+      var oid = (o && o.id) ? String(o.id) : '';
+      var txt = (o && o.tekst != null) ? String(o.tekst) : '';
+      var rid = 'mc_' + safeDomId(locId) + '_' + safeDomId(q.id) + '_' + safeDomId(oid);
+      var on = (picked && oid && picked === oid);
+
+      return ''
+        + '<label class="rbRow' + (closed ? ' isDisabled' : '') + '" for="'+rid+'">'
+        + '  <input type="radio" name="mc_'+escapeHtml(q.id)+'" class="rbOpt" id="'+rid+'"'
+        + ' data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'" data-oid="'+escapeHtml(oid)+'"'
+        + (on ? ' checked' : '')
+        + (closed ? ' disabled' : '')
+        + '>'
+        + '  <span>' + escapeHtml(txt) + '</span>'
+        + '</label>';
+    }).join('');
+
     return ''
-      + '<button class="optBtn' + (active?' isActive':'') + '"'
+      + '<div class="qa qaMC' + (closed ? ' isClosed' : '') + '" data-qwrap="'+escapeHtml(q.id)+'">'
+      + '  <div class="q"><b>Meerkeuze:</b> ' + escapeHtml(q.vraag || '') + '</div>'
+      + '  <div class="controls">'
+      + '    <div class="rbList">' + items + '</div>'
+      + '    <div class="btnRow">'
+      +      (!closed ? '<button class="clearAns" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'">✖</button>' : '')
+      + '      <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'"></span>'
+      + '    </div>'
+      + '  </div>'
+      + '</div>';
+  }
+
+  // ---- BUTTON GRID ----
+  var buttons = opts.map(function(o){
+    var oid = (o && o.id) ? String(o.id) : '';
+    var txt = (o && o.tekst != null) ? String(o.tekst) : '';
+    var active = (picked && oid && picked === oid);
+
+    return ''
+      + '<button class="optBtn' + (active ? ' isActive' : '') + '"'
       + ' data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'" data-oid="'+escapeHtml(oid)+'"'
       + (closed ? ' disabled' : '')
       + '>'
-      + escapeHtml(o.tekst || '')
+      + escapeHtml(txt)
       + '</button>';
   }).join('');
 
@@ -131,6 +183,7 @@ function renderVraagMC(locId, q, closed){
     + '  </div>'
     + '</div>';
 }
+
 
 function renderVraagCheckbox(locId, q, closed){
   var raw = getAns(locId, q.id);
@@ -3285,49 +3338,12 @@ if(ul){
   }
 // -------------------  Eventhandlers ----------------------------------
   ul.addEventListener('input', handleSave);
-  ul.addEventListener('change', handleSave);
+ // ul.addEventListener('change', handleSave);
   ul.addEventListener('blur', handleSave, true);
 
-  ul.addEventListener('click', function(e){
-    var clr = e.target && e.target.closest ? e.target.closest('button.clearAns') : null;
-    if(clr){
-      var sid  = clr.getAttribute('data-stop');
-      var qKey = readQKey(clr);              // ✅ STRING, geen parseInt
+ul.addEventListener('click', function(e){
 
-      // als je ondertussen clearAns() hebt: clearAns(sid, qKey);
-      // anders: gewoon setAns naar '' zoals je al deed
-      setAns(sid, qKey, '');
-
-      var ta = ul.querySelector('textarea.ans[data-stop="'+sid+'"][data-q="'+qKey+'"]');
-      if(ta){ ta.value=''; ta.focus(); }
-      return;
-    }
-            var mic = e.target && e.target.closest ? e.target.closest('button.micBtn') : null;
-            if(mic){
-              if(!MIC_OK){ toast('Spraakherkenning niet beschikbaar (probeer online in Chrome).'); return; }
-              var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-              var r = new Recognition(); r.lang='nl-NL'; r.interimResults=false; r.maxAlternatives=1;
-              var sid2 = mic.getAttribute('data-stop'), qi2 = parseInt(mic.getAttribute('data-q'),10);
-              r.onresult = function(ev){
-                var txt2 = ev.results[0][0].transcript || '';
-                var ta2 = ul.querySelector('textarea.ans[data-stop="'+sid2+'"][data-q="'+qi2+'"]');
-                if(ta2){
-                  ta2.value = (ta2.value ? ta2.value+' ' : '') + txt2;
-                  setAns(sid2, qi2, ta2.value);
-                }
-              };
-              r.onerror = function(ev){
-                var msg = (ev && ev.error) ? ev.error : 'mislukt';
-                if (msg==='not-allowed') msg = 'toegang geweigerd (controleer microfoonrechten)';
-                if (msg==='network') msg = 'offline? (internet vereist in Chrome)';
-                toast('🎙️ '+msg);
-              };
-              try { r.start(); toast('🎙️ Spreek maar…'); } catch(_e){ toast('🎙️ kon niet starten'); }
-            }
-          });
-        }
- ul.addEventListener('click', function(e){
-  // MC optieknop
+  // ---- MC optieknop (buttons) ----
   var ob = e.target && e.target.closest ? e.target.closest('button.optBtn') : null;
   if(ob){
     var sid = ob.getAttribute('data-stop');
@@ -3347,18 +3363,22 @@ if(ul){
     return;
   }
 
-  // clear
+  // ---- CLEAR (open/mc/checkbox/media) ----
   var clr = e.target && e.target.closest ? e.target.closest('button.clearAns') : null;
   if(clr){
     var sid2 = clr.getAttribute('data-stop');
     var qid2 = String(clr.getAttribute('data-q')||'');
-    clearAns(sid2, qid2);
+    if(!sid2 || !qid2) return;
 
-    // als het open vraag is: textarea leegmaken
+    // als je geen clearAns() hebt: setAns(sid2,qid2,'') volstaat
+    if(typeof clearAns === 'function') clearAns(sid2, qid2);
+    else setAns(sid2, qid2, '');
+
+    // open: textarea leegmaken
     var ta = ul.querySelector('textarea.ans[data-stop="'+sid2+'"][data-q="'+qid2+'"]');
     if(ta){ ta.value=''; ta.focus(); }
 
-    // als het MC is: active states weg
+    // mc buttons: active states weg
     var w1 = ul.querySelector('.qaMC[data-qwrap="'+qid2+'"]');
     if(w1){
       var btns = w1.querySelectorAll('button.optBtn');
@@ -3371,24 +3391,65 @@ if(ul){
       var cbs = w2.querySelectorAll('input.cbOpt');
       for(var k=0;k<cbs.length;k++) cbs[k].checked = false;
     }
+
     return;
   }
 
-  // media knoppen (placeholder)
+  // ---- MIC (open textarea) ----
+  var mic = e.target && e.target.closest ? e.target.closest('button.micBtn') : null;
+  if(mic){
+    if(!MIC_OK){ toast('Spraakherkenning niet beschikbaar (probeer online in Chrome).'); return; }
+
+    var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    var r = new Recognition(); r.lang='nl-NL'; r.interimResults=false; r.maxAlternatives=1;
+
+    var sid3 = mic.getAttribute('data-stop');
+    var qid3 = String(mic.getAttribute('data-q')||'');   // ✅ STRING, geen parseInt
+
+    r.onresult = function(ev){
+      var txt = (ev.results && ev.results[0] && ev.results[0][0] && ev.results[0][0].transcript) ? ev.results[0][0].transcript : '';
+      var ta3 = ul.querySelector('textarea.ans[data-stop="'+sid3+'"][data-q="'+qid3+'"]');
+      if(ta3){
+        ta3.value = (ta3.value ? ta3.value+' ' : '') + txt;
+        setAns(sid3, qid3, ta3.value);
+      }
+    };
+
+    r.onerror = function(ev){
+      var msg = (ev && ev.error) ? ev.error : 'mislukt';
+      if (msg==='not-allowed') msg = 'toegang geweigerd (controleer microfoonrechten)';
+      if (msg==='network') msg = 'offline? (internet vereist in Chrome)';
+      toast('🎙️ '+msg);
+    };
+
+    try { r.start(); toast('🎙️ Spreek maar…'); } catch(_e){ toast('🎙️ kon niet starten'); }
+    return;
+  }
+
+  // ---- MEDIA knoppen (placeholder) ----
   var mb = e.target && e.target.closest ? e.target.closest('button.mediaBtn') : null;
   if(mb){
-    var sid3 = mb.getAttribute('data-stop');
-    var qid3 = String(mb.getAttribute('data-q')||'');
+    var sid4 = mb.getAttribute('data-stop');
+    var qid4 = String(mb.getAttribute('data-q')||'');
     var mode = String(mb.getAttribute('data-mode')||'');
-    // hier haken we later echte photo/audio flow in
-    alert('Media ('+mode+') voor '+qid3+' — volgende stap 🙂');
+    alert('Media ('+mode+') voor '+qid4+' — volgende stap 🙂');
     return;
   }
 });
+
 ul.addEventListener('change', function(e){
   var t = e.target;
   if(!t || !t.matches) return;
 
+  // ---- OPEN vraag (textarea) ----
+  if(t.matches('textarea.ans')){
+    var stopId = t.getAttribute('data-stop');
+    var qid    = String(t.getAttribute('data-q')||'');
+    setAns(stopId, qid, t.value);
+    return;
+  }
+
+  // ---- CHECKBOX ----
   if(t.matches('input.cbOpt')){
     var sid = t.getAttribute('data-stop');
     var qid = String(t.getAttribute('data-q')||'');
@@ -3408,9 +3469,20 @@ ul.addEventListener('change', function(e){
     setAns(sid, qid, stringifyJson(next));
     return;
   }
+
+  // ---- MC RADIO ----
+  if(t.matches('input.rbOpt')){
+    var sid2 = t.getAttribute('data-stop');
+    var qid2 = String(t.getAttribute('data-q')||'');
+    var oid2 = String(t.getAttribute('data-oid')||'');
+    if(sid2 && qid2 && oid2){
+      setAns(sid2, qid2, oid2);
+    }
+    return;
+  }
 });
 
- 
+
         //---------------------------------------------------------------------------------------
         window.__APP_BOUND__ = true;
   
