@@ -342,17 +342,25 @@ console.log('AUDIO cfg', cfg, 'minsAttr=', btn && btn.getAttribute('data-mins'),
     setRecUi(k, true, 0);
     toast('🎙️ Opname gestart…');
 
-    // timer + auto-stop op maxSeconds
-    var timerId = setInterval(function(){
-      var st = __recMap[k];
-      if(!st) return;
-      var sec = Math.floor((Date.now() - st.startedAt)/1000);
-      setRecUi(k, true, sec);
+// timer + auto-stop op maxSeconds
+var timerId = setInterval(function(){
+  var st = __recMap[k];
+  if(!st) return;
 
-      if(st.cfg && st.cfg.maxSeconds != null && sec >= st.cfg.maxSeconds){
-        try{ st.rec.stop(); }catch(e){}
-      }
-    }, 250);
+  var elapsedMs = Date.now() - st.startedAt;
+  var secDisp   = Math.ceil(elapsedMs / 1000);
+
+  var maxS = (st.cfg && typeof st.cfg.maxSeconds === 'number') ? st.cfg.maxSeconds : null;
+
+  // display
+  setRecUi(k, true, (maxS != null) ? Math.min(secDisp, maxS) : secDisp);
+
+  // auto-stop
+  if(maxS != null && elapsedMs >= maxS * 1000){
+    try{ st.rec.stop(); }catch(e){}
+  }
+}, 250);
+
     __recMap[k].timerId = timerId;
 
     rec.ondataavailable = function(ev){
@@ -395,7 +403,7 @@ console.log('AUDIO cfg', cfg, 'minsAttr=', btn && btn.getAttribute('data-mins'),
         return;
       }
 
-      if(seconds > cfg.maxSeconds){
+      if(seconds >  cfg.maxSeconds){
           flashBtnError(btn);
         toast(
           '🎙️ Opname te lang ('+seconds+'s). '
