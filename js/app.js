@@ -3700,7 +3700,7 @@ function charactersEnabled(){
       
         applyRouteModeUI();
       
-        var st = store.get();
+        var st = store.get() || {};
         var pc = currentPc();
         var cont = qs('unlockList');
         if(!cont) return;
@@ -3826,7 +3826,7 @@ function charactersEnabled(){
           var qsArr = hasRealLoc ? (loc.vragen || []) : [];
           var qaHtml = '';
 
-          var st = store.get() || {};
+//          var st = store.get() || {};
 
           // routeOrder één keer bepalen en bewaren
           var routeOrder = st.routeOrder || buildRouteOrder(DATA);
@@ -3855,7 +3855,7 @@ function charactersEnabled(){
         if(!hasRealLoc){
           qaHtml = '<div class="muted">Nog geen vragen: wandel eerst een cirkel binnen 🙂</div>';
           }else if(qsArr.length){
-          var st = store.get() || {};
+          //var st = store.get() || {};
           var routeOrder = st.routeOrder || buildRouteOrder(DATA);
           if(!st.routeOrder && routeOrder.length){ st.routeOrder = routeOrder; store.set(st); }
 
@@ -4113,7 +4113,7 @@ function charactersEnabled(){
       var focus = panel.getAttribute('data-panel');
       if(!focus) return;
   
-      var st = store.get();
+      //var st = store.get();
       st.focus = focus;
       store.set(st);
   
