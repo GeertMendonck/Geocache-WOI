@@ -298,7 +298,12 @@ function toggleAudioRecord(stopId, qid, btn){
   }
 
   // config (min/max + maxCount)
-  var cfg = getAudioCfg(stopId, qid);
+  var cfg = {
+  minSeconds: parseInt(btn && btn.getAttribute('data-mins') || '0', 10) || 0,
+  maxSeconds: parseInt(btn && btn.getAttribute('data-maxs') || '30', 10) || 30,
+  maxCount:   parseInt(btn && btn.getAttribute('data-maxcount') || '1', 10) || 1
+};
+
 
   // ✅ enforce maxCount vóór we mic openen
   var curArr = parseJsonArray(getAns(stopId, qid));
@@ -636,7 +641,7 @@ function renderVraagAudio(locId, q, closed){
   var media = (q && typeof q.media === 'object') ? q.media : {};
   var minS = media.minSeconds != null ? media.minSeconds : 0;
   var maxS = media.maxSeconds != null ? media.maxSeconds : 30;
-
+  var maxC  = (media.maxCount   != null) ? media.maxCount   : 1;
   var arr = parseJsonArray(getAns(locId, q.id));
   var count = arr.length;
 
