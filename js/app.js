@@ -3319,12 +3319,12 @@ function charactersEnabled(){
   
         // Answer save delegation op unlockList
         var ul=qs('unlockList');
+// ---------------- Eventhandlers ----------------
 if(ul){
+
   function readQKey(el){
-    // data-q kan "0" zijn (oude index) of "q_thuis_open_01" (nieuwe id)
     var k = el.getAttribute('data-q');
-    if(k == null) return '';
-    return String(k);
+    return (k == null) ? '' : String(k);
   }
 
   function handleSave(e){
@@ -3333,154 +3333,154 @@ if(ul){
     if(!ta) return;
 
     var stopId = ta.getAttribute('data-stop');
-    var qKey   = readQKey(ta);               // ✅ STRING, geen parseInt
+    var qKey   = readQKey(ta);              // ✅ string key
     setAns(stopId, qKey, ta.value);
   }
-// -------------------  Eventhandlers ----------------------------------
+
+  // tekst (open vragen)
   ul.addEventListener('input', handleSave);
- // ul.addEventListener('change', handleSave);
   ul.addEventListener('blur', handleSave, true);
 
-ul.addEventListener('click', function(e){
+  // discrete changes (checkbox + radio + textarea fallback)
+  ul.addEventListener('change', function(e){
+    var t = e.target;
+    if(!t || !t.matches) return;
 
-  // ---- MC optieknop (buttons) ----
-  var ob = e.target && e.target.closest ? e.target.closest('button.optBtn') : null;
-  if(ob){
-    var sid = ob.getAttribute('data-stop');
-    var qid = String(ob.getAttribute('data-q')||'');
-    var oid = String(ob.getAttribute('data-oid')||'');
-    if(sid && qid && oid){
-      setAns(sid, qid, oid);
+    // textarea fallback (voor browsers die change afvuren bij blur)
+    if(t.matches('textarea.ans')){
+      handleSave(e);
+      return;
+    }
 
-      // UI: active state
-      var wrap = ob.closest('.qaMC');
-      if(wrap){
-        var all = wrap.querySelectorAll('button.optBtn');
-        for(var i=0;i<all.length;i++) all[i].classList.remove('isActive');
+    // checkbox
+    if(t.matches('input.cbOpt')){
+      var sid = t.getAttribute('data-stop');
+      var qid = String(t.getAttribute('data-q')||'');
+      var oid = String(t.getAttribute('data-oid')||'');
+      if(!sid || !qid || !oid) return;
+
+      var cur = parseJsonArray(getAns(sid, qid));
+      var map = Object.create(null);
+      for(var i=0;i<cur.length;i++) map[cur[i]] = true;
+
+      if(t.checked) map[oid] = true;
+      else delete map[oid];
+
+      var next = [];
+      for(var k in map) if(map.hasOwnProperty(k)) next.push(k);
+
+      setAns(sid, qid, stringifyJson(next));
+      return;
+    }
+
+    // radio (MC list)
+    if(t.matches('input.rbOpt')){
+      var sid2 = t.getAttribute('data-stop');
+      var qid2 = String(t.getAttribute('data-q')||'');
+      var oid2 = String(t.getAttribute('data-oid')||'');
+      if(sid2 && qid2 && oid2){
+        setAns(sid2, qid2, oid2);
       }
-      ob.classList.add('isActive');
+      return;
     }
-    return;
-  }
+  });
 
-  // ---- CLEAR (open/mc/checkbox/media) ----
-  var clr = e.target && e.target.closest ? e.target.closest('button.clearAns') : null;
-  if(clr){
-    var sid2 = clr.getAttribute('data-stop');
-    var qid2 = String(clr.getAttribute('data-q')||'');
-    if(!sid2 || !qid2) return;
+  // clicks (mc buttons + clear + mic + media placeholder)
+  ul.addEventListener('click', function(e){
 
-    // als je geen clearAns() hebt: setAns(sid2,qid2,'') volstaat
-    if(typeof clearAns === 'function') clearAns(sid2, qid2);
-    else setAns(sid2, qid2, '');
+    // MC optieknop (buttons)
+    var ob = e.target && e.target.closest ? e.target.closest('button.optBtn') : null;
+    if(ob){
+      var sid = ob.getAttribute('data-stop');
+      var qid = String(ob.getAttribute('data-q')||'');
+      var oid = String(ob.getAttribute('data-oid')||'');
+      if(sid && qid && oid){
+        setAns(sid, qid, oid);
 
-    // open: textarea leegmaken
-    var ta = ul.querySelector('textarea.ans[data-stop="'+sid2+'"][data-q="'+qid2+'"]');
-    if(ta){ ta.value=''; ta.focus(); }
-
-    // mc buttons: active states weg
-    var w1 = ul.querySelector('.qaMC[data-qwrap="'+qid2+'"]');
-    if(w1){
-      var btns = w1.querySelectorAll('button.optBtn');
-      for(var j=0;j<btns.length;j++) btns[j].classList.remove('isActive');
-    }
-
-    // checkbox: uncheck
-    var w2 = ul.querySelector('.qaCB[data-qwrap="'+qid2+'"]');
-    if(w2){
-      var cbs = w2.querySelectorAll('input.cbOpt');
-      for(var k=0;k<cbs.length;k++) cbs[k].checked = false;
-    }
-
-    return;
-  }
-
-  // ---- MIC (open textarea) ----
-  var mic = e.target && e.target.closest ? e.target.closest('button.micBtn') : null;
-  if(mic){
-    if(!MIC_OK){ toast('Spraakherkenning niet beschikbaar (probeer online in Chrome).'); return; }
-
-    var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    var r = new Recognition(); r.lang='nl-NL'; r.interimResults=false; r.maxAlternatives=1;
-
-    var sid3 = mic.getAttribute('data-stop');
-    var qid3 = String(mic.getAttribute('data-q')||'');   // ✅ STRING, geen parseInt
-
-    r.onresult = function(ev){
-      var txt = (ev.results && ev.results[0] && ev.results[0][0] && ev.results[0][0].transcript) ? ev.results[0][0].transcript : '';
-      var ta3 = ul.querySelector('textarea.ans[data-stop="'+sid3+'"][data-q="'+qid3+'"]');
-      if(ta3){
-        ta3.value = (ta3.value ? ta3.value+' ' : '') + txt;
-        setAns(sid3, qid3, ta3.value);
+        // UI: active state
+        var wrap = ob.closest('.qaMC');
+        if(wrap){
+          var all = wrap.querySelectorAll('button.optBtn');
+          for(var i=0;i<all.length;i++) all[i].classList.remove('isActive');
+        }
+        ob.classList.add('isActive');
       }
-    };
-
-    r.onerror = function(ev){
-      var msg = (ev && ev.error) ? ev.error : 'mislukt';
-      if (msg==='not-allowed') msg = 'toegang geweigerd (controleer microfoonrechten)';
-      if (msg==='network') msg = 'offline? (internet vereist in Chrome)';
-      toast('🎙️ '+msg);
-    };
-
-    try { r.start(); toast('🎙️ Spreek maar…'); } catch(_e){ toast('🎙️ kon niet starten'); }
-    return;
-  }
-
-  // ---- MEDIA knoppen (placeholder) ----
-  var mb = e.target && e.target.closest ? e.target.closest('button.mediaBtn') : null;
-  if(mb){
-    var sid4 = mb.getAttribute('data-stop');
-    var qid4 = String(mb.getAttribute('data-q')||'');
-    var mode = String(mb.getAttribute('data-mode')||'');
-    alert('Media ('+mode+') voor '+qid4+' — volgende stap 🙂');
-    return;
-  }
-});
-
-ul.addEventListener('change', function(e){
-  var t = e.target;
-  if(!t || !t.matches) return;
-
-  // ---- OPEN vraag (textarea) ----
-  if(t.matches('textarea.ans')){
-    var stopId = t.getAttribute('data-stop');
-    var qid    = String(t.getAttribute('data-q')||'');
-    setAns(stopId, qid, t.value);
-    return;
-  }
-
-  // ---- CHECKBOX ----
-  if(t.matches('input.cbOpt')){
-    var sid = t.getAttribute('data-stop');
-    var qid = String(t.getAttribute('data-q')||'');
-    var oid = String(t.getAttribute('data-oid')||'');
-    if(!sid || !qid || !oid) return;
-
-    var cur = parseJsonArray(getAns(sid, qid));
-    var map = Object.create(null);
-    for(var i=0;i<cur.length;i++) map[cur[i]] = true;
-
-    if(t.checked) map[oid] = true;
-    else delete map[oid];
-
-    var next = [];
-    for(var k in map) if(map.hasOwnProperty(k)) next.push(k);
-
-    setAns(sid, qid, stringifyJson(next));
-    return;
-  }
-
-  // ---- MC RADIO ----
-  if(t.matches('input.rbOpt')){
-    var sid2 = t.getAttribute('data-stop');
-    var qid2 = String(t.getAttribute('data-q')||'');
-    var oid2 = String(t.getAttribute('data-oid')||'');
-    if(sid2 && qid2 && oid2){
-      setAns(sid2, qid2, oid2);
+      return;
     }
-    return;
-  }
-});
+
+    // clear
+    var clr = e.target && e.target.closest ? e.target.closest('button.clearAns') : null;
+    if(clr){
+      var sid2 = clr.getAttribute('data-stop');
+      var qid2 = String(clr.getAttribute('data-q')||'');
+      if(!sid2 || !qid2) return;
+
+      if(typeof clearAns === 'function') clearAns(sid2, qid2);
+      else setAns(sid2, qid2, '');
+
+      // open: textarea leegmaken
+      var ta = ul.querySelector('textarea.ans[data-stop="'+sid2+'"][data-q="'+qid2+'"]');
+      if(ta){ ta.value=''; ta.focus(); }
+
+      // mc buttons: active states weg
+      var w1 = ul.querySelector('.qaMC[data-qwrap="'+qid2+'"]');
+      if(w1){
+        var btns = w1.querySelectorAll('button.optBtn');
+        for(var j=0;j<btns.length;j++) btns[j].classList.remove('isActive');
+      }
+
+      // checkbox: uncheck
+      var w2 = ul.querySelector('.qaCB[data-qwrap="'+qid2+'"]');
+      if(w2){
+        var cbs = w2.querySelectorAll('input.cbOpt');
+        for(var k=0;k<cbs.length;k++) cbs[k].checked = false;
+      }
+
+      return;
+    }
+
+    // mic (open textarea)
+    var mic = e.target && e.target.closest ? e.target.closest('button.micBtn') : null;
+    if(mic){
+      if(!MIC_OK){ toast('Spraakherkenning niet beschikbaar (probeer online in Chrome).'); return; }
+
+      var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      var r = new Recognition(); r.lang='nl-NL'; r.interimResults=false; r.maxAlternatives=1;
+
+      var sid3 = mic.getAttribute('data-stop');
+      var qid3 = String(mic.getAttribute('data-q')||'');
+
+      r.onresult = function(ev){
+        var txt = (ev.results && ev.results[0] && ev.results[0][0] && ev.results[0][0].transcript) ? ev.results[0][0].transcript : '';
+        var ta3 = ul.querySelector('textarea.ans[data-stop="'+sid3+'"][data-q="'+qid3+'"]');
+        if(ta3){
+          ta3.value = (ta3.value ? ta3.value+' ' : '') + txt;
+          setAns(sid3, qid3, ta3.value);
+        }
+      };
+
+      r.onerror = function(ev){
+        var msg = (ev && ev.error) ? ev.error : 'mislukt';
+        if (msg==='not-allowed') msg = 'toegang geweigerd (controleer microfoonrechten)';
+        if (msg==='network') msg = 'offline? (internet vereist in Chrome)';
+        toast('🎙️ '+msg);
+      };
+
+      try { r.start(); toast('🎙️ Spreek maar…'); } catch(_e){ toast('🎙️ kon niet starten'); }
+      return;
+    }
+
+    // media placeholder
+    var mb = e.target && e.target.closest ? e.target.closest('button.mediaBtn') : null;
+    if(mb){
+      var sid4 = mb.getAttribute('data-stop');
+      var qid4 = String(mb.getAttribute('data-q')||'');
+      var mode = String(mb.getAttribute('data-mode')||'');
+      alert('Media ('+mode+') voor '+qid4+' — volgende stap 🙂');
+      return;
+    }
+  });
+}
 
 
         //---------------------------------------------------------------------------------------
