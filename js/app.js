@@ -74,6 +74,176 @@ function shouldShowQuestion(q, passedThisLoc, routeEnded, hasRealLoc){
 
   return !passedThisLoc;
 }
+// ---------------- Media storage (IndexedDB) ----------------
+var MEDIA_DB_NAME = 'geo_media_db_v1';
+var MEDIA_STORE = 'blobs';
+
+function openMediaDb(){
+  return new Promise(function(resolve, reject){
+    var req = indexedDB.open(MEDIA_DB_NAME, 1);
+    req.onupgradeneeded = function(){
+      var db = req.result;
+      if(!db.objectStoreNames.contains(MEDIA_STORE)){
+        db.createObjectStore(MEDIA_STORE);
+      }
+    };
+    req.onsuccess = function(){ resolve(req.result); };
+    req.onerror = function(){ reject(req.error || new Error('indexedDB open failed')); };
+  });
+}
+
+function mediaPut(key, blob){
+  return openMediaDb().then(function(db){
+    return new Promise(function(resolve, reject){
+      var tx = db.transaction(MEDIA_STORE, 'readwrite');
+      tx.objectStore(MEDIA_STORE).put(blob, key);
+      tx.oncomplete = function(){ db.close(); resolve(true); };
+      tx.onerror = function(){ db.close(); reject(tx.error || new Error('mediaPut failed')); };
+    });
+  });
+}
+
+function mediaGet(key){
+  return openMediaDb().then(function(db){
+    return new Promise(function(resolve, reject){
+      var tx = db.transaction(MEDIA_STORE, 'readonly');
+      var rq = tx.objectStore(MEDIA_STORE).get(key);
+      rq.onsuccess = function(){ var v = rq.result || null; db.close(); resolve(v); };
+      rq.onerror = function(){ db.close(); reject(rq.error || new Error('mediaGet failed')); };
+    });
+  });
+}
+
+function mediaDel(key){
+  return openMediaDb().then(function(db){
+    return new Promise(function(resolve, reject){
+      var tx = db.transaction(MEDIA_STORE, 'readwrite');
+      tx.objectStore(MEDIA_STORE).delete(key);
+      tx.oncomplete = function(){ db.close(); resolve(true); };
+      tx.onerror = function(){ db.close(); reject(tx.error || new Error('mediaDel failed')); };
+    });
+  });
+}
+
+// delete all keys with prefix (simple cursor scan)
+function mediaDelPrefix(prefix){
+  return openMediaDb().then(function(db){
+    return new Promise(function(resolve, reject){
+      var tx = db.transaction(MEDIA_STORE, 'readwrite');
+      var store = tx.objectStore(MEDIA_STORE);
+      var req = store.openCursor();
+      req.onsuccess = function(){
+        var cur = req.result;
+        if(cur){
+          var k = String(cur.key);
+          if(k.indexOf(prefix) === 0) cur.delete();
+          cur.continue();
+        }
+      };
+      tx.oncomplete = function(){ db.close(); resolve(true); };
+      tx.onerror = function(){ db.close(); reject(tx.error || new Error('mediaDelPrefix failed')); };
+    });
+  });
+}
+
+function mediaKey(stopId, qid, itemId){
+  return 'm|' + String(stopId) + '|' + String(qid) + '|' + String(itemId);
+}
+function pickPhotoAndStore(stopId, qid, btn){
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  // mobile hint:
+  try{ input.setAttribute('capture','environment'); }catch(e){}
+
+  input.onchange = function(){
+    var f = input.files && input.files[0];
+    if(!f) return;
+
+    // item id
+    var itemId = 'it_' + Date.now();
+    var key = mediaKey(stopId, qid, itemId);
+
+    // store blob directly (later we can compress if needed)
+    mediaPut(key, f).then(function(){
+      var arr = parseJsonArray(getAns(stopId, qid));
+      arr.push({ id:itemId, kind:'photo', ts:Date.now(), mime:f.type || 'image/*' });
+      setAns(stopId, qid, stringifyJson(arr));
+
+      // rerender to show thumbnail
+      try{ renderUnlocked(); }catch(e){}
+    }).catch(function(err){
+      console.warn('photo store failed', err);
+      toast('📷 Kon foto niet opslaan');
+    });
+  };
+
+  input.click();
+}
+var __recMap = Object.create(null); // key: stopId|qid -> {rec, chunks, startedAt, timer}
+
+function toggleAudioRecord(stopId, qid, btn){
+  var k = stopId + '|' + qid;
+  var cur = __recMap[k];
+
+  if(cur && cur.rec && cur.rec.state === 'recording'){
+    // stop
+    try{ cur.rec.stop(); }catch(e){}
+    return;
+  }
+
+  // start
+  navigator.mediaDevices.getUserMedia({ audio:true }).then(function(stream){
+    var rec = new MediaRecorder(stream);
+    var chunks = [];
+    var startedAt = Date.now();
+
+    __recMap[k] = { rec:rec, chunks:chunks, startedAt:startedAt, stream:stream };
+
+    btn.textContent = '⏹️ Stop opname';
+    btn.classList.add('isRecording');
+
+    rec.ondataavailable = function(ev){
+      if(ev.data && ev.data.size) chunks.push(ev.data);
+    };
+
+    rec.onstop = function(){
+      // cleanup stream
+      try{ stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+
+      btn.textContent = '🎙️ Neem audio op';
+      btn.classList.remove('isRecording');
+
+      var blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
+      var seconds = Math.round((Date.now() - startedAt)/1000);
+
+      // enforce min/max if present in question media (we don't have q here; keep simple)
+      // (als je wil, lezen we min/max straks uit DATA via qid)
+
+      var itemId = 'it_' + Date.now();
+      var key = mediaKey(stopId, qid, itemId);
+
+      mediaPut(key, blob).then(function(){
+        var arr = parseJsonArray(getAns(stopId, qid));
+        arr.push({ id:itemId, kind:'audio', ts:Date.now(), mime: blob.type || 'audio/webm', seconds: seconds });
+        setAns(stopId, qid, stringifyJson(arr));
+        try{ renderUnlocked(); }catch(e){}
+      }).catch(function(err){
+        console.warn('audio store failed', err);
+        toast('🎙️ Kon audio niet opslaan');
+      });
+
+      delete __recMap[k];
+    };
+
+    rec.start();
+    toast('🎙️ Opname gestart…');
+  }).catch(function(err){
+    console.warn('mic denied', err);
+    toast('🎙️ Microfoon niet beschikbaar');
+  });
+}
+
 // ------------- Render per soort vraag -------------------------
 function renderVraagOpen(locId, q, closed){
   var val = getAns(locId, q.id);
@@ -230,18 +400,32 @@ function renderVraagCheckbox(locId, q, closed){
 }
 
 function renderVraagPhoto(locId, q, closed){
-  var media = isObj(q.media) ? q.media : {};
+  var media = (q && typeof q.media === 'object') ? q.media : {};
   var minC = media.minCount != null ? media.minCount : 0;
   var maxC = media.maxCount != null ? media.maxCount : 1;
 
-  // voorlopig enkel “placeholder UI”
+  var arr = parseJsonArray(getAns(locId, q.id)); // list of refs
+  var count = arr.length;
+
+  var canAdd = (!closed && count < maxC);
+
+  var thumbs = arr.map(function(it){
+    var iid = it && it.id ? String(it.id) : '';
+    var key = mediaKey(locId, q.id, iid);
+    return ''
+      + '<div class="mThumb" data-mkind="photo" data-mkey="'+escapeHtml(key)+'">'
+      + '  <div class="mPh">preview…</div>'
+      + '</div>';
+  }).join('');
+
   return ''
-    + '<div class="qa qaMedia' + (closed ? ' isClosed' : '') + '" data-qwrap="'+escapeHtml(q.id)+'">'
+    + '<div class="qa qaMedia' + (closed ? ' isClosed' : '') + '" data-qwrap="'+escapeHtml(q.id)+'" data-mode="photo">'
     + '  <div class="q" data-qtype="photo">' + escapeHtml(q.vraag || '') + '</div>'
     + '  <div class="controls">'
-    + '    <div class="muted small">Min: '+minC+' – Max: '+maxC+' (media-opslag bouwen we als volgende stap)</div>'
+    + '    <div class="muted small">Min: '+minC+' — Max: '+maxC+' <span class="muted">('+count+'/'+maxC+')</span></div>'
+    + (thumbs ? ('    <div class="mGrid">'+thumbs+'</div>') : '')
     + '    <button class="mediaBtn" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'" data-mode="photo"'
-    +      (closed ? ' disabled' : '')
+    +      (canAdd ? '' : ' disabled')
     + '    >📷 Voeg foto toe</button>'
     + '    <div class="btnRow">'
     +      (!closed ? '<button class="clearAns" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'">✖</button>' : '')
@@ -251,16 +435,30 @@ function renderVraagPhoto(locId, q, closed){
     + '</div>';
 }
 
+
 function renderVraagAudio(locId, q, closed){
-  var media = isObj(q.media) ? q.media : {};
+  var media = (q && typeof q.media === 'object') ? q.media : {};
   var minS = media.minSeconds != null ? media.minSeconds : 0;
   var maxS = media.maxSeconds != null ? media.maxSeconds : 30;
 
+  var arr = parseJsonArray(getAns(locId, q.id));
+  var count = arr.length;
+
+  var clips = arr.map(function(it){
+    var iid = it && it.id ? String(it.id) : '';
+    var key = mediaKey(locId, q.id, iid);
+    return ''
+      + '<div class="mAudio" data-mkind="audio" data-mkey="'+escapeHtml(key)+'">'
+      + '  <audio controls preload="none"></audio>'
+      + '</div>';
+  }).join('');
+
   return ''
-    + '<div class="qa qaMedia' + (closed ? ' isClosed' : '') + '" data-qwrap="'+escapeHtml(q.id)+'">'
+    + '<div class="qa qaMedia' + (closed ? ' isClosed' : '') + '" data-qwrap="'+escapeHtml(q.id)+'" data-mode="audio">'
     + '  <div class="q" data-qtype="audio">' + escapeHtml(q.vraag || '') + '</div>'
     + '  <div class="controls">'
-    + '    <div class="muted small">Min: '+minS+'s – Max: '+maxS+'s (media-opslag bouwen we als volgende stap)</div>'
+    + '    <div class="muted small">Min: '+minS+'s — Max: '+maxS+'s</div>'
+    + (clips ? ('    <div class="mList">'+clips+'</div>') : '')
     + '    <button class="mediaBtn" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'" data-mode="audio"'
     +      (closed ? ' disabled' : '')
     + '    >🎙️ Neem audio op</button>'
@@ -270,6 +468,38 @@ function renderVraagAudio(locId, q, closed){
     + '    </div>'
     + '  </div>'
     + '</div>';
+}
+
+function hydrateMedia(root){
+  if(!root) return;
+
+  // photos
+  var ph = root.querySelectorAll('[data-mkind="photo"][data-mkey]');
+  for(var i=0;i<ph.length;i++){
+    (function(node){
+      var key = node.getAttribute('data-mkey');
+      mediaGet(key).then(function(blob){
+        if(!blob) return;
+        var url = URL.createObjectURL(blob);
+        node.innerHTML = '<img src="'+url+'" class="mImg" alt="foto">';
+      }).catch(function(){ /* ignore */ });
+    })(ph[i]);
+  }
+
+  // audios
+  var au = root.querySelectorAll('[data-mkind="audio"][data-mkey]');
+  for(var j=0;j<au.length;j++){
+    (function(node){
+      var key = node.getAttribute('data-mkey');
+      var audio = node.querySelector('audio');
+      if(!audio) return;
+      mediaGet(key).then(function(blob){
+        if(!blob) return;
+        var url = URL.createObjectURL(blob);
+        audio.src = url;
+      }).catch(function(){ /* ignore */ });
+    })(au[j]);
+  }
 }
 
 
@@ -2997,35 +3227,6 @@ function charactersEnabled(){
 
             return passedThisLoc;
           }
-
-
-          // qaHtml = qsArr.map(function(q, qi){
-          //   // q is object
-          //   var qObj = (q && typeof q === 'object') ? q : { id: (locId+'__q'+qi), type:'open', vraag:String(q||'') };
-          //   var qid  = qObj.id || (locId+'__q'+qi);
-          //   var qtxt = qObj.vraag != null ? String(qObj.vraag) : '';
-          //   var pol  = qObj.policy || {};
-
-          //   if(!shouldShow(pol)) return '';
-
-          //   var closed = shouldClose(pol);
-          //   var val = getAns(locId, qid);
-
-          //   return ''
-          //     + '<div class="qa'+(closed?' isClosed':'')+'">'
-          //     + '  <div class="q"><b>Vraag '+(qi+1)+':</b> '+escapeHtml(qtxt)+'</div>'
-          //     + '  <div class="controls">'
-          //     + '    <textarea class="ans" data-stop="'+locId+'" data-q="'+escapeHtml(qid)+'" placeholder="Jouw antwoord..."'
-          //     + (closed ? ' readonly' : '')
-          //     + '>'+escapeHtml(val)+'</textarea>'
-          //     + '    <div class="btnRow">'
-          //     + (MIC_OK && !closed ? '      <button class="micBtn" data-stop="'+locId+'" data-q="'+escapeHtml(qid)+'">🎙️</button>' : '')
-          //     + (!closed ? '      <button class="clearAns" data-stop="'+locId+'" data-q="'+escapeHtml(qid)+'">✖</button>' : '')
-          //     + '      <span class="saveBadge small muted" data-stop="'+locId+'" data-q="'+escapeHtml(qid)+'"></span>'
-          //     + '    </div>'
-          //     + '  </div>'
-          //     + '</div>';
-          // }).join('');
           
           //per type vraag
           qaHtml = qsArr.map(function(q, qi){
@@ -3191,6 +3392,7 @@ function charactersEnabled(){
         if(oneMap && oneMap.parentElement !== park) park.appendChild(oneMap);
       
         cont.innerHTML = html;
+        hydrateMedia(cont);
       // ✅ gallery bij Informatie (uitleg)
         // host div bestaat pas na cont.innerHTML
         if(loc && loc.images && loc.images.length){
@@ -3414,6 +3616,14 @@ if(ul){
       var sid2 = clr.getAttribute('data-stop');
       var qid2 = String(clr.getAttribute('data-q')||'');
       if(!sid2 || !qid2) return;
+        // ✅ media blobs weg
+      var raw = getAns(sid2, qid2);
+      var arr = parseJsonArray(raw);
+      var looksLikeMedia = !!(arr && arr.length && typeof arr[0] === 'object' && arr[0] && arr[0].kind);
+      if(looksLikeMedia){
+        var prefix = 'm|' + sid2 + '|' + qid2 + '|';
+        mediaDelPrefix(prefix).catch(function(){});
+      }
 
       if(typeof clearAns === 'function') clearAns(sid2, qid2);
       else setAns(sid2, qid2, '');
@@ -3470,15 +3680,21 @@ if(ul){
       return;
     }
 
-    // media placeholder
+    // ---- MEDIA ----
     var mb = e.target && e.target.closest ? e.target.closest('button.mediaBtn') : null;
     if(mb){
-      var sid4 = mb.getAttribute('data-stop');
-      var qid4 = String(mb.getAttribute('data-q')||'');
+      var sid = mb.getAttribute('data-stop');
+      var qid = String(mb.getAttribute('data-q')||'');
       var mode = String(mb.getAttribute('data-mode')||'');
-      alert('Media ('+mode+') voor '+qid4+' — volgende stap 🙂');
+
+      if(mode === 'photo'){
+        pickPhotoAndStore(sid, qid, mb);
+      }else if(mode === 'audio'){
+        toggleAudioRecord(sid, qid, mb);
+      }
       return;
     }
+
   });
 }
 
