@@ -640,8 +640,8 @@ function renderVraagPhoto(locId, q, closed){
 
 function renderVraagAudio(locId, q, closed){
   var media = (q && typeof q.media === 'object') ? q.media : {};
-  var minS = media.minSeconds != null ? media.minSeconds : 0;
-  var maxS = media.maxSeconds != null ? media.maxSeconds : 30;
+  var minS = media.minSeconds != null ? media.minSeconds : 2;
+  var maxS = media.maxSeconds != null ? media.maxSeconds : 20;
   var maxC  = (media.maxCount   != null) ? media.maxCount   : 1;
   var arr = parseJsonArray(getAns(locId, q.id));
   var count = arr.length;
@@ -662,6 +662,7 @@ function renderVraagAudio(locId, q, closed){
     + '    <div class="muted small">Min: '+minS+'s — Max: '+maxS+'s</div>'
     + (clips ? ('    <div class="mList">'+clips+'</div>') : '')
     + '    <button class="mediaBtn" data-stop="'+locId+'" data-q="'+escapeHtml(q.id)+'" data-mode="audio"'
+    + '      data-mins="'+minS+'" data-maxs="'+maxS+'" data-maxcount="'+maxC+'"'
     +      (closed ? ' disabled' : '')
     + '    >🎙️ Neem audio op</button>'
     + '    <div class="recRow" data-rec="'+escapeHtml(locId)+'|'+escapeHtml(q.id)+'" style="display:none">'
