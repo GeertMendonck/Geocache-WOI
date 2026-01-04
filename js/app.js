@@ -3611,43 +3611,52 @@ if(ul){
     }
 
     // clear
-    var clr = e.target && e.target.closest ? e.target.closest('button.clearAns') : null;
-    if(clr){
-      var sid2 = clr.getAttribute('data-stop');
-      var qid2 = String(clr.getAttribute('data-q')||'');
-      if(!sid2 || !qid2) return;
-        // ✅ media blobs weg
-      var raw = getAns(sid2, qid2);
-      var arr = parseJsonArray(raw);
-      var looksLikeMedia = !!(arr && arr.length && typeof arr[0] === 'object' && arr[0] && arr[0].kind);
-      if(looksLikeMedia){
-        var prefix = 'm|' + sid2 + '|' + qid2 + '|';
-        mediaDelPrefix(prefix).catch(function(){});
-      }
+   var clr = e.target && e.target.closest ? e.target.closest('button.clearAns') : null;
+if(clr){
+  var sid2 = clr.getAttribute('data-stop');
+  var qid2 = String(clr.getAttribute('data-q')||'');
+  if(!sid2 || !qid2) return;
 
-      if(typeof clearAns === 'function') clearAns(sid2, qid2);
-      else setAns(sid2, qid2, '');
+  // ✅ media blobs weg
+  var raw = getAns(sid2, qid2);
+  var arr = parseJsonArray(raw);
+  var looksLikeMedia = !!(arr && arr.length && typeof arr[0] === 'object' && arr[0] && arr[0].kind);
 
-      // open: textarea leegmaken
-      var ta = ul.querySelector('textarea.ans[data-stop="'+sid2+'"][data-q="'+qid2+'"]');
-      if(ta){ ta.value=''; ta.focus(); }
+  if(looksLikeMedia){
+    var prefix = 'm|' + sid2 + '|' + qid2 + '|';
+    mediaDelPrefix(prefix).catch(function(){});
+  }
 
-      // mc buttons: active states weg
-      var w1 = ul.querySelector('.qaMC[data-qwrap="'+qid2+'"]');
-      if(w1){
-        var btns = w1.querySelectorAll('button.optBtn');
-        for(var j=0;j<btns.length;j++) btns[j].classList.remove('isActive');
-      }
+  if(typeof clearAns === 'function') clearAns(sid2, qid2);
+  else setAns(sid2, qid2, '');
 
-      // checkbox: uncheck
-      var w2 = ul.querySelector('.qaCB[data-qwrap="'+qid2+'"]');
-      if(w2){
-        var cbs = w2.querySelectorAll('input.cbOpt');
-        for(var k=0;k<cbs.length;k++) cbs[k].checked = false;
-      }
+  // ✅ als media: rerender zodat thumbs/audio verdwijnen
+  if(looksLikeMedia){
+    try{ renderUnlocked(); }catch(e){}
+    return;
+  }
 
-      return;
-    }
+  // open: textarea leegmaken
+  var ta = ul.querySelector('textarea.ans[data-stop="'+sid2+'"][data-q="'+qid2+'"]');
+  if(ta){ ta.value=''; ta.focus(); }
+
+  // mc buttons: active states weg
+  var w1 = ul.querySelector('.qaMC[data-qwrap="'+qid2+'"]');
+  if(w1){
+    var btns = w1.querySelectorAll('button.optBtn');
+    for(var j=0;j<btns.length;j++) btns[j].classList.remove('isActive');
+  }
+
+  // checkbox: uncheck
+  var w2 = ul.querySelector('.qaCB[data-qwrap="'+qid2+'"]');
+  if(w2){
+    var cbs = w2.querySelectorAll('input.cbOpt');
+    for(var k=0;k<cbs.length;k++) cbs[k].checked = false;
+  }
+
+  return;
+}
+
 
     // mic (open textarea)
     var mic = e.target && e.target.closest ? e.target.closest('button.micBtn') : null;
