@@ -44,6 +44,60 @@ function parseJsonArray(s){
     return [];
   }
 }
+function findQuestionById(stopId, qid){
+  var loc = findLocById(stopId);
+  if(!loc || !loc.vragen) return null;
+  for(var i=0;i<loc.vragen.length;i++){
+    var q = loc.vragen[i];
+    if(q && q.id === qid) return q;
+  }
+  return null;
+}
+
+function pickPhotoAndStore(stopId, qid, btn){
+
+  // ✅ enforce maxCount (hard guard)
+  var q = findQuestionById(stopId, qid);
+  var media = (q && isObj(q.media)) ? q.media : {};
+  var maxC = (media.maxCount != null) ? media.maxCount : 1;
+
+  var curArr = parseJsonArray(getAns(stopId, qid));
+  if(curArr.length >= maxC){
+    toast('📷 Maximaal '+maxC+' foto' + (maxC===1?'':'s') + ' toegestaan.');
+    return;
+  }
+
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  try{ input.setAttribute('capture','environment'); }catch(e){}
+
+  input.onchange = function(){
+    var f = input.files && input.files[0];
+    if(!f) return;
+
+    // ✅ check opnieuw (voor zekerheid)
+    var arr = parseJsonArray(getAns(stopId, qid));
+    if(arr.length >= maxC){
+      toast('📷 Maximaal '+maxC+' foto' + (maxC===1?'':'s') + ' toegestaan.');
+      return;
+    }
+
+    var itemId = 'it_' + Date.now();
+    var key = mediaKey(stopId, qid, itemId);
+
+    mediaPut(key, f).then(function(){
+      arr.push({ id:itemId, kind:'photo', ts:Date.now(), mime:f.type || 'image/*' });
+      setAns(stopId, qid, stringifyJson(arr));
+      try{ renderUnlocked(); }catch(e){}
+    }).catch(function(err){
+      console.warn('photo store failed', err);
+      toast('📷 Kon foto niet opslaan');
+    });
+  };
+
+  input.click();
+}
 
 function stringifyJson(v){
   try{ return JSON.stringify(v); }catch(e){ return ''; }
@@ -3258,30 +3312,30 @@ function charactersEnabled(){
         }
 
         // ✅ zijn er nog onbeantwoorde (en niet-gesloten) vragen?
-        var hasUnanswered = false;
-        if(hasRealLoc && qsArr && qsArr.length){
-          for(var i=0;i<qsArr.length;i++){
-            var qx = qsArr[i];
-            qx = isObj(qx) ? qx : { type:'open', vraag:String(qx||'') };
+          var hasUnanswered = false;
+          if(hasRealLoc && qsArr && qsArr.length){
+            for(var i=0;i<qsArr.length;i++){
+              var qx = qsArr[i];
+              qx = isObj(qx) ? qx : { type:'open', vraag:String(qx||'') };
 
-            var qid2 = qx.id || (locId + '__q' + i);
+              var qid2 = qx.id || (locId + '__q' + i);
 
-            var pol2 = isObj(qx.policy) ? qx.policy : {};
-            var showUntil2 = pol2.showUntil || 'nextLocation';
-            var closeWhen2 = pol2.closeWhen || showUntil2;
+              var pol2 = isObj(qx.policy) ? qx.policy : {};
+              var showUntil2 = String(pol2.showUntil || 'nextLocation');
+              var closeWhen2 = String(pol2.closeWhen || showUntil2);
 
-            var ctx2 = { inRangeThisLoc: inRangeThisLoc, passedThisLoc: passedThisLoc, routeEnded: routeEnded };
+              var ctx2 = { inRangeThisLoc: inRangeThisLoc, passedThisLoc: passedThisLoc, routeEnded: routeEnded };
 
-            if(!shouldShowQuestion(showUntil2, ctx2)) continue;
-            if(shouldCloseQuestion(closeWhen2, ctx2)) continue;
+              if(!shouldShowQuestion(showUntil2, ctx2)) continue;
+              if(shouldCloseQuestion(closeWhen2, ctx2)) continue;
 
-            var a = getAns(locId, qid2);
-            if(!a || !String(a).trim()){
-              hasUnanswered = true;
-              break;
+              if(!isAnsweredForQuestion(locId, qx, i)){
+                hasUnanswered = true;
+                break;
+              }
             }
           }
-        }
+
 
              // ---- panel bodies ---------------------------------------------------
               // Info-panel: enkel info/uitleg (met eventueel gallery in uitlegHtml)
