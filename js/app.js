@@ -239,29 +239,30 @@ function getProgressContext(){
 }
 
 // showUntil: bepaalt of de vraag nog getoond wordt
-function shouldShowQuestion(showUntil, ctx){
-  showUntil = (showUntil || 'nextLocation').toLowerCase();
+function shouldShow(pol){
+  var showUntil = String((pol && pol.showUntil) ? pol.showUntil : 'nextLocation').toLowerCase();
 
-  if(showUntil === 'inrange') return !!ctx.inRangeThisLoc;
-  if(showUntil === 'nextlocation') return !ctx.passedThisLoc;    // weg zodra je verder bent
-  if(showUntil === 'beforeend') return !ctx.routeEnded;          // weg na einde
-  if(showUntil === 'afterend') return true;                      // blijft altijd zichtbaar
+  if(showUntil === 'inrange') return true;
+  if(showUntil === 'nextlocation') return !passedThisLoc;
 
-  // fallback
-  return !ctx.passedThisLoc;
+  if(showUntil === 'beforeend') return !routeEnded;
+  if(showUntil === 'afterend')  return true;
+
+  return !passedThisLoc;
 }
 
-// closeWhen: bepaalt of de controls dicht/readonly worden
-function shouldCloseQuestion(closeWhen, ctx){
-  closeWhen = (closeWhen || 'nextLocation').toLowerCase();
+function shouldClose(pol){
+  var closeWhen = String((pol && pol.closeWhen) ? pol.closeWhen : ((pol && pol.showUntil) ? pol.showUntil : 'nextLocation')).toLowerCase();
 
-  if(closeWhen === 'inrange') return !ctx.inRangeThisLoc;        // zodra je weg bent
-  if(closeWhen === 'nextlocation') return !!ctx.passedThisLoc;
-  if(closeWhen === 'beforeend') return !!ctx.routeEnded;
-  if(closeWhen === 'afterend') return !!ctx.routeEnded;          // “sluit op het einde”
+  if(closeWhen === 'inrange') return false;
+  if(closeWhen === 'nextlocation') return passedThisLoc;
 
-  return false;
+  if(closeWhen === 'beforeend') return routeEnded;
+  if(closeWhen === 'afterend')  return routeEnded;
+
+  return passedThisLoc;
 }
+
 
 function resolveImageFile(file, data){
   if(!file) return '';
