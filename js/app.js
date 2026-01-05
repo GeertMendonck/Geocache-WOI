@@ -4117,7 +4117,7 @@ function charactersEnabled(){
       var focus = panel.getAttribute('data-panel');
       if(!focus) return;
   
-      //var st = store.get();
+      var st = store.get();
       st.focus = focus;
       store.set(st);
   
