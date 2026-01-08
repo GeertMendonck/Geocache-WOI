@@ -613,7 +613,7 @@ function pickPhotoAndStore(stopId, qid, btn){
       setAns(stopId, qid, stringifyJson(arr));
 
       // rerender to show thumbnail
-      try{ renderUnlocked(); }catch(e){}
+      try{ renderUnlocked(true); }catch(e){}
     }).catch(function(err){
       console.warn('photo store failed', err);
       toast('📷 Kon foto niet opslaan');
@@ -784,7 +784,7 @@ var timerId = setInterval(function(){
       mediaPut(key, blob).then(function(){
         arr.push({ id:itemId, kind:'audio', ts:Date.now(), mime: blob.type || 'audio/webm', seconds: seconds });
         setAns(stopId, qid, stringifyJson(arr));
-        try{ renderUnlocked(); }catch(e){}
+        try{ renderUnlocked(true); }catch(e){}
       }).catch(function(err){
         console.warn('audio store failed', err);
         toast('🎙️ Kon audio niet opslaan');
@@ -3695,11 +3695,7 @@ function charactersEnabled(){
   }
 }
 
-  
-
-
-
-    function renderUnlocked(){
+    function renderUnlocked(force=false){
         var old = document.getElementById('mapSection');
         if(old) old.style.display = 'none';
       
@@ -3714,7 +3710,7 @@ function charactersEnabled(){
             (st.unlockedSlots||[]).length
           ].join('|');
 
-          if(renderKey === __lastRenderKey){
+          if(!force && renderKey === __lastRenderKey){
             // hier kan je nog wél status/map updaten als je wil
             return;
           }
