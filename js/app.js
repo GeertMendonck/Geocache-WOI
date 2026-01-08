@@ -358,19 +358,147 @@ async function importZip(file, opts){
 
   return { progress: progress, manifest: manifest };
 }
+function collectMediaRefsFromAnswers(answers){
+  var out = [];
+  if(!answers || typeof answers !== 'object') return out;
 
+  Object.keys(answers).forEach(function(locId){
+    var perLoc = answers[locId];
+    if(!perLoc || typeof perLoc !== 'object') return;
 
+    Object.keys(perLoc).forEach(function(qId){
+      var v = perLoc[qId];
+
+      // jouw photo/audio answers zitten typisch als JSON-string array in getAns(),
+      // maar in st.answers kan het al object/array zijn afhankelijk van setAns().
+      // We ondersteunen beide.
+      var arr = null;
+
+      if(typeof v === 'string'){
+        try { arr = JSON.parse(v); } catch(e){ arr = null; }
+      } else if(Array.isArray(v)){
+        arr = v;
+      } else if(v && typeof v === 'object' && Array.isArray(v.items)){
+        arr = v.items;
+      } else if(v && typeof v === 'object' && Array.isArray(v)){
+        arr = v;
+      }
+
+      if(!Array.isArray(arr)) return;
+
+      arr.forEach(function(it){
+        if(!it || typeof it !== 'object') return;
+        if(it.kind !== 'photo' && it.kind !== 'audio') return;
+        if(!it.id) return;
+
+        out.push({
+          locId: String(locId),
+          qId: String(qId),
+          itemId: String(it.id),
+          kind: it.kind,
+          ts: it.ts || null
+        });
+      });
+    });
+  });
+
+  return out;
+}
+
+// async function exportZip(){
+//   if(typeof JSZip === 'undefined') throw new Error('JSZip ontbreekt');
+
+//   var st = store.get();
+//   var pc = (typeof currentPc === 'function') ? (currentPc() || {}) : {};
+
+//   var zip = new JSZip();
+
+//   // --- progress.json (geen media, enkel state + answers)
+//   var progress = {
+//     exportVersion: 3,
+//     exportedAt: new Date().toISOString(),
+//     scenario: {
+//       title: (DATA && DATA.meta && DATA.meta.title) ? DATA.meta.title : '',
+//       version: (DATA && DATA.meta && DATA.meta.version) ? DATA.meta.version : ''
+//     },
+//     pc: pc,
+//     state: {
+//       // neem alles mee dat je route bepaalt
+//       unlockedLocs: st.unlockedLocs || [],
+//       unlockedBySlot: st.unlockedBySlot || null,
+//       focus: st.focus || null,
+//       lastUnlockedLocId: st.lastUnlockedLocId || null,
+//       notes: st.notes || '',
+//       answers: st.answers || {}
+//     }
+//   };
+
+//   zip.file('progress.json', JSON.stringify(progress, null, 2));
+
+//   // --- media + manifest
+//   var db = await idbOpen();
+//   var keys = await idbGetAllKeys(db);
+
+//   var manifest = {
+//     exportVersion: 3,
+//     exportedAt: new Date().toISOString(),
+//     db: { name: MEDIA_DB_NAME, store: MEDIA_STORE },
+//     items: []
+//   };
+
+//   // sequentieel: minder RAM spikes op mobiel
+//   for(var i=0;i<keys.length;i++){
+//     var key = String(keys[i] || '');
+//     if(key.indexOf('m|') !== 0) continue;
+
+//     var blob = await idbGet(db, key);
+//     if(!blob) continue;
+
+//     var parts = key.split('|'); // m|loc|q|item
+//     var locId  = parts[1] || 'unknownLoc';
+//     var qId    = parts[2] || 'unknownQ';
+//     var itemId = parts[3] || ('item' + i);
+
+//     var ext = mimeToExt(blob.type);
+//     var path = 'media/' + locId + '/' + qId + '/' + itemId + ext;
+
+//     zip.file(path, blob);
+
+//     manifest.items.push({
+//       key: key,
+//       path: path,
+//       mime: blob.type || '',
+//       size: blob.size || 0
+//     });
+//   }
+
+//   zip.file('manifest.json', JSON.stringify(manifest, null, 2));
+
+//   // --- download zip
+//   var outBlob = await zip.generateAsync({ type:'blob' });
+//   var url = URL.createObjectURL(outBlob);
+
+//   var safeTitle = (progress.scenario.title || 'export').replace(/[^\w\-]+/g,'_').slice(0,40);
+//   var a = document.createElement('a');
+//   a.href = url;
+//   a.download = safeTitle + '_' + Date.now() + '.zip';
+//   document.body.appendChild(a);
+//   a.click();
+//   a.remove();
+
+//   setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+// }
 async function exportZip(){
   if(typeof JSZip === 'undefined') throw new Error('JSZip ontbreekt');
 
-  var st = store.get();
+  var st = store.get() || {};
   var pc = (typeof currentPc === 'function') ? (currentPc() || {}) : {};
 
   var zip = new JSZip();
 
-  // --- progress.json (geen media, enkel state + answers)
+  // --- progress.json
   var progress = {
-    exportVersion: 3,
+    exportVersion: 4,
     exportedAt: new Date().toISOString(),
     scenario: {
       title: (DATA && DATA.meta && DATA.meta.title) ? DATA.meta.title : '',
@@ -378,7 +506,6 @@ async function exportZip(){
     },
     pc: pc,
     state: {
-      // neem alles mee dat je route bepaalt
       unlockedLocs: st.unlockedLocs || [],
       unlockedBySlot: st.unlockedBySlot || null,
       focus: st.focus || null,
@@ -390,38 +517,68 @@ async function exportZip(){
 
   zip.file('progress.json', JSON.stringify(progress, null, 2));
 
-  // --- media + manifest
-  var db = await idbOpen();
-  var keys = await idbGetAllKeys(db);
+  // --- media refs uit answers
+  var refs = collectMediaRefsFromAnswers(st.answers || {});
 
+  // OPTIONEEL: enkel media van vandaag
+  // var onlyToday = false; // <-- zet op true als je dat echt wil
+  // var now = new Date();
+  // if(onlyToday){
+  //   refs = refs.filter(r => sameDay(r.ts, now));
+  // }
+
+  // dedupe (veilig)
+  var seen = Object.create(null);
+  refs = refs.filter(function(r){
+    var k = r.locId + '|' + r.qId + '|' + r.itemId;
+    if(seen[k]) return false;
+    seen[k] = true;
+    return true;
+  });
+
+  // --- IDB open
+  var db = await idbOpen();
+
+  // --- manifest
   var manifest = {
-    exportVersion: 3,
+    exportVersion: 4,
     exportedAt: new Date().toISOString(),
     db: { name: MEDIA_DB_NAME, store: MEDIA_STORE },
     items: []
   };
 
-  // sequentieel: minder RAM spikes op mobiel
-  for(var i=0;i<keys.length;i++){
-    var key = String(keys[i] || '');
-    if(key.indexOf('m|') !== 0) continue;
+  // teller per locId+kind voor naming 01/02/..
+  var counters = Object.create(null);
+
+  for(var i=0;i<refs.length;i++){
+    var r = refs[i];
+    var key = mediaKey(r.locId, r.qId, r.itemId);
 
     var blob = await idbGet(db, key);
     if(!blob) continue;
 
-    var parts = key.split('|'); // m|loc|q|item
-    var locId  = parts[1] || 'unknownLoc';
-    var qId    = parts[2] || 'unknownQ';
-    var itemId = parts[3] || ('item' + i);
-
     var ext = mimeToExt(blob.type);
-    var path = 'media/' + locId + '/' + qId + '/' + itemId + ext;
+    var locPart = safeFilePart(r.locId);
+    var kindPart = (r.kind === 'audio') ? 'audio' : 'photo';
+
+    var cKey = locPart + '|' + kindPart;
+    counters[cKey] = (counters[cKey] || 0) + 1;
+
+    var fname = locPart + '_' + kindPart + '_' + pad2(counters[cKey]) + ext;
+
+    // ✅ platter: alles in media/
+    var path = 'media/' + fname;
 
     zip.file(path, blob);
 
     manifest.items.push({
       key: key,
       path: path,
+      locId: r.locId,
+      qId: r.qId,
+      itemId: r.itemId,
+      kind: r.kind,
+      ts: r.ts || null,
       mime: blob.type || '',
       size: blob.size || 0
     });
