@@ -1,0 +1,202 @@
+{
+  "meta": {
+    "title": "Naar Mombasa",
+    "subtitle": "donderdagavond",
+    "version": "1.0",
+    "assetsBase": ""
+  },
+  "settings": {
+    "visibilityMode": "nextOnly",
+    "multiLocationSlotMode": "all",
+    "showOptionalSlots": true,
+    "listShowFutureSlots": true,
+    "mapShowFutureLocations": false
+  },
+  "prestart": {
+    "useLocationId": "startloc",
+    "meetingPoint": {
+      "lat": 51.220418,
+      "lng": 4.440854,
+      "label": "Aan de voordeur"
+    },
+    "message": "Nog niet aan het startpunt. Ga naar de startlocatie om te beginnen.",
+    "maps": {
+      "label": "Route naar startpunt"
+    },
+    "images": []
+  },
+  "slots": [
+    {
+      "id": "start",
+      "label": "Start",
+      "required": true
+    },
+    {
+      "id": "stop01",
+      "label": "stop01",
+      "required": true,
+      "unlockAfterSlot": "start"
+    },
+    {
+      "id": "stop02",
+      "label": "stop02",
+      "required": true,
+      "unlockAfterSlot": "stop01"
+    },
+    {
+      "id": "stop03",
+      "label": "stop03",
+      "required": true,
+      "unlockAfterSlot": "stop02"
+    },
+    {
+      "id": "end",
+      "label": "Einde",
+      "required": true,
+      "unlockAfterSlot": "stop03"
+    }
+  ],
+  "locaties": [
+    {
+      "id": "startloc",
+      "slot": "start",
+      "naam": "Start",
+      "lat": 51.220418,
+      "lng": 4.440854,
+      "radius": 40,
+      "images": [],
+      "routeHint": "Verlaat het huis en ga naar links richting Kortrijkstraat, daar sl je terug links af naar het Groeningerplein",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": [
+        {
+          "id": "q_mk5h9bye_iwq6",
+          "type": "mc",
+          "vraag": "Zie ik de opties?",
+          "policy": {
+            "showUntil": "beforeEnd",
+            "closeWhen": "beforeEnd"
+          },
+          "opties": [
+            {
+              "id": "o_mk5h9bye_xttv",
+              "tekst": "ja",
+              "correct": true
+            },
+            {
+              "id": "o_mk5h9bye_aswy",
+              "tekst": "neen",
+              "correct": false
+            }
+          ],
+          "media": {},
+          "shuffle": true
+        },
+        {
+          "id": "q_mk5h9tg6_wmrk",
+          "type": "checkbox",
+          "vraag": "Idem voor de checkboxen",
+          "policy": {
+            "showUntil": "beforeEnd",
+            "closeWhen": "beforeEnd"
+          },
+          "opties": [
+            {
+              "id": "o_mk5h9tg6_1oi3",
+              "tekst": "Alle mogelijkheden",
+              "correct": true
+            },
+            {
+              "id": "o_mk5h9tg6_6anw",
+              "tekst": "verspringend",
+              "correct": false
+            },
+            {
+              "id": "o_mk5hacpz_rupx",
+              "tekst": "niets",
+              "correct": false
+            }
+          ],
+          "media": {},
+          "shuffle": true
+        },
+        {
+          "id": "q_mk5hahkn_a9go",
+          "type": "photo",
+          "vraag": "Controle stabiliteit voorbeeld foto",
+          "policy": {
+            "showUntil": "inRange",
+            "closeWhen": "inRange"
+          },
+          "media": {
+            "mode": "photo",
+            "minCount": 1,
+            "maxCount": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "loc01",
+      "slot": "stop01",
+      "naam": "Groeningerplein",
+      "lat": 51.22000233312988,
+      "lng": 4.438197612762452,
+      "radius": 40,
+      "images": [],
+      "routeHint": "Kruis het Groeningerplein en ga richting Generaal Eysenhouwerlei. ",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "loc02",
+      "slot": "stop02",
+      "naam": "Nieuwe Fagus",
+      "lat": 51.21585770366159,
+      "lng": 4.435641467571259,
+      "radius": 20,
+      "images": [],
+      "routeHint": "Vervolg de G. Eysenhouwerlei tot het einde, steek over en ga naar links.",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "loc03",
+      "slot": "stop03",
+      "naam": "Eco Huis",
+      "lat": 51.21504620638265,
+      "lng": 4.434404969215394,
+      "radius": 35,
+      "images": [],
+      "routeHint": "Ga richting het districthuis.",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "end",
+      "slot": "end",
+      "naam": "Mombasa",
+      "lat": 51.21397762914277,
+      "lng": 4.433219432830811,
+      "radius": 30,
+      "images": [],
+      "routeHint": "Je bestemming ligt op je linkerkant.",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    }
+  ]
+}

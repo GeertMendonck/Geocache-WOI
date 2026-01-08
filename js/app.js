@@ -16,6 +16,7 @@
     window.__lastGeoAt  = 0;
     window.__lastFix    = null; 
     window.__pendingRecenter = false; // alleen als je dat gebruikt
+    var __lastRenderKey = '';
    
   
     // ---------- Mini helpers ----------
@@ -3705,6 +3706,19 @@ function charactersEnabled(){
         applyRouteModeUI();
       
         var st = store.get() || {};
+        var renderKey = [
+            st.focus,
+            st.currentLocId,
+            st.lastUnlockedLocId,
+            (st.unlockedLocs||[]).length,
+            (st.unlockedSlots||[]).length
+          ].join('|');
+
+          if(renderKey === __lastRenderKey){
+            // hier kan je nog wél status/map updaten als je wil
+            return;
+          }
+          __lastRenderKey = renderKey;
         var pc = currentPc();
         var cont = qs('unlockList');
         if(!cont) return;
@@ -4693,11 +4707,33 @@ if(clr){
       }
 
       // type normaliseren
-      var t = (q.type || 'open') + '';
-      t = t.toLowerCase();
-      var allowed = { mc:1, checkbox:1, open:1, photo:1, audio:1 };
+     // type normaliseren (+ synoniemen)
+      var t = String(q.type || 'open').trim().toLowerCase();
+      if(t === 'multiplechoice') t = 'mc';
+      if(t === 'dropdown' || t === 'select') t = 'combobox';
+
+      var allowed = { mc:1, checkbox:1, combobox:1, open:1, photo:1, audio:1 };
       if(!allowed[t]) t = 'open';
       q.type = t;
+
+      // opties normaliseren voor mc/checkbox/combobox
+      if(q.type === 'mc' || q.type === 'checkbox' || q.type === 'combobox'){
+        // support ook "options" als bronveld
+        if(q.opties == null && q.options != null) q.opties = q.options;
+
+        q.opties = normalizeOpties(q.opties, q.id);
+
+        // ✅ alias zodat renderers die options verwachten ook werken
+        q.options = q.opties;
+
+        // shuffle: enkel zinvol voor mc/checkbox (niet voor combobox)
+        q.shuffle = (q.type !== 'combobox') && (q.shuffle === true);
+      } else {
+        // geen opties nodig
+        if(q.opties != null) q.opties = safeArr(q.opties);
+        if(q.options != null) q.options = safeArr(q.options);
+        q.shuffle = false;
+      }
 
       // vraagtekst
       if(q.vraag == null) q.vraag = '';
