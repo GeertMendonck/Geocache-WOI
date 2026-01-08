@@ -404,7 +404,11 @@ function collectMediaRefsFromAnswers(answers){
 
   return out;
 }
+function pad2(n){ n = String(n||0); return (n.length<2?('0'+n):n); }
 
+function safeFilePart(s){
+  return String(s||'').trim().replace(/[^\w\-]+/g,'_').slice(0,60) || 'x';
+}
 // async function exportZip(){
 //   if(typeof JSZip === 'undefined') throw new Error('JSZip ontbreekt');
 
