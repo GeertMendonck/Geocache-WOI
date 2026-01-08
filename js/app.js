@@ -2004,78 +2004,167 @@ function resolveCharacterFile(file, data){
           if(!name) return '';
           return name.replace(/^(Stop\s*\d+\s*:\s*|Start\s*:\s*|Einde\s*:\s*)/i, '').trim();
         }
-        function allLocationsForSlot(slotId){
-          var arr = DATA.locaties || DATA.stops || [];
-          var out = [];
-          for(var i=0;i<arr.length;i++){
-            if(arr[i] && arr[i].slot === slotId) out.push(arr[i]);
-          }
-          return out;
-        }
-        function findLocById(locId){
-          var arr = DATA.locaties || DATA.stops || [];
-          for (var i=0;i<arr.length;i++){
-            if(arr[i] && arr[i].id === locId) return arr[i];
+        // function allLocationsForSlot(slotId){
+        //   var arr = DATA.locaties || DATA.stops || [];
+        //   var out = [];
+        //   for(var i=0;i<arr.length;i++){
+        //     if(arr[i] && arr[i].slot === slotId) out.push(arr[i]);
+        //   }
+        //   return out;
+        // }
+        // function findLocById(locId){
+        //   var arr = DATA.locaties || DATA.stops || [];
+        //   for (var i=0;i<arr.length;i++){
+        //     if(arr[i] && arr[i].id === locId) return arr[i];
+        //   }
+        //   return null;
+        // }
+        // function displayPlaceForSlot(sid, ok){
+        //     var locs = allLocationsForSlot(sid);
+        //     if(!locs.length) return '';
+          
+        //     var mode = getCompleteMode(sid);
+        //     var st2 = store.get();
+        //     var unlockedLocs = st2.unlockedLocs || [];
+        //     var pickedId = (st2.slotPick && st2.slotPick[sid]) ? st2.slotPick[sid] : null;
+          
+        //     // helper: eerste bezochte loc in slot
+        //     function firstVisitedId(){
+        //       for(var i=0;i<locs.length;i++){
+        //         if(unlockedLocs.indexOf(locs[i].id) >= 0) return locs[i].id;
+        //       }
+        //       return null;
+        //     }
+          
+        //     // random/nearest: als er al een pick is, is het op kaart al "niet-spoiler"
+        //     if(mode === 'random' || mode === 'nearest'){
+        //       if(pickedId){
+        //         var locP = findLocById(pickedId);
+        //         return (locP && locP.naam) ? stripPrefix(locP.naam) : '';
+        //       }
+        //       // nog geen pick (bv. nearest zonder GPS): toon voorlopig aantal
+        //       return (locs.length > 1) ? '🔀 (' + locs.length + ' opties)' : '';
+        //     }
+          
+        //     // any: als al iets bezocht is, toon die plaats; anders toon aantal opties
+        //     if(mode === 'any'){
+        //       var vid = firstVisitedId();
+        //       if(vid){
+        //         var locV = findLocById(vid);
+        //         return (locV && locV.naam) ? stripPrefix(locV.naam) : '';
+        //       }
+        //       return (locs.length > 1) ? '🔀 (' + locs.length + ' opties)' : '';
+        //     }
+          
+        //     // all: je kan hier kiezen: of niets tonen tot alles klaar is, of "x/y"
+        //     if(mode === 'all'){
+        //       if(ok){
+        //         // als alles klaar is, toon gerust de (eerste) plaatsnaam of leeg
+        //         // (ik toon hier leeg, want "all" is vaak meerdere plekken)
+        //         return '';
+        //       }
+        //       // toon progress x/y (handig!)
+        //       var done = 0;
+        //       for(var j=0;j<locs.length;j++){
+        //         if(unlockedLocs.indexOf(locs[j].id) >= 0) done++;
+        //       }
+        //       if(locs.length > 1) return '🧩 (' + done + '/' + locs.length + ')';
+        //       return '';
+        //     }
+          
+        //     // fallback
+        //     return '';
+        //   }
+        function displayPlaceForSlot(sid){
+        var locs = allLocationsForSlot(sid);
+        if(!locs.length) return '';
+
+        var mode = getCompleteMode(sid);
+        var st2 = store.get() || {};
+        var unlockedLocs = st2.unlockedLocs || [];
+        var pickedId = (st2.slotPick && st2.slotPick[sid]) ? st2.slotPick[sid] : null;
+
+        function firstVisitedId(){
+          for(var i=0;i<locs.length;i++){
+            if(unlockedLocs.indexOf(locs[i].id) >= 0) return locs[i].id;
           }
           return null;
         }
-        function displayPlaceForSlot(sid, ok){
-            var locs = allLocationsForSlot(sid);
-            if(!locs.length) return '';
-          
-            var mode = getCompleteMode(sid);
-            var st2 = store.get();
-            var unlockedLocs = st2.unlockedLocs || [];
-            var pickedId = (st2.slotPick && st2.slotPick[sid]) ? st2.slotPick[sid] : null;
-          
-            // helper: eerste bezochte loc in slot
-            function firstVisitedId(){
-              for(var i=0;i<locs.length;i++){
-                if(unlockedLocs.indexOf(locs[i].id) >= 0) return locs[i].id;
-              }
-              return null;
-            }
-          
-            // random/nearest: als er al een pick is, is het op kaart al "niet-spoiler"
-            if(mode === 'random' || mode === 'nearest'){
-              if(pickedId){
-                var locP = findLocById(pickedId);
-                return (locP && locP.naam) ? stripPrefix(locP.naam) : '';
-              }
-              // nog geen pick (bv. nearest zonder GPS): toon voorlopig aantal
-              return (locs.length > 1) ? '🔀 (' + locs.length + ' opties)' : '';
-            }
-          
-            // any: als al iets bezocht is, toon die plaats; anders toon aantal opties
-            if(mode === 'any'){
-              var vid = firstVisitedId();
-              if(vid){
-                var locV = findLocById(vid);
-                return (locV && locV.naam) ? stripPrefix(locV.naam) : '';
-              }
-              return (locs.length > 1) ? '🔀 (' + locs.length + ' opties)' : '';
-            }
-          
-            // all: je kan hier kiezen: of niets tonen tot alles klaar is, of "x/y"
-            if(mode === 'all'){
-              if(ok){
-                // als alles klaar is, toon gerust de (eerste) plaatsnaam of leeg
-                // (ik toon hier leeg, want "all" is vaak meerdere plekken)
-                return '';
-              }
-              // toon progress x/y (handig!)
-              var done = 0;
-              for(var j=0;j<locs.length;j++){
-                if(unlockedLocs.indexOf(locs[j].id) >= 0) done++;
-              }
-              if(locs.length > 1) return '🧩 (' + done + '/' + locs.length + ')';
-              return '';
-            }
-          
-            // fallback
-            return '';
+
+        // random/nearest: toon naam pas als pick er is (anders geen spoiler)
+        if(mode === 'random' || mode === 'nearest'){
+          if(pickedId){
+            var locP = findLocById(pickedId);
+            return (locP && locP.naam) ? stripPrefix(locP.naam) : '';
           }
-          
+          return (locs.length > 1) ? '🔀 (' + locs.length + ' opties)' : '';
+        }
+
+        // any: toon eerste bezochte loc-naam zodra bezocht
+        if(mode === 'any'){
+          var vid = firstVisitedId();
+          if(vid){
+            var locV = findLocById(vid);
+            return (locV && locV.naam) ? stripPrefix(locV.naam) : '';
+          }
+          return (locs.length > 1) ? '🔀 (' + locs.length + ' opties)' : '';
+        }
+
+        // all: toon altijd progress x/y (handig), en eventueel naam als er maar 1 is
+        if(mode === 'all'){
+          var done = 0;
+          for(var j=0;j<locs.length;j++){
+            if(unlockedLocs.indexOf(locs[j].id) >= 0) done++;
+          }
+          if(locs.length > 1) return '🧩 (' + done + '/' + locs.length + ')';
+          // één locatie in all => toon naam zodra visited
+          if(done >= 1){
+            var loc1 = findLocById(locs[0].id);
+            return (loc1 && loc1.naam) ? stripPrefix(loc1.naam) : '';
+          }
+          return '';
+        }
+
+        return '';
+      }
+
+         function normId(x){ return String(x==null?'':x).trim().toLowerCase(); }
+
+        function allLocationsForSlot(slotId){
+          var arr = DATA.locaties || DATA.stops || [];
+          var out = [];
+          var sid = normId(slotId);
+          for(var i=0;i<arr.length;i++){
+            if(arr[i] && normId(arr[i].slot) === sid) out.push(arr[i]);
+          }
+          return out;
+        }
+
+        function findLocById(locId){
+          var arr = DATA.locaties || DATA.stops || [];
+          var id = normId(locId);
+          for(var i=0;i<arr.length;i++){
+            if(arr[i] && normId(arr[i].id) === id) return arr[i];
+          }
+          return null;
+        }
+
+        function slotVisited(sid){
+          var st2 = store.get() || {};
+          var unlockedLocs = st2.unlockedLocs || [];
+          var locs = allLocationsForSlot(sid);
+          if(!locs.length) return false;
+
+          // als er een pick bestaat (random/nearest), beschouw het slot als “bezocht” (zonder spoilers)
+          var pickedId = (st2.slotPick && st2.slotPick[sid]) ? st2.slotPick[sid] : null;
+          if(pickedId) return true;
+
+          for(var i=0;i<locs.length;i++){
+            if(unlockedLocs.indexOf(locs[i].id) >= 0) return true;
+          }
+          return false;
+        }
+        
       
         var html = '';
         (slotOrder||[]).forEach(function(sid){
@@ -2084,20 +2173,29 @@ function resolveCharacterFile(file, data){
          // var ok = !!unlockedMap[sid];
           var ok = isSlotCompleted(sid);
           var optional = isOptionalSlot(sid);
-          var icon = ok ? '✅' : (sid===endSlot ? '🔒' : (optional ? '🧩' : '⏳'));
-      
+          //var icon = ok ? '✅' : (sid===endSlot ? '🔒' : (optional ? '🧩' : '⏳'));
+          var icon = ok ? '✅'
+         : (visited ? '👣'
+         : (sid===endSlot ? '🔒' : (optional ? '🧩' : '⏳')));
+          var visited = slotVisited(sid);
           var label = slotLabel(sid);
-      
+          var cls = 'pill'
+          + (ok ? ' ok' : ' no')
+          + (visited && !ok ? ' visited' : '');
           // ✅ Spoiler-proof: place alleen tonen als slot unlocked is
           //var place = ok ? displayPlaceForSlot(sid) : '';
-          var place = displayPlaceForSlot(sid, ok);
-          html += '<span class="pill ' + (ok?'ok':'no') + '">'
-                + icon + ' '
-                + '<span class="pillMain">' + escapeHtml(label) + '</span>'
-                + (place ? ' <span class="pillSub">· ' + escapeHtml(place) + '</span>' : '')
-                + '</span>';
-        });
-      
+         // var place = displayPlaceForSlot(sid, ok);
+         var place = visited ? displayPlaceForSlot(sid) : '';
+         var baseLabel = slotLabel(sid); // start/stop01/...
+         var mainLabel = (visited && place) ? place : baseLabel;
+ 
+          html += '<span class="' + cls + '">'
+          + icon + ' '
+          + '<span class="pillMain">' + escapeHtml(mainLabel) + '</span>'
+          + (sub ? ' <span class="pillSub">· ' + escapeHtml(sub) + '</span>' : '')
+          + '</span>';
+            });
+          
         cont.innerHTML = html || '<span class="muted">(Geen stops geladen)</span>';
       }
       

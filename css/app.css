@@ -609,7 +609,41 @@ container die 3 panelen onder elkaar stapelt
 
 
 .stopsPills { display:flex; flex-wrap:wrap; gap:8px; }
-.stopsPills .pill { display:inline-flex; align-items:center; }
+.stopsPills .pill{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.stopsPills .pillMain{
+  font-weight: 600;          /* 👈 hoofdinfo (plaatsnaam) */
+  letter-spacing: .2px;
+}
+
+.stopsPills .pillSub{
+  font-weight: 400;
+  font-size: 11.5px;         /* 👈 subtieler */
+  opacity: .65;
+}
+
+.stopsPills .pill.ok .pillMain{
+  font-weight: 650;          /* afgerond / klaar = iets steviger */
+}
+
+.stopsPills .pill.no{
+  opacity: .9;
+}
+
+/* optioneel: visited maar niet completed */
+.stopsPills .pill.visited:not(.ok){
+  border: 1px dashed rgba(255,255,255,.35);
+}
+
 /* ===============================
      Verhaal met focus op nieuwste deel
      =============================== */
