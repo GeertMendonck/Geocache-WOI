@@ -14,7 +14,7 @@
     "multiLocationSlotMode": "all",
     "showOptionalSlots": true,
     "listShowFutureSlots": true,
-    "mapShowFutureLocations": true
+    "mapShowFutureLocations": false
   },
   "prestart": {
     "useLocationId": "thuis",
