@@ -13,7 +13,7 @@
     "visibilityMode": "nextOnly",
     "multiLocationSlotMode": "all",
     "showOptionalSlots": true,
-    "listShowFutureSlots": true
+    "listShowFutureSlots": false
   },
   "prestart": {
     "useLocationId": "thuis",
