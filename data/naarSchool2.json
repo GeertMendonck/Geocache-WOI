@@ -46,7 +46,7 @@
       "label": "Stop 2",
       "required": true,
       "unlockAfterSlot": "stop01",
-      "completeMode": "random"
+      "completeMode": "any"
     },
     {
       "id": "stop03",
