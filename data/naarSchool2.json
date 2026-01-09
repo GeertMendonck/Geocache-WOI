@@ -11,7 +11,7 @@
   },
   "settings": {
     "visibilityMode": "nextOnly",
-    "multiLocationSlotMode": "all",
+    "multiLocationSlotMode": "any",
     "showOptionalSlots": true,
     "listShowFutureSlots": true,
     "mapShowFutureLocations": false
