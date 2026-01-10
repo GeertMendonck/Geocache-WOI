@@ -1,0 +1,109 @@
+{
+  "meta": {
+    "title": "route5",
+    "subtitle": "optionalsslots=true, list: true, maps: true met split",
+    "version": "1.0",
+    "assetsBase": ""
+  },
+  "settings": {
+    "visibilityMode": "nextOnly",
+    "multiLocationSlotMode": "all",
+    "showOptionalSlots": true,
+    "listShowFutureSlots": true,
+    "mapShowFutureLocations": true
+  },
+  "prestart": {
+    "useLocationId": "startloc",
+    "meetingPoint": {
+      "lat": 51.220418,
+      "lng": 4.440854,
+      "label": "Aan de voordeur"
+    },
+    "message": "Nog niet aan het startpunt. Ga naar de startlocatie om te beginnen.",
+    "maps": {
+      "label": "Route naar startpunt"
+    },
+    "images": []
+  },
+  "slots": [
+    {
+      "id": "start",
+      "label": "Start",
+      "required": true
+    },
+    {
+      "id": "stop01",
+      "label": "stop01",
+      "required": true,
+      "unlockAfterSlot": "start"
+    },
+    {
+      "id": "end",
+      "label": "einde",
+      "required": true,
+      "unlockAfterSlot": "stop01"
+    }
+  ],
+  "locaties": [
+    {
+      "id": "startloc",
+      "slot": "start",
+      "naam": "Start",
+      "lat": 51.220418,
+      "lng": 4.440854,
+      "radius": 50,
+      "images": [],
+      "routeHint": "",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "loc01",
+      "slot": "stop01",
+      "naam": "Turk",
+      "lat": 51.219955294434854,
+      "lng": 4.438927173614503,
+      "radius": 50,
+      "images": [],
+      "routeHint": "",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "loc02",
+      "slot": "end",
+      "naam": "Kerkstraat",
+      "lat": 51.220277844521206,
+      "lng": 4.436094760894776,
+      "radius": 50,
+      "images": [],
+      "routeHint": "",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    },
+    {
+      "id": "loc03",
+      "slot": "stop01",
+      "naam": "apotheek",
+      "lat": 51.22144706963869,
+      "lng": 4.439592361450196,
+      "radius": 50,
+      "images": [],
+      "routeHint": "",
+      "uitleg": {
+        "kort": "",
+        "uitgebreid": ""
+      },
+      "vragen": []
+    }
+  ]
+}
