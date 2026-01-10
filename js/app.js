@@ -1904,80 +1904,80 @@ function resolveCharacterFile(file, data){
     //     }
     //     return null;
     //   }
-    //   function computeVisibleSlotIds(){
-    //     var st = store.get();
-    //     var unlockedSlots = st.unlockedSlots || [];
-    //     var unlockedMap = {};
-    //     for (var i=0;i<unlockedSlots.length;i++) unlockedMap[unlockedSlots[i]] = true;
+      function computeVisibleSlotIds(){
+        var st = store.get();
+        var unlockedSlots = st.unlockedSlots || [];
+        var unlockedMap = {};
+        for (var i=0;i<unlockedSlots.length;i++) unlockedMap[unlockedSlots[i]] = true;
       
-    //     var settings = (DATA && DATA.settings) ? DATA.settings : {};
-    //     var mode = settings.visibilityMode || 'all';
-    //     var showOptional = !!settings.showOptionalSlots;
+        var settings = (DATA && DATA.settings) ? DATA.settings : {};
+        var mode = settings.visibilityMode || 'all';
+        var showOptional = !!settings.showOptionalSlots;
       
-    //     var slots = DATA.slots || [];
-    //     var slotOrder = DATA.slotOrder || slots.map(function(s){ return s.id; });
+        var slots = DATA.slots || [];
+        var slotOrder = DATA.slotOrder || slots.map(function(s){ return s.id; });
       
-    //     function slotObj(id){
-    //       for (var j=0;j<slots.length;j++){
-    //         if (slots[j] && slots[j].id === id) return slots[j];
-    //       }
-    //       return null;
-    //     }
-    //     function isOptional(id){
-    //       var o = slotObj(id);
-    //       return o ? (o.required === false) : false;
-    //     }
+        function slotObj(id){
+          for (var j=0;j<slots.length;j++){
+            if (slots[j] && slots[j].id === id) return slots[j];
+          }
+          return null;
+        }
+        function isOptional(id){
+          var o = slotObj(id);
+          return o ? (o.required === false) : false;
+        }
       
-    //     // optional slots eventueel eruit
-    //     function allowedByOptional(id){
-    //       return showOptional || !isOptional(id);
-    //     }
+        // optional slots eventueel eruit
+        function allowedByOptional(id){
+          return showOptional || !isOptional(id);
+        }
       
-    //     // default: alles zichtbaar (behalve optional als uit)
-    //     if (mode !== 'nextOnly') {
-    //       var all = [];
-    //       for (var k=0;k<slotOrder.length;k++){
-    //         var sid = slotOrder[k];
-    //         if (sid && allowedByOptional(sid)) all.push(sid);
-    //       }
-    //       return all;
-    //     }
+        // default: alles zichtbaar (behalve optional als uit)
+        if (mode !== 'nextOnly') {
+          var all = [];
+          for (var k=0;k<slotOrder.length;k++){
+            var sid = slotOrder[k];
+            if (sid && allowedByOptional(sid)) all.push(sid);
+          }
+          return all;
+        }
       
-    //     // nextOnly:
-    //     // 1) toon alle unlocked slots
-    //     var visible = [];
-    //     for (var a=0;a<slotOrder.length;a++){
-    //       var sid1 = slotOrder[a];
-    //       if (!sid1) continue;
-    //       if (!allowedByOptional(sid1)) continue;
-    //       if (unlockedMap[sid1]) visible.push(sid1);
-    //     }
+        // nextOnly:
+        // 1) toon alle unlocked slots
+        var visible = [];
+        for (var a=0;a<slotOrder.length;a++){
+          var sid1 = slotOrder[a];
+          if (!sid1) continue;
+          if (!allowedByOptional(sid1)) continue;
+          if (unlockedMap[sid1]) visible.push(sid1);
+        }
       
-    //     // 2) bepaal 1 "volgende" slot
-    //     var startSid = DATA.startSlot || (DATA.meta && DATA.meta.startSlot) || 'start';
-    //     var nextSid = null;
+        // 2) bepaal 1 "volgende" slot
+        var startSid = DATA.startSlot || (DATA.meta && DATA.meta.startSlot) || 'start';
+        var nextSid = null;
       
-    //     for (var b=0;b<slotOrder.length;b++){
-    //       var sid2 = slotOrder[b];
-    //       if (!sid2) continue;
-    //       if (!allowedByOptional(sid2)) continue;
-    //       if (unlockedMap[sid2]) continue;
+        for (var b=0;b<slotOrder.length;b++){
+          var sid2 = slotOrder[b];
+          if (!sid2) continue;
+          if (!allowedByOptional(sid2)) continue;
+          if (unlockedMap[sid2]) continue;
       
-    //       var o2 = slotObj(sid2);
-    //       var prereq = o2 && o2.unlockAfterSlot ? o2.unlockAfterSlot : null;
+          var o2 = slotObj(sid2);
+          var prereq = o2 && o2.unlockAfterSlot ? o2.unlockAfterSlot : null;
       
-    //       var prereqOk = (!prereq) || !!unlockedMap[prereq] || (prereq === startSid && !!unlockedMap[startSid]);
+          var prereqOk = (!prereq) || !!unlockedMap[prereq] || (prereq === startSid && !!unlockedMap[startSid]);
       
-    //       if (prereqOk) { nextSid = sid2; break; }
-    //     }
+          if (prereqOk) { nextSid = sid2; break; }
+        }
       
-    //     // start altijd zichtbaar
-    //     if (visible.indexOf(startSid) < 0 && allowedByOptional(startSid)) visible.unshift(startSid);
+        // start altijd zichtbaar
+        if (visible.indexOf(startSid) < 0 && allowedByOptional(startSid)) visible.unshift(startSid);
       
-    //     if (nextSid && visible.indexOf(nextSid) < 0) visible.push(nextSid);
+        if (nextSid && visible.indexOf(nextSid) < 0) visible.push(nextSid);
       
-    //     return visible;
-    //   }
+        return visible;
+      }
       
       function renderStops(){
         var host = document.getElementById('stopsListHost');
