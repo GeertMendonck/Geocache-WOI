@@ -1578,68 +1578,83 @@ function resolveCharacterFile(file, data){
     //----------
     
     //slotconfig
+    function normId(x){ return String(x==null?'':x).trim().toLowerCase(); }
+
     function getSlotConfig(slotId){
-        var slots = DATA.slots || [];
-        for(var i=0;i<slots.length;i++){
-          if(slots[i] && slots[i].id === slotId) return slots[i];
-        }
-        return null;
+      var sid = normId(slotId);
+      var arr = (DATA && DATA.slots) ? DATA.slots : [];
+      for (var i=0;i<arr.length;i++){
+        if(arr[i] && normId(arr[i].id) === sid) return arr[i];
       }
+      return null;
+    }
       
-      function getCompleteMode(slotId){
-        var so = getSlotConfig(slotId);
-        var m = (so && so.completeMode) ? String(so.completeMode).toLowerCase() : null;
-        if(!m && DATA.settings && DATA.settings.multiLocationSlotMode) {
-          m = String(DATA.settings.multiLocationSlotMode).toLowerCase();
+        function getCompleteMode(slotId){
+          var so = getSlotConfig(slotId); // nu norm-safe
+          var m = (so && so.completeMode != null) ? String(so.completeMode).trim().toLowerCase() : null;
+
+          if(!m && DATA.settings && DATA.settings.multiLocationSlotMode != null){
+            m = String(DATA.settings.multiLocationSlotMode).trim().toLowerCase();
+          }
+
+          // default veilig
+          return m || 'all';
         }
-        // default veilig
-        m = m || 'all';
-        return m;
-      }
+
       
-      function getUnlockedLocIds(){
-        var st = store.get();
-        return st.unlockedLocs || [];
-      }
+        function getUnlockedLocIds(){
+          var st = store.get() || {};
+          var arr = st.unlockedLocs || [];
+          var map = {};
+          for(var i=0;i<arr.length;i++){
+            map[normId(arr[i])] = true;
+          }
+          return Object.keys(map);
+        }
       
       function isSlotCompleted(slotId){
         var mode = getCompleteMode(slotId);
-        var unlocked = getUnlockedLocIds();
+        var unlocked = getUnlockedLocIds(); // nu genormaliseerd
         var locs = DATA.locaties || DATA.stops || [];
-      
+
+        var sid = normId(slotId);
+
         var idsInSlot = [];
         for(var i=0;i<locs.length;i++){
           var s = locs[i];
-          if(s && s.slot === slotId) idsInSlot.push(s.id);
+          if(s && normId(s.slot) === sid) idsInSlot.push(normId(s.id));
         }
-      
-        // geen locaties => niet blokkeren
-        if(!idsInSlot.length) return true;
-      
+
+        if(!idsInSlot.length){
+          // beter: false, of loggen
+          // console.warn('Slot heeft geen locaties:', slotId);
+          return false;
+        }
+
+        var unlockedMap = {};
+        for(var u=0;u<unlocked.length;u++) unlockedMap[unlocked[u]] = true;
+
         if(mode === 'any'){
           for(var j=0;j<idsInSlot.length;j++){
-            if(unlocked.indexOf(idsInSlot[j]) >= 0) return true;
+            if(unlockedMap[idsInSlot[j]]) return true;
           }
           return false;
         }
-      
+
         if(mode === 'random' || mode === 'nearest'){
-          // random/nearest: slot is compleet als de gekozen target gehaald is
-          var st = store.get();
+          var st = store.get() || {};
           var picked = st.slotPick ? st.slotPick[slotId] : null;
-          if(!picked){
-            // nog geen keuze gemaakt => niet compleet (keuze wordt gemaakt wanneer je hem nodig hebt)
-            return false;
-          }
-          return unlocked.indexOf(picked) >= 0;
+          if(!picked) return false;
+          return !!unlockedMap[normId(picked)];
         }
-      
-        // default / all
+
+        // all
         for(var k=0;k<idsInSlot.length;k++){
-          if(unlocked.indexOf(idsInSlot[k]) < 0) return false;
+          if(!unlockedMap[idsInSlot[k]]) return false;
         }
         return true;
       }
+
       
       function getRandomPickForSlot(slotId, candidates){
         var st = store.get();
@@ -1882,87 +1897,87 @@ function resolveCharacterFile(file, data){
       }
       
  
-    function slotById(id){
-        var arr = (DATA && DATA.slots) ? DATA.slots : [];
-        for (var i=0;i<arr.length;i++){
-          if (arr[i] && arr[i].id === id) return arr[i];
-        }
-        return null;
-      }
-      function computeVisibleSlotIds(){
-        var st = store.get();
-        var unlockedSlots = st.unlockedSlots || [];
-        var unlockedMap = {};
-        for (var i=0;i<unlockedSlots.length;i++) unlockedMap[unlockedSlots[i]] = true;
+    // function slotById(id){
+    //     var arr = (DATA && DATA.slots) ? DATA.slots : [];
+    //     for (var i=0;i<arr.length;i++){
+    //       if (arr[i] && arr[i].id === id) return arr[i];
+    //     }
+    //     return null;
+    //   }
+    //   function computeVisibleSlotIds(){
+    //     var st = store.get();
+    //     var unlockedSlots = st.unlockedSlots || [];
+    //     var unlockedMap = {};
+    //     for (var i=0;i<unlockedSlots.length;i++) unlockedMap[unlockedSlots[i]] = true;
       
-        var settings = (DATA && DATA.settings) ? DATA.settings : {};
-        var mode = settings.visibilityMode || 'all';
-        var showOptional = !!settings.showOptionalSlots;
+    //     var settings = (DATA && DATA.settings) ? DATA.settings : {};
+    //     var mode = settings.visibilityMode || 'all';
+    //     var showOptional = !!settings.showOptionalSlots;
       
-        var slots = DATA.slots || [];
-        var slotOrder = DATA.slotOrder || slots.map(function(s){ return s.id; });
+    //     var slots = DATA.slots || [];
+    //     var slotOrder = DATA.slotOrder || slots.map(function(s){ return s.id; });
       
-        function slotObj(id){
-          for (var j=0;j<slots.length;j++){
-            if (slots[j] && slots[j].id === id) return slots[j];
-          }
-          return null;
-        }
-        function isOptional(id){
-          var o = slotObj(id);
-          return o ? (o.required === false) : false;
-        }
+    //     function slotObj(id){
+    //       for (var j=0;j<slots.length;j++){
+    //         if (slots[j] && slots[j].id === id) return slots[j];
+    //       }
+    //       return null;
+    //     }
+    //     function isOptional(id){
+    //       var o = slotObj(id);
+    //       return o ? (o.required === false) : false;
+    //     }
       
-        // optional slots eventueel eruit
-        function allowedByOptional(id){
-          return showOptional || !isOptional(id);
-        }
+    //     // optional slots eventueel eruit
+    //     function allowedByOptional(id){
+    //       return showOptional || !isOptional(id);
+    //     }
       
-        // default: alles zichtbaar (behalve optional als uit)
-        if (mode !== 'nextOnly') {
-          var all = [];
-          for (var k=0;k<slotOrder.length;k++){
-            var sid = slotOrder[k];
-            if (sid && allowedByOptional(sid)) all.push(sid);
-          }
-          return all;
-        }
+    //     // default: alles zichtbaar (behalve optional als uit)
+    //     if (mode !== 'nextOnly') {
+    //       var all = [];
+    //       for (var k=0;k<slotOrder.length;k++){
+    //         var sid = slotOrder[k];
+    //         if (sid && allowedByOptional(sid)) all.push(sid);
+    //       }
+    //       return all;
+    //     }
       
-        // nextOnly:
-        // 1) toon alle unlocked slots
-        var visible = [];
-        for (var a=0;a<slotOrder.length;a++){
-          var sid1 = slotOrder[a];
-          if (!sid1) continue;
-          if (!allowedByOptional(sid1)) continue;
-          if (unlockedMap[sid1]) visible.push(sid1);
-        }
+    //     // nextOnly:
+    //     // 1) toon alle unlocked slots
+    //     var visible = [];
+    //     for (var a=0;a<slotOrder.length;a++){
+    //       var sid1 = slotOrder[a];
+    //       if (!sid1) continue;
+    //       if (!allowedByOptional(sid1)) continue;
+    //       if (unlockedMap[sid1]) visible.push(sid1);
+    //     }
       
-        // 2) bepaal 1 "volgende" slot
-        var startSid = DATA.startSlot || (DATA.meta && DATA.meta.startSlot) || 'start';
-        var nextSid = null;
+    //     // 2) bepaal 1 "volgende" slot
+    //     var startSid = DATA.startSlot || (DATA.meta && DATA.meta.startSlot) || 'start';
+    //     var nextSid = null;
       
-        for (var b=0;b<slotOrder.length;b++){
-          var sid2 = slotOrder[b];
-          if (!sid2) continue;
-          if (!allowedByOptional(sid2)) continue;
-          if (unlockedMap[sid2]) continue;
+    //     for (var b=0;b<slotOrder.length;b++){
+    //       var sid2 = slotOrder[b];
+    //       if (!sid2) continue;
+    //       if (!allowedByOptional(sid2)) continue;
+    //       if (unlockedMap[sid2]) continue;
       
-          var o2 = slotObj(sid2);
-          var prereq = o2 && o2.unlockAfterSlot ? o2.unlockAfterSlot : null;
+    //       var o2 = slotObj(sid2);
+    //       var prereq = o2 && o2.unlockAfterSlot ? o2.unlockAfterSlot : null;
       
-          var prereqOk = (!prereq) || !!unlockedMap[prereq] || (prereq === startSid && !!unlockedMap[startSid]);
+    //       var prereqOk = (!prereq) || !!unlockedMap[prereq] || (prereq === startSid && !!unlockedMap[startSid]);
       
-          if (prereqOk) { nextSid = sid2; break; }
-        }
+    //       if (prereqOk) { nextSid = sid2; break; }
+    //     }
       
-        // start altijd zichtbaar
-        if (visible.indexOf(startSid) < 0 && allowedByOptional(startSid)) visible.unshift(startSid);
+    //     // start altijd zichtbaar
+    //     if (visible.indexOf(startSid) < 0 && allowedByOptional(startSid)) visible.unshift(startSid);
       
-        if (nextSid && visible.indexOf(nextSid) < 0) visible.push(nextSid);
+    //     if (nextSid && visible.indexOf(nextSid) < 0) visible.push(nextSid);
       
-        return visible;
-      }
+    //     return visible;
+    //   }
       
       function renderStops(){
         var host = document.getElementById('stopsListHost');
@@ -2004,77 +2019,6 @@ function resolveCharacterFile(file, data){
           if(!name) return '';
           return name.replace(/^(Stop\s*\d+\s*:\s*|Start\s*:\s*|Einde\s*:\s*)/i, '').trim();
         }
-        // function allLocationsForSlot(slotId){
-        //   var arr = DATA.locaties || DATA.stops || [];
-        //   var out = [];
-        //   for(var i=0;i<arr.length;i++){
-        //     if(arr[i] && arr[i].slot === slotId) out.push(arr[i]);
-        //   }
-        //   return out;
-        // }
-        // function findLocById(locId){
-        //   var arr = DATA.locaties || DATA.stops || [];
-        //   for (var i=0;i<arr.length;i++){
-        //     if(arr[i] && arr[i].id === locId) return arr[i];
-        //   }
-        //   return null;
-        // }
-        // function displayPlaceForSlot(sid, ok){
-        //     var locs = allLocationsForSlot(sid);
-        //     if(!locs.length) return '';
-          
-        //     var mode = getCompleteMode(sid);
-        //     var st2 = store.get();
-        //     var unlockedLocs = st2.unlockedLocs || [];
-        //     var pickedId = (st2.slotPick && st2.slotPick[sid]) ? st2.slotPick[sid] : null;
-          
-        //     // helper: eerste bezochte loc in slot
-        //     function firstVisitedId(){
-        //       for(var i=0;i<locs.length;i++){
-        //         if(unlockedLocs.indexOf(locs[i].id) >= 0) return locs[i].id;
-        //       }
-        //       return null;
-        //     }
-          
-        //     // random/nearest: als er al een pick is, is het op kaart al "niet-spoiler"
-        //     if(mode === 'random' || mode === 'nearest'){
-        //       if(pickedId){
-        //         var locP = findLocById(pickedId);
-        //         return (locP && locP.naam) ? stripPrefix(locP.naam) : '';
-        //       }
-        //       // nog geen pick (bv. nearest zonder GPS): toon voorlopig aantal
-        //       return (locs.length > 1) ? '🔀 (' + locs.length + ' opties)' : '';
-        //     }
-          
-        //     // any: als al iets bezocht is, toon die plaats; anders toon aantal opties
-        //     if(mode === 'any'){
-        //       var vid = firstVisitedId();
-        //       if(vid){
-        //         var locV = findLocById(vid);
-        //         return (locV && locV.naam) ? stripPrefix(locV.naam) : '';
-        //       }
-        //       return (locs.length > 1) ? '🔀 (' + locs.length + ' opties)' : '';
-        //     }
-          
-        //     // all: je kan hier kiezen: of niets tonen tot alles klaar is, of "x/y"
-        //     if(mode === 'all'){
-        //       if(ok){
-        //         // als alles klaar is, toon gerust de (eerste) plaatsnaam of leeg
-        //         // (ik toon hier leeg, want "all" is vaak meerdere plekken)
-        //         return '';
-        //       }
-        //       // toon progress x/y (handig!)
-        //       var done = 0;
-        //       for(var j=0;j<locs.length;j++){
-        //         if(unlockedLocs.indexOf(locs[j].id) >= 0) done++;
-        //       }
-        //       if(locs.length > 1) return '🧩 (' + done + '/' + locs.length + ')';
-        //       return '';
-        //     }
-          
-        //     // fallback
-        //     return '';
-        //   }
         function displayPlaceForSlot(sid){
         var locs = allLocationsForSlot(sid);
         if(!locs.length) return '';
@@ -2170,30 +2114,30 @@ function resolveCharacterFile(file, data){
         (slotOrder||[]).forEach(function(sid){
           if(!isSlotVisibleInList(sid)) return;
       
-         // var ok = !!unlockedMap[sid];
           var ok = isSlotCompleted(sid);
           var optional = isOptionalSlot(sid);
-          //var icon = ok ? '✅' : (sid===endSlot ? '🔒' : (optional ? '🧩' : '⏳'));
-          var icon = ok ? '✅'
-         : (visited ? '👣'
-         : (sid===endSlot ? '🔒' : (optional ? '🧩' : '⏳')));
           var visited = slotVisited(sid);
-          var label = slotLabel(sid);
+
+          var icon = ok ? '✅'
+            : (visited ? '👣'
+            : (sid===endSlot ? '🔒' : (optional ? '🧩' : '⏳')));
+
+          var place = visited ? displayPlaceForSlot(sid) : '';
+          var baseLabel = slotLabel(sid);     // bv. "Stop 2"
+          var mainLabel = (visited && place) ? place : baseLabel;
+
+          // subtekst enkel tonen als we effectief een plaatsnaam tonen
+          var sub = (visited && place) ? baseLabel : '';
+
           var cls = 'pill'
-          + (ok ? ' ok' : ' no')
-          + (visited && !ok ? ' visited' : '');
-          // ✅ Spoiler-proof: place alleen tonen als slot unlocked is
-          //var place = ok ? displayPlaceForSlot(sid) : '';
-         // var place = displayPlaceForSlot(sid, ok);
-         var place = visited ? displayPlaceForSlot(sid) : '';
-         var baseLabel = slotLabel(sid); // start/stop01/...
-         var mainLabel = (visited && place) ? place : baseLabel;
- 
+            + (ok ? ' ok' : ' no')
+            + (visited && !ok ? ' visited' : '');
+
           html += '<span class="' + cls + '">'
-          + icon + ' '
-          + '<span class="pillMain">' + escapeHtml(mainLabel) + '</span>'
-          + (sub ? ' <span class="pillSub">· ' + escapeHtml(sub) + '</span>' : '')
-          + '</span>';
+            + icon + ' '
+            + '<span class="pillMain">' + escapeHtml(mainLabel) + '</span>'
+            + (sub ? ' <span class="pillSub">· ' + escapeHtml(sub) + '</span>' : '')
+            + '</span>';
             });
           
         cont.innerHTML = html || '<span class="muted">(Geen stops geladen)</span>';
@@ -3577,89 +3521,52 @@ function charactersEnabled(){
       
    
     }
-    function computeVisibleSlotMap(kind){
-        var slots = DATA.slots || [];
-        var settings = DATA.settings || {};
-      
-        var showOptional = (settings.showOptionalSlots !== false);
-      
-        // "future" betekent: ook slots tonen die nog niet "aan de beurt" zijn
-        // voor lijst/kaart apart regelbaar
-        var showFuture =
-          (kind === 'list') ? !!settings.listShowFutureSlots :
-          (kind === 'map')  ? !!settings.mapShowFutureLocations :
-          false;
-      
-        // visibilityMode beïnvloedt vooral "nextOnly" gedrag
-        var visibilityMode = settings.visibilityMode || 'nextOnly';
-      
-        // Helper: is slot optional?
-        function isOptional(slotId){
-          for(var i=0;i<slots.length;i++){
-            if(slots[i] && slots[i].id === slotId) return slots[i].required === false;
+   function computeVisibleSlotMap(kind){
+          var settings = DATA.settings || {};
+          var showOptional = (settings.showOptionalSlots !== false);
+
+          var showFuture =
+            (kind === 'list') ? !!settings.listShowFutureSlots :
+            (kind === 'map')  ? !!settings.mapShowFutureLocations :
+            false;
+
+          var slots = DATA.slots || [];
+          var slotOrder = DATA.slotOrder || slots.map(function(s){ return s.id; });
+
+          // Helper: optional?
+          function isOptionalSlot(id){
+            for(var i=0;i<slots.length;i++){
+              if(slots[i] && slots[i].id === id) return slots[i].required === false;
+            }
+            return false;
           }
-          return false;
-        }
-      
-        // Helper: bepaal volgende required slot (eerste required dat niet complete is)
-        var nextRequired = null;
-        for(var i=0;i<slots.length;i++){
-          var sl = slots[i];
-          if(!sl || sl.required === false) continue;
-          if(!isSlotCompleted(sl.id)){ nextRequired = sl.id; break; }
-        }
-      
-        // Als alles complete is: toon alles wat je wil tonen
-        if(!nextRequired){
-          var allDone = {};
-          for(var z=0;z<slots.length;z++){
-            var sid0 = slots[z].id;
-            if(!showOptional && isOptional(sid0)) continue;
-            allDone[sid0] = true;
-          }
-          return allDone;
-        }
-      
-        // Bepaal “tot waar” je mag tonen bij nextOnly zonder future
-        // We tonen: alle completed required slots + nextRequired.
-        // Optionele slots: enkel als showOptional én (showFuture of al complete)
-        var map = {};
-      
-        for(var j=0;j<slots.length;j++){
-          var sid = slots[j].id;
-          if(!sid) continue;
-      
-          if(!showOptional && isOptional(sid)) continue;
-      
+
+          // Als future aan staat: toon alles (behalve optional als uit)
           if(showFuture){
-            // future aan: toon alles (behalve optioneel als uit)
-            map[sid] = true;
-            continue;
+            var all = {};
+            for(var k=0;k<slotOrder.length;k++){
+              var sid = slotOrder[k];
+              if(!sid) continue;
+              if(!showOptional && isOptionalSlot(sid)) continue;
+              all[sid] = true;
+            }
+            return all;
           }
-      
-          // future uit:
-          if(visibilityMode === 'all'){
-            // all: toon alles unlocked? (maar future=false => nog steeds geen toekomst)
-            // hier interpreteer ik: toon tot nextRequired (incl) + completed.
-            // (zelfde als nextOnly)
+
+          // Future uit: gebruik de prereq-aware “nextOnly” logica
+          var ids = computeVisibleSlotIds();   // ← jouw bestaande functie
+          var map = {};
+          for(var j=0;j<ids.length;j++){
+            map[ids[j]] = true;
           }
-      
-          // nextOnly gedrag:
-          if(isSlotCompleted(sid) || sid === nextRequired){
-            map[sid] = true;
-          } else {
-            // optioneel: toon optional slots die al compleet zijn (bij any/random kan dat)
-            if(isOptional(sid) && isSlotCompleted(sid)) map[sid] = true;
-          }
+          return map;
         }
+
       
-        return map;
-      }
-      
-      function rebuildVisibleSlotMap(){
-        window.visibleSlotMap = computeVisibleSlotMap() || {};
-        return window.visibleSlotMap;
-      }
+      // function rebuildVisibleSlotMap(){
+      //   window.visibleSlotMap = computeVisibleSlotMap() || {};
+      //   return window.visibleSlotMap;
+      // }
         
       function rebuildVisibleSlotMaps(){
         window.visibleSlotMapMap  = computeVisibleSlotMap('map')  || {};
